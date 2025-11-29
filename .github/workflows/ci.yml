@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  phpunit:
+    runs-on: ubuntu-latest
+
+    services: {}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, intl, pdo, pdo_sqlite, sqlite3
+          coverage: none
+
+      - name: Get composer cache
+        id: composer-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --no-progress --no-suggest --prefer-dist
+
+      - name: Copy .env.testing
+        run: |
+          cp .env.example .env
+          php -r "file_exists('.env') || die('.env not found');"
+
+      - name: Generate APP_KEY
+        run: php artisan key:generate --ansi
+
+      - name: Create SQLite database file (optional)
+        run: mkdir -p database && touch database/database.sqlite || true
+
+      - name: Run migrations
+        run: php artisan migrate --force
+
+      - name: Run tests
+        run: vendor/bin/phpunit --colors=always

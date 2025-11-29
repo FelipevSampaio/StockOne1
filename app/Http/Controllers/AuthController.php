@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Restaurante;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
     public function showLogin()
     {
-        if (session()->has('restaurante_id')) {
+        if (Auth::check()) {
+            // Se é admin, vai para o painel de admin
+            if (Auth::user()->isAdmin()) {
+                return redirect()->route('admin.users.index');
+            }
             return redirect()->route('dashboard');
         }
 
@@ -18,33 +22,40 @@ class AuthController extends Controller
 
     public function authenticate(Request $request)
     {
-        $data = $request->validate([
+        $credentials = $request->validate([
             'email' => ['required', 'email'],
-            'cnpj' => ['required', 'string', 'max:18'],
+            'password' => ['required'],
         ]);
 
-        $restaurante = Restaurante::query()
-            ->where('email', $data['email'])
-            ->where('cnpj', $data['cnpj'])
-            ->where('status', 'ativo')
-            ->first();
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
 
-        if (!$restaurante) {
-            return back()->withErrors([
-                'email' => 'Credenciais inválidas ou restaurante inativo.',
-            ])->onlyInput('email');
+            // Adicionar informações do restaurante na sessão
+            $user = Auth::user();
+
+            // Se é admin, redirecionar para o painel de admin
+            if ($user->isAdmin()) {
+                return redirect()->intended(route('admin.users.index'));
+            }
+
+            $request->session()->put('restaurante_id', $user->restaurante_id);
+
+            if ($user->restaurante) {
+                $request->session()->put('restaurante_nome', $user->restaurante->nome);
+                $request->session()->put('restaurante_cnpj', $user->restaurante->cnpj);
+            }
+
+            return redirect()->intended(route('dashboard'));
         }
 
-        $request->session()->put('restaurante_id', $restaurante->id);
-        $request->session()->put('restaurante_nome', $restaurante->nome);
-        $request->session()->regenerate();
-
-        return redirect()->intended(route('dashboard'));
+        return back()->withErrors([
+            'email' => 'As credenciais fornecidas não são válidas.',
+        ])->onlyInput('email');
     }
 
     public function logout(Request $request)
     {
-        $request->session()->forget(['restaurante_id', 'restaurante_nome']);
+        Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

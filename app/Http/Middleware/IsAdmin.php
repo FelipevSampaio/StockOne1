@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class EnsureRestauranteSession
+class IsAdmin
 {
     /**
      * Handle an incoming request.
@@ -15,15 +15,14 @@ class EnsureRestauranteSession
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Se for admin, permite o acesso
-        if ($request->user() && $request->user()->isAdmin()) {
-            return $next($request);
+        // Verifica se o usuário está autenticado
+        if (!auth()->check()) {
+            return redirect()->route('auth.login');
         }
 
-        if (!$request->session()->has('restaurante_id')) {
-            return redirect()
-                ->route('auth.login')
-                ->with('error', 'Faça login para acessar o painel.');
+        // Verifica se o usuário é administrador
+        if (!auth()->user()->isAdmin()) {
+            abort(403, 'Acesso negado. Apenas administradores podem acessar esta área.');
         }
 
         return $next($request);

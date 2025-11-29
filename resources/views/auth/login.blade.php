@@ -21,7 +21,7 @@
                     <p class="text-xs uppercase tracking-[0.3em] text-red-500">StockOne</p>
                     <h1 class="mt-2 text-3xl font-semibold text-gray-900">Acesso ao painel</h1>
                     <p class="mt-2 text-sm text-gray-500">
-                        Informe os dados do restaurante para entrar.
+                        Informe suas credenciais para entrar.
                     </p>
                 </div>
 
@@ -59,16 +59,15 @@
 
                     <div>
                         <label class="text-sm font-semibold text-gray-700">
-                            CNPJ
+                            Senha
                             <input
-                                type="text"
-                                name="cnpj"
-                                value="{{ old('cnpj') }}"
+                                type="password"
+                                name="password"
                                 required
                                 class="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-red-500 focus:ring-red-500"
                             >
                         </label>
-                        @error('cnpj')
+                        @error('password')
                             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>

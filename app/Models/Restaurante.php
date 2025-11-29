@@ -23,6 +23,11 @@ class Restaurante extends Model
         return $this->hasMany(Insumo::class);
     }
 
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
+
     public function cardapioItens()
     {
         return $this->hasMany(CardapioItem::class);
