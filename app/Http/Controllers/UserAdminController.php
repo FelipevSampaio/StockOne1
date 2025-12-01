@@ -385,7 +385,7 @@ class UserAdminController extends Controller
 
         // Buscar últimas atividades relacionadas ao usuário
         $recentLogs = AuditLog::where(function($query) use ($user) {
-                $query->where('model_type', 'User')
+                $query->where('model', 'User')
                       ->where('model_id', $user->id);
             })
             ->orWhere('user_id', $user->id)
@@ -412,7 +412,7 @@ class UserAdminController extends Controller
                 'recent_logs' => $recentLogs->map(function($log) {
                     return [
                         'action' => $log->action,
-                        'description' => $log->action . ' - ' . $log->model_type,
+                        'description' => $log->action . ' - ' . $log->model,
                         'created_at' => $log->created_at->diffForHumans()
                     ];
                 })->toArray()
