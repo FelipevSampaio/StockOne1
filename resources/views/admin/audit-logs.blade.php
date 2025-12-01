@@ -120,8 +120,8 @@
                                          x-transition:enter-start="opacity-0 transform -translate-y-2"
                                          x-transition:enter-end="opacity-100 transform translate-y-0"
                                          class="mt-3 bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                                        <h4 class="text-xs font-semibold text-gray-700 uppercase mb-2">Alterações:</h4>
-                                        <pre class="text-xs text-gray-600 overflow-x-auto">{{ json_encode(json_decode($log->changes), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                                        <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase mb-2">Alterações:</h4>
+                                        <pre class="text-xs text-gray-600 dark:text-gray-400 overflow-x-auto">{{ json_encode(is_array($log->changes) ? $log->changes : json_decode($log->changes, true), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                                     </div>
                                 @endif
                             </div>

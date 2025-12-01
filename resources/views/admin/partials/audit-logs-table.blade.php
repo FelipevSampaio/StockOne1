@@ -50,7 +50,7 @@
                     <td class="px-3 py-2">
                         @if($log->changes)
                             <button class="text-blue-600 hover:underline text-sm expand-json" data-target="json-{{ $log->id }}">Expandir JSON</button>
-                            <pre id="json-{{ $log->id }}" class="mt-2 p-2 bg-gray-50 rounded text-xs hidden">{{ json_encode($log->changes, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                            <pre id="json-{{ $log->id }}" class="mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded text-xs hidden">{{ json_encode(is_array($log->changes) ? $log->changes : json_decode($log->changes, true), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                         @else
                             <span class="text-gray-400">—</span>
                         @endif
