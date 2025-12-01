@@ -18,26 +18,26 @@
     <form method="GET" action="{{ route('admin.users.index') }}" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-6">
         <div class="flex flex-wrap items-center gap-3">
             <div class="relative flex-1 min-w-[200px]">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
-                <input type="text" name="search" placeholder="Buscar..." value="{{ request('search') }}" class="pl-10 w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500">
+                <input type="text" name="search" placeholder="Buscar..." value="{{ request('search') }}" class="pl-10 w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
             </div>
 
-            <select name="restaurante_id" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500">
+            <select name="restaurante_id" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                 <option value="">Restaurante</option>
                 @foreach($restaurantes as $restaurante)
                     <option value="{{ $restaurante->id }}" @selected(request('restaurante_id') == $restaurante->id)>{{ $restaurante->nome }}</option>
                 @endforeach
             </select>
 
-            <select name="role" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500">
+            <select name="role" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                 <option value="">Papel</option>
                 <option value="admin" @selected(request('role') === 'admin')>Admin</option>
                 <option value="user" @selected(request('role') === 'user')>Usuário</option>
             </select>
 
-            <select name="status" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500">
+            <select name="status" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                 <option value="">Status</option>
                 <option value="ativo" @selected(request('status') === 'ativo')>Ativo</option>
                 <option value="inativo" @selected(request('status') === 'inativo')>Inativo</option>
@@ -59,37 +59,37 @@
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full">
-                <thead class="bg-gray-50">
+                <thead class="bg-gray-50 dark:bg-gray-900">
                     <tr>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Usuário</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Restaurante</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Papel</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Ações</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Usuário</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Restaurante</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Papel</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Ações</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200" x-data="{}">
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700" x-data="{}">
                     @forelse ($users as $user)
-                        <tr class="hover:bg-gray-50 transition-colors {{ $user->trashed() ? 'bg-red-50/30' : '' }}" x-data="{ open: false }">
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors {{ $user->trashed() ? 'bg-red-50/30 dark:bg-red-900/10' : '' }}" x-data="{ open: false }">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0 h-10 w-10">
-                                        <div class="h-10 w-10 rounded-full {{ $user->trashed() ? 'bg-gray-200' : 'bg-red-100' }} flex items-center justify-center">
-                                            <span class="{{ $user->trashed() ? 'text-gray-500' : 'text-red-600' }} font-semibold text-sm">
+                                        <div class="h-10 w-10 rounded-full {{ $user->trashed() ? 'bg-gray-200 dark:bg-gray-700' : 'bg-red-100 dark:bg-red-900/30' }} flex items-center justify-center">
+                                            <span class="{{ $user->trashed() ? 'text-gray-500 dark:text-gray-400' : 'text-red-600 dark:text-red-400' }} font-semibold text-sm">
                                                 {{ strtoupper(substr($user->name, 0, 2)) }}
                                             </span>
                                         </div>
                                     </div>
                                     <div class="ml-4">
                                         <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $user->name }}</div>
-                                        <div class="text-sm text-gray-500">{{ $user->email }}</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ $user->email }}</div>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @if($user->restaurante)
                                     <div class="flex items-center">
-                                        <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                                         </svg>
                                         <span class="text-sm text-gray-900 dark:text-gray-100">{{ $user->restaurante->nome }}</span>
