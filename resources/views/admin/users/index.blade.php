@@ -195,20 +195,21 @@
 
     </form>
 
-    <!-- Barra de Ações em Massa -->
-    <div x-data="bulkActions()"
-         x-show="selectedUsers.length > 0"
-         x-cloak
-         x-transition
-         class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4 flex items-center justify-between">
-        <div class="flex items-center gap-4">
-            <span class="text-sm font-medium text-red-900 dark:text-red-100">
-                <span x-text="selectedUsers.length"></span> usuário(s) selecionado(s)
-            </span>
-            <button @click="deselectAll()" class="text-xs text-red-700 dark:text-red-300 hover:text-red-900 dark:hover:text-red-100 underline">
-                Desmarcar todos
-            </button>
-        </div>
+    <!-- Container Principal com Bulk Actions -->
+    <div x-data="bulkActions()">
+        <!-- Barra de Ações em Massa -->
+        <div x-show="selectedUsers.length > 0"
+             x-cloak
+             x-transition
+             class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <span class="text-sm font-medium text-red-900 dark:text-red-100">
+                    <span x-text="selectedUsers.length"></span> usuário(s) selecionado(s)
+                </span>
+                <button @click="deselectAll()" class="text-xs text-red-700 dark:text-red-300 hover:text-red-900 dark:hover:text-red-100 underline">
+                    Desmarcar todos
+                </button>
+            </div>
         <div class="flex items-center gap-2">
             <button @click="bulkAction('export')"
                     class="inline-flex items-center px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
@@ -239,11 +240,11 @@
                 Deletar
             </button>
         </div>
-    </div>
+        </div>
 
-    <!-- Container de Visualização -->
-    <div x-data="{ viewMode: localStorage.getItem('users_view_mode') || 'table' }"
-         @view-changed.window="viewMode = $event.detail">
+        <!-- Container de Visualização -->
+        <div x-data="{ viewMode: localStorage.getItem('users_view_mode') || 'table' }"
+             @view-changed.window="viewMode = $event.detail">
 
         <!-- Visualização em Tabela -->
         <div x-show="viewMode === 'table'" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
@@ -268,7 +269,7 @@
                         <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Ações</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200 dark:divide-gray-700" x-data="bulkActions()">
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse ($users as $user)
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors {{ $user->trashed() ? 'bg-red-50/30 dark:bg-red-900/10' : '' }}" x-data="{ open: false, quickView: false }">
                             <td class="px-4 py-4">
@@ -656,6 +657,7 @@
                     </svg>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 @endsection
