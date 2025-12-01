@@ -247,7 +247,10 @@
                         <th class="px-4 py-4 w-12">
                             <input type="checkbox"
                                    @change="toggleAll($event.target.checked)"
-                                   :checked="selectedUsers.length === {{ $users->count() }} && {{ $users->count() }} > 0"
+                                   :checked="(() => {
+                                       const pageIds = @json($users->pluck('id')->toArray());
+                                       return pageIds.length > 0 && pageIds.every(id => selectedUsers.includes(id));
+                                   })()"
                                    class="rounded border-gray-300 dark:border-gray-600 text-red-600 focus:ring-red-500 dark:bg-gray-700">
                         </th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Usuário</th>
@@ -808,10 +811,17 @@
             },
 
             toggleAll(checked) {
+                const allIds = @json($users->pluck('id')->toArray());
                 if (checked) {
-                    this.selectedUsers = @json($users->pluck('id')->toArray());
+                    // Adiciona todos os IDs que ainda não estão selecionados
+                    allIds.forEach(id => {
+                        if (!this.selectedUsers.includes(id)) {
+                            this.selectedUsers.push(id);
+                        }
+                    });
                 } else {
-                    this.selectedUsers = [];
+                    // Remove apenas os IDs da página atual
+                    this.selectedUsers = this.selectedUsers.filter(id => !allIds.includes(id));
                 }
             },
 
