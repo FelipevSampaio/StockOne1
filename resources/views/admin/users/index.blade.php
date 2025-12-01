@@ -200,8 +200,13 @@
         <!-- Barra de Ações em Massa -->
         <div x-show="selectedUsers.length > 0"
              x-cloak
-             x-transition
-             class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4 flex items-center justify-between">
+             x-transition:enter="transition ease-out duration-300 transform"
+             x-transition:enter-start="opacity-0 -translate-y-4"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200 transform"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 -translate-y-4"
+             class="bulk-actions-bar bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4 flex items-center justify-between shadow-lg">
             <div class="flex items-center gap-4">
                 <span class="text-sm font-medium text-red-900 dark:text-red-100">
                     <span x-text="selectedUsers.length"></span> usuário(s) selecionado(s)
@@ -212,28 +217,28 @@
             </div>
         <div class="flex items-center gap-2">
             <button @click="bulkAction('export')"
-                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    class="btn-ripple inline-flex items-center px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:scale-105 transition-all duration-200 shadow-sm hover:shadow-md">
                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
                 Exportar
             </button>
             <button @click="bulkAction('activate')"
-                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    class="btn-ripple inline-flex items-center px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 hover:scale-105 transition-all duration-200 shadow-sm hover:shadow-md">
                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 Ativar
             </button>
             <button @click="bulkAction('deactivate')"
-                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
+                    class="btn-ripple inline-flex items-center px-3 py-1.5 text-xs font-medium bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 hover:scale-105 transition-all duration-200 shadow-sm hover:shadow-md">
                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
                 </svg>
                 Desativar
             </button>
             <button @click="bulkAction('delete')"
-                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    class="btn-ripple inline-flex items-center px-3 py-1.5 text-xs font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 hover:scale-105 transition-all duration-200 shadow-sm hover:shadow-md">
                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                 </svg>
@@ -271,12 +276,14 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse ($users as $user)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors {{ $user->trashed() ? 'bg-red-50/30 dark:bg-red-900/10' : '' }}" x-data="{ open: false, quickView: false }">
+                        <tr :class="selectedUsers.includes({{ $user->id }}) ? 'selected-row' : ''" 
+                            class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 {{ $user->trashed() ? 'bg-red-50/30 dark:bg-red-900/10' : '' }}" 
+                            x-data="{ open: false, quickView: false }">
                             <td class="px-4 py-4">
                                 <input type="checkbox"
                                        :checked="selectedUsers.includes({{ $user->id }})"
                                        @change="toggleUser({{ $user->id }})"
-                                       class="rounded border-gray-300 dark:border-gray-600 text-red-600 focus:ring-red-500 dark:bg-gray-700">
+                                       class="rounded border-gray-300 dark:border-gray-600 text-red-600 focus:ring-red-500 dark:bg-gray-700 cursor-pointer">
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
@@ -840,50 +847,98 @@
 
             async bulkAction(action) {
                 if (this.selectedUsers.length === 0) {
-                    alert('Selecione pelo menos um usuário');
+                    window.dispatchEvent(new CustomEvent('show-toast', {
+                        detail: { message: 'Selecione pelo menos um usuário', type: 'warning' }
+                    }));
                     return;
                 }
 
                 // Exportação não precisa de confirmação
                 if (action === 'export') {
-                    const ids = this.selectedUsers.join(',');
-                    window.location.href = `{{ route('admin.users.export') }}?ids=${ids}`;
+                    window.dispatchEvent(new CustomEvent('show-loading'));
+
+                    setTimeout(() => {
+                        const ids = this.selectedUsers.join(',');
+                        window.location.href = `{{ route('admin.users.export') }}?ids=${ids}`;
+
+                        setTimeout(() => {
+                            window.dispatchEvent(new CustomEvent('hide-loading'));
+                            window.dispatchEvent(new CustomEvent('show-toast', {
+                                detail: { message: 'Exportação iniciada com sucesso!', type: 'success' }
+                            }));
+                        }, 1000);
+                    }, 300);
                     return;
                 }
 
-                const confirmMessages = {
-                    'activate': 'Deseja ativar os usuários selecionados?',
-                    'deactivate': 'Deseja desativar os usuários selecionados?',
-                    'delete': 'Deseja deletar permanentemente os usuários selecionados? Esta ação não pode ser desfeita!'
+                const confirmConfig = {
+                    'activate': {
+                        title: 'Ativar Usuários',
+                        message: `Deseja ativar ${this.selectedUsers.length} usuário(s) selecionado(s)?`,
+                        type: 'info',
+                        confirmText: 'Ativar'
+                    },
+                    'deactivate': {
+                        title: 'Desativar Usuários',
+                        message: `Deseja desativar ${this.selectedUsers.length} usuário(s) selecionado(s)?`,
+                        type: 'warning',
+                        confirmText: 'Desativar'
+                    },
+                    'delete': {
+                        title: 'Deletar Usuários',
+                        message: `Deseja deletar permanentemente ${this.selectedUsers.length} usuário(s)? Esta ação não pode ser desfeita!`,
+                        type: 'danger',
+                        confirmText: 'Deletar'
+                    }
                 };
 
-                if (!confirm(confirmMessages[action])) {
-                    return;
-                }
+                const config = confirmConfig[action];
 
-                try {
-                    const response = await fetch('{{ route('admin.users.bulk-action') }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({
-                            action: action,
-                            user_ids: this.selectedUsers
-                        })
-                    });
+                window.dispatchEvent(new CustomEvent('show-confirm', {
+                    detail: {
+                        ...config,
+                        onConfirm: async () => {
+                            window.dispatchEvent(new CustomEvent('show-loading'));
 
-                    const data = await response.json();
+                            try {
+                                const response = await fetch('{{ route('admin.users.bulk-action') }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                    },
+                                    body: JSON.stringify({
+                                        action: action,
+                                        user_ids: this.selectedUsers
+                                    })
+                                });
 
-                    if (data.success) {
-                        alert(data.message);
-                        window.location.reload();
+                                const data = await response.json();
+                                window.dispatchEvent(new CustomEvent('hide-loading'));
+
+                                if (data.success) {
+                                    window.dispatchEvent(new CustomEvent('show-toast', {
+                                        detail: { message: data.message, type: 'success' }
+                                    }));
+
+                                    setTimeout(() => {
+                                        window.location.reload();
+                                    }, 1000);
+                                } else {
+                                    window.dispatchEvent(new CustomEvent('show-toast', {
+                                        detail: { message: data.message || 'Erro ao processar ação', type: 'error' }
+                                    }));
+                                }
+                            } catch (error) {
+                                window.dispatchEvent(new CustomEvent('hide-loading'));
+                                console.error('Erro:', error);
+                                window.dispatchEvent(new CustomEvent('show-toast', {
+                                    detail: { message: 'Erro ao processar ação em massa', type: 'error' }
+                                }));
+                            }
+                        }
                     }
-                } catch (error) {
-                    console.error('Erro:', error);
-                    alert('Erro ao processar ação em massa');
-                }
+                }));
             }
         }));
 
@@ -895,7 +950,6 @@
             recentLogs: [],
 
             async loadUserData(userId) {
-                console.log('Carregando dados do usuário:', userId);
                 this.isOpen = true;
                 this.loading = true;
                 this.userData = null;
@@ -903,8 +957,6 @@
 
                 try {
                     const url = `/admin/users/${userId}/quick-view`;
-                    console.log('Fazendo requisição para:', url);
-
                     const response = await fetch(url, {
                         headers: {
                             'Accept': 'application/json',
@@ -912,22 +964,21 @@
                         }
                     });
 
-                    console.log('Status da resposta:', response.status);
-
                     if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('Resposta de erro:', errorText);
                         throw new Error(`Erro ${response.status}: ${response.statusText}`);
                     }
 
                     const data = await response.json();
-                    console.log('Dados recebidos:', data);
-
                     this.userData = data.user;
                     this.recentLogs = data.recent_logs || [];
                 } catch (error) {
-                    console.error('Erro completo:', error);
-                    alert(`Erro ao carregar informações do usuário: ${error.message}`);
+                    console.error('Erro ao carregar usuário:', error);
+                    window.dispatchEvent(new CustomEvent('show-toast', {
+                        detail: { 
+                            message: `Erro ao carregar informações do usuário: ${error.message}`, 
+                            type: 'error' 
+                        }
+                    }));
                     this.closeModal();
                 } finally {
                     this.loading = false;

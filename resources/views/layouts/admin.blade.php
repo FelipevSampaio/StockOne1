@@ -23,6 +23,70 @@
             background: linear-gradient(to right, #374151 4%, #4b5563 25%, #374151 36%);
             background-size: 1000px 100%;
         }
+
+        /* Smooth Checkbox Animations */
+        input[type="checkbox"] {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        input[type="checkbox"]:checked {
+            animation: checkboxPulse 0.3s ease-out;
+        }
+        
+        @keyframes checkboxPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Row Selection Highlight */
+        tr.selected-row {
+            background-color: rgba(239, 68, 68, 0.05);
+            transition: background-color 0.2s ease;
+        }
+        
+        .dark tr.selected-row {
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Bulk Actions Bar Animation */
+        .bulk-actions-bar {
+            animation: slideInFromTop 0.3s ease-out;
+        }
+        
+        @keyframes slideInFromTop {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Button Ripple Effect */
+        .btn-ripple {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-ripple::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn-ripple:active::after {
+            width: 300px;
+            height: 300px;
+        }
     </style>
     <script>
         // Dark Mode: Carregar preferência antes do render
@@ -473,6 +537,159 @@
         </div>
     </div>
 
+    <!-- Toast Notification System -->
+    <div x-data="toastManager()"
+         @show-toast.window="showToast($event.detail)"
+         class="fixed top-4 right-4 z-[9999] space-y-2">
+        <template x-for="(toast, index) in toasts" :key="toast.id">
+            <div x-show="toast.visible"
+                 x-transition:enter="transition ease-out duration-300 transform"
+                 x-transition:enter-start="translate-x-full opacity-0"
+                 x-transition:enter-end="translate-x-0 opacity-100"
+                 x-transition:leave="transition ease-in duration-200 transform"
+                 x-transition:leave-start="translate-x-0 opacity-100"
+                 x-transition:leave-end="translate-x-full opacity-0"
+                 class="flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg max-w-sm border backdrop-blur-sm"
+                 :class="{
+                     'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800': toast.type === 'success',
+                     'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800': toast.type === 'error',
+                     'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800': toast.type === 'info',
+                     'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-800': toast.type === 'warning'
+                 }">
+                <div class="flex-shrink-0">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
+                         :class="{
+                             'text-green-600 dark:text-green-400': toast.type === 'success',
+                             'text-red-600 dark:text-red-400': toast.type === 'error',
+                             'text-blue-600 dark:text-blue-400': toast.type === 'info',
+                             'text-yellow-600 dark:text-yellow-400': toast.type === 'warning'
+                         }">
+                        <template x-if="toast.type === 'success'">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </template>
+                        <template x-if="toast.type === 'error'">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </template>
+                        <template x-if="toast.type === 'info'">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </template>
+                        <template x-if="toast.type === 'warning'">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </template>
+                    </svg>
+                </div>
+                <div class="flex-1 text-sm font-medium"
+                     :class="{
+                         'text-green-900 dark:text-green-100': toast.type === 'success',
+                         'text-red-900 dark:text-red-100': toast.type === 'error',
+                         'text-blue-900 dark:text-blue-100': toast.type === 'info',
+                         'text-yellow-900 dark:text-yellow-100': toast.type === 'warning'
+                     }"
+                     x-text="toast.message"></div>
+                <button @click="removeToast(toast.id)"
+                        class="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                </button>
+            </div>
+        </template>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div x-data="confirmModal()"
+         @show-confirm.window="showConfirm($event.detail)"
+         x-show="visible"
+         x-cloak
+         class="fixed inset-0 z-[9998] overflow-y-auto"
+         @keydown.escape.window="cancel()">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <!-- Overlay -->
+            <div x-show="visible"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 @click="cancel()"
+                 class="fixed inset-0 transition-opacity bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-80"></div>
+
+            <!-- Modal -->
+            <div x-show="visible"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 class="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-gray-800 shadow-xl rounded-2xl">
+
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-full"
+                         :class="{
+                             'bg-red-100 dark:bg-red-900/30': type === 'danger',
+                             'bg-yellow-100 dark:bg-yellow-900/30': type === 'warning',
+                             'bg-blue-100 dark:bg-blue-900/30': type === 'info'
+                         }">
+                        <svg class="w-6 h-6"
+                             :class="{
+                                 'text-red-600 dark:text-red-400': type === 'danger',
+                                 'text-yellow-600 dark:text-yellow-400': type === 'warning',
+                                 'text-blue-600 dark:text-blue-400': type === 'info'
+                             }"
+                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <template x-if="type === 'danger'">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </template>
+                            <template x-if="type === 'warning'">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </template>
+                            <template x-if="type === 'info'">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </template>
+                        </svg>
+                    </div>
+
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2" x-text="title"></h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400" x-text="message"></p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button @click="cancel()"
+                            class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                            x-text="cancelText"></button>
+                    <button @click="confirm()"
+                            class="flex-1 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+                            :class="{
+                                'bg-red-600 hover:bg-red-700': type === 'danger',
+                                'bg-yellow-600 hover:bg-yellow-700': type === 'warning',
+                                'bg-blue-600 hover:bg-blue-700': type === 'info'
+                            }"
+                            x-text="confirmText"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Loading Overlay -->
+    <div x-data="{ loading: false }"
+         @show-loading.window="loading = true"
+         @hide-loading.window="loading = false"
+         x-show="loading"
+         x-cloak
+         class="fixed inset-0 z-[9997] flex items-center justify-center bg-gray-900/50 dark:bg-gray-950/70 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 flex flex-col items-center gap-4">
+            <svg class="animate-spin h-12 w-12 text-red-600" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Processando...</p>
+        </div>
+    </div>
+
     <!-- Mobile Sidebar Overlay -->
     <div x-show="sidebarOpen"
          x-cloak
@@ -637,6 +854,69 @@
                         'default': 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                     };
                     return colors[type] || colors['default'];
+                }
+            }));
+
+            // Toast Manager
+            Alpine.data('toastManager', () => ({
+                toasts: [],
+                nextId: 1,
+
+                showToast({ message, type = 'success', duration = 4000 }) {
+                    const id = this.nextId++;
+                    const toast = { id, message, type, visible: true };
+                    this.toasts.push(toast);
+
+                    setTimeout(() => {
+                        this.removeToast(id);
+                    }, duration);
+                },
+
+                removeToast(id) {
+                    const index = this.toasts.findIndex(t => t.id === id);
+                    if (index > -1) {
+                        this.toasts[index].visible = false;
+                        setTimeout(() => {
+                            this.toasts.splice(index, 1);
+                        }, 300);
+                    }
+                }
+            }));
+
+            // Confirmation Modal
+            Alpine.data('confirmModal', () => ({
+                visible: false,
+                title: '',
+                message: '',
+                type: 'warning',
+                confirmText: 'Confirmar',
+                cancelText: 'Cancelar',
+                onConfirm: null,
+                onCancel: null,
+
+                showConfirm({ title, message, type = 'warning', confirmText = 'Confirmar', cancelText = 'Cancelar', onConfirm, onCancel }) {
+                    this.title = title;
+                    this.message = message;
+                    this.type = type;
+                    this.confirmText = confirmText;
+                    this.cancelText = cancelText;
+                    this.onConfirm = onConfirm;
+                    this.onCancel = onCancel;
+                    this.visible = true;
+                },
+
+                confirm() {
+                    this.visible = false;
+                    if (this.onConfirm) {
+                        this.onConfirm();
+                    }
+                },
+
+                cancel() {
+                    this.visible = false;
+                    if (this.onCancel) {
+                        this.onCancel();
+                    }
                 }
             }));
         });
