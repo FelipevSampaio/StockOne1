@@ -247,6 +247,7 @@
                         <th class="px-4 py-4 w-12">
                             <input type="checkbox"
                                    @change="toggleAll($event.target.checked)"
+                                   :checked="selectedUsers.length === {{ $users->count() }} && {{ $users->count() }} > 0"
                                    class="rounded border-gray-300 dark:border-gray-600 text-red-600 focus:ring-red-500 dark:bg-gray-700">
                         </th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Usuário</th>
@@ -876,12 +877,30 @@
         // Função global para abrir Quick View
         window.openQuickView = async function(userId) {
             const modalElement = document.querySelector('[x-data*="quickViewModal"]');
-            if (!modalElement || !modalElement.__x) {
+            if (!modalElement) {
                 console.error('Modal não encontrado');
                 return;
             }
 
-            const modal = modalElement.__x.$data;
+            // Aguardar Alpine carregar se necessário
+            await new Promise(resolve => {
+                if (window.Alpine) {
+                    resolve();
+                } else {
+                    document.addEventListener('alpine:initialized', resolve, { once: true });
+                }
+            });
+
+            // Tentar diferentes formas de acessar o Alpine data
+            let modal;
+            if (modalElement._x_dataStack && modalElement._x_dataStack[0]) {
+                modal = modalElement._x_dataStack[0];
+            } else if (modalElement.__x && modalElement.__x.$data) {
+                modal = modalElement.__x.$data;
+            } else {
+                console.error('Não foi possível acessar os dados do modal');
+                return;
+            }
 
             modal.isOpen = true;
             modal.loading = true;
@@ -898,7 +917,11 @@
             } catch (error) {
                 console.error('Erro ao carregar dados:', error);
                 alert('Erro ao carregar informações do usuário');
-                modal.closeModal();
+                if (modal.closeModal) {
+                    modal.closeModal();
+                } else {
+                    modal.isOpen = false;
+                }
             } finally {
                 modal.loading = false;
             }

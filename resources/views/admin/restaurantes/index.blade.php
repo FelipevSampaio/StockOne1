@@ -179,7 +179,7 @@
                                     </a>
 
                                     <!-- Botão Toggle Status -->
-                                    <form method="POST" 
+                                    <form method="POST"
                                           action="{{ route('admin.restaurantes.update', $restaurante) }}"
                                           class="inline-block"
                                           onsubmit="return confirm('Deseja alterar o status deste restaurante?')">
@@ -191,7 +191,7 @@
                                         <input type="hidden" name="telefone" value="{{ $restaurante->telefone }}">
                                         <input type="hidden" name="endereco" value="{{ $restaurante->endereco }}">
                                         <input type="hidden" name="status" value="{{ $restaurante->status === 'ativo' ? 'inativo' : 'ativo' }}">
-                                        
+
                                         <button type="submit"
                                                 class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium {{ $restaurante->status === 'ativo' ? 'text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 border-yellow-200 dark:border-yellow-800' : 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 border-green-200 dark:border-green-800' }} rounded-lg transition-colors border"
                                                 title="{{ $restaurante->status === 'ativo' ? 'Desativar' : 'Ativar' }} restaurante">
@@ -210,7 +210,7 @@
                                     </form>
 
                                     <!-- Botão Deletar -->
-                                    <form method="POST" 
+                                    <form method="POST"
                                           action="{{ route('admin.restaurantes.destroy', $restaurante) }}"
                                           class="inline-block"
                                           onsubmit="return confirm('⚠️ ATENÇÃO!\n\nDeseja realmente excluir o restaurante {{ $restaurante->nome }}?\n\nEsta ação irá:\n- Remover o restaurante permanentemente\n- Desvincular todos os usuários associados\n- Esta ação NÃO pode ser desfeita\n\nTem certeza que deseja continuar?')">
@@ -352,21 +352,21 @@
                         const form = document.createElement('form');
                         form.method = 'POST';
                         form.action = '{{ route("admin.restaurantes.bulk-action") }}';
-                        
+
                         // CSRF Token
                         const csrfInput = document.createElement('input');
                         csrfInput.type = 'hidden';
                         csrfInput.name = '_token';
                         csrfInput.value = '{{ csrf_token() }}';
                         form.appendChild(csrfInput);
-                        
+
                         // Action
                         const actionInput = document.createElement('input');
                         actionInput.type = 'hidden';
                         actionInput.name = 'action';
                         actionInput.value = action;
                         form.appendChild(actionInput);
-                        
+
                         // IDs
                         this.selectedRestaurantes.forEach(id => {
                             const idInput = document.createElement('input');
@@ -375,11 +375,11 @@
                             idInput.value = id;
                             form.appendChild(idInput);
                         });
-                        
+
                         document.body.appendChild(form);
                         form.submit();
                         document.body.removeChild(form);
-                        
+
                         toast.remove();
                         this.showToast('Download iniciado!', 'success');
                         return;
