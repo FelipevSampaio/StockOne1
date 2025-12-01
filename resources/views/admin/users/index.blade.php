@@ -356,7 +356,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end gap-2">
                                     <!-- Botão Quick View -->
-                                    <button @click="openQuickView({{ $user->id }})"
+                                    <button @click="$dispatch('open-quick-view', { userId: {{ $user->id }} })"
                                             type="button"
                                             class="inline-flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium"
                                             title="Ver detalhes completos e atividades recentes">
@@ -365,7 +365,9 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                         </svg>
                                         <span class="hidden xl:inline">Ver</span>
-                                    </button>                                    <div class="relative inline-block text-left">
+                                    </button>
+
+                                    <div class="relative inline-block text-left">
                                         <button @click="open = !open" type="button" class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
                                             Ações
                                             <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -653,6 +655,7 @@
      x-show="isOpen"
      x-cloak
      @keydown.escape.window="closeModal()"
+     @open-quick-view.window="loadUserData($event.detail.userId)"
      class="fixed inset-0 z-50 overflow-y-auto"
      style="display: none;">
     <!-- Overlay -->
@@ -865,6 +868,30 @@
             userData: null,
             recentLogs: [],
 
+            async loadUserData(userId) {
+                this.isOpen = true;
+                this.loading = true;
+                this.userData = null;
+                this.recentLogs = [];
+
+                try {
+                    const response = await fetch(`/admin/users/${userId}/quick-view`);
+                    if (!response.ok) {
+                        throw new Error('Erro na requisição');
+                    }
+                    const data = await response.json();
+
+                    this.userData = data.user;
+                    this.recentLogs = data.recent_logs;
+                } catch (error) {
+                    console.error('Erro ao carregar dados:', error);
+                    alert('Erro ao carregar informações do usuário');
+                    this.closeModal();
+                } finally {
+                    this.loading = false;
+                }
+            },
+
             closeModal() {
                 this.isOpen = false;
                 setTimeout(() => {
@@ -873,59 +900,6 @@
                 }, 300);
             }
         }));
-
-        // Função global para abrir Quick View
-        window.openQuickView = async function(userId) {
-            const modalElement = document.querySelector('[x-data*="quickViewModal"]');
-            if (!modalElement) {
-                console.error('Modal não encontrado');
-                return;
-            }
-
-            // Aguardar Alpine carregar se necessário
-            await new Promise(resolve => {
-                if (window.Alpine) {
-                    resolve();
-                } else {
-                    document.addEventListener('alpine:initialized', resolve, { once: true });
-                }
-            });
-
-            // Tentar diferentes formas de acessar o Alpine data
-            let modal;
-            if (modalElement._x_dataStack && modalElement._x_dataStack[0]) {
-                modal = modalElement._x_dataStack[0];
-            } else if (modalElement.__x && modalElement.__x.$data) {
-                modal = modalElement.__x.$data;
-            } else {
-                console.error('Não foi possível acessar os dados do modal');
-                return;
-            }
-
-            modal.isOpen = true;
-            modal.loading = true;
-
-            try {
-                const response = await fetch(`/admin/users/${userId}/quick-view`);
-                if (!response.ok) {
-                    throw new Error('Erro na requisição');
-                }
-                const data = await response.json();
-
-                modal.userData = data.user;
-                modal.recentLogs = data.recent_logs;
-            } catch (error) {
-                console.error('Erro ao carregar dados:', error);
-                alert('Erro ao carregar informações do usuário');
-                if (modal.closeModal) {
-                    modal.closeModal();
-                } else {
-                    modal.isOpen = false;
-                }
-            } finally {
-                modal.loading = false;
-            }
-        };
 
         Alpine.data('filterManager', () => ({
             showAdvanced: false
