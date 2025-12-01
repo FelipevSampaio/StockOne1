@@ -383,9 +383,11 @@ class UserAdminController extends Controller
 
         $user->load('restaurante');
 
-        // Buscar últimas atividades (simplificado)
-        $recentLogs = AuditLog::where('model_type', 'User')
-            ->where('model_id', $user->id)
+        // Buscar últimas atividades relacionadas ao usuário
+        $recentLogs = AuditLog::where(function($query) use ($user) {
+                $query->where('model_type', 'User')
+                      ->where('model_id', $user->id);
+            })
             ->orWhere('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->limit(5)
