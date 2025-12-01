@@ -22,79 +22,6 @@
 
 @section('content')
 
-    <!-- Estatísticas -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-100 dark:border-gray-700">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{{ $totalUsers }}</p>
-                </div>
-                <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-100 dark:border-gray-700">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ativos</p>
-                    <p class="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{{ $totalActive }}</p>
-                </div>
-                <div class="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-100 dark:border-gray-700">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Inativos</p>
-                    <p class="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{{ $totalInactive }}</p>
-                </div>
-                <div class="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                    <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-100 dark:border-gray-700">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Admins</p>
-                    <p class="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{{ $totalAdmins }}</p>
-                </div>
-                <div class="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                    <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-100 dark:border-gray-700">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Novos (7d)</p>
-                    <p class="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{{ $newUsersWeek }}</p>
-                </div>
-                <div class="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                    <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
-                    </svg>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Filtros Inteligentes (Atalhos) -->
     <div class="flex flex-wrap gap-2 mb-4">
         <a href="{{ route('admin.users.index') }}" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg {{ !request()->has('status') && !request()->has('role') ? 'bg-red-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }} transition-colors">
@@ -664,17 +591,90 @@
     <div class="mt-6">
         {{ $users->links() }}
     </div>
+
+    <!-- Estatísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mt-8">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{{ $totalUsers }}</p>
+                </div>
+                <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ativos</p>
+                    <p class="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{{ $totalActive }}</p>
+                </div>
+                <div class="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Inativos</p>
+                    <p class="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{{ $totalInactive }}</p>
+                </div>
+                <div class="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                    <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Admins</p>
+                    <p class="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{{ $totalAdmins }}</p>
+                </div>
+                <div class="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                    <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Novos (7d)</p>
+                    <p class="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{{ $newUsersWeek }}</p>
+                </div>
+                <div class="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 <!-- Modal Quick View -->
-<div x-data="quickViewModal()" 
-     x-show="isOpen" 
+<div x-data="quickViewModal()"
+     x-show="isOpen"
      x-cloak
      @keydown.escape.window="closeModal()"
      class="fixed inset-0 z-50 overflow-y-auto"
      style="display: none;">
     <!-- Overlay -->
-    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" 
+    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
          @click="closeModal()"></div>
 
     <!-- Modal -->
@@ -796,7 +796,7 @@
                 }
 
                 this.loading = true;
-                
+
                 try {
                     const response = await fetch(`{{ route('admin.users.live-search') }}?q=${encodeURIComponent(query)}&limit=5`);
                     const data = await response.json();
@@ -864,7 +864,7 @@
                     });
 
                     const data = await response.json();
-                    
+
                     if (data.success) {
                         alert(data.message);
                         window.location.reload();
@@ -895,14 +895,14 @@
         // Função global para abrir Quick View
         window.openQuickView = async function(userId) {
             const modal = Alpine.store('quickView') || document.querySelector('[x-data*="quickViewModal"]').__x.$data;
-            
+
             modal.isOpen = true;
             modal.loading = true;
 
             try {
                 const response = await fetch(`{{ route('admin.users.index') }}/${userId}/quick-view`);
                 const data = await response.json();
-                
+
                 modal.userData = data.user;
                 modal.recentLogs = data.recent_logs;
             } catch (error) {
