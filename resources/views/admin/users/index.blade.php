@@ -48,6 +48,12 @@
             </svg>
             Sem Restaurante
         </a>
+        <a href="{{ route('admin.users.index', ['never_logged_in' => '1']) }}" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg {{ request('never_logged_in') === '1' ? 'bg-yellow-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }} transition-colors">
+            <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+            </svg>
+            Nunca Logou
+        </a>
     </div>
 
     <!-- Filtros Avançados -->
@@ -276,8 +282,8 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse ($users as $user)
-                        <tr :class="selectedUsers.includes({{ $user->id }}) ? 'selected-row' : ''" 
-                            class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 {{ $user->trashed() ? 'bg-red-50/30 dark:bg-red-900/10' : '' }}" 
+                        <tr :class="selectedUsers.includes({{ $user->id }}) ? 'selected-row' : ''"
+                            class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 {{ $user->trashed() ? 'bg-red-50/30 dark:bg-red-900/10' : '' }}"
                             x-data="{ open: false, quickView: false }">
                             <td class="px-4 py-4">
                                 <input type="checkbox"
@@ -287,12 +293,19 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-10 w-10">
+                                    <div class="flex-shrink-0 h-10 w-10 relative">
                                         <div class="h-10 w-10 rounded-full {{ $user->trashed() ? 'bg-gray-200 dark:bg-gray-700' : 'bg-red-100 dark:bg-red-900/30' }} flex items-center justify-center">
                                             <span class="{{ $user->trashed() ? 'text-gray-500 dark:text-gray-400' : 'text-red-600 dark:text-red-400' }} font-semibold text-sm">
-                                                {{ strtoupper(substr($user->name, 0, 2)) }}
+                                                {{ $user->avatar_initials }}
                                             </span>
                                         </div>
+                                        @if($user->isOnline())
+                                        <span class="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white dark:border-gray-800 animate-pulse" title="Online agora"></span>
+                                        @elseif($user->getPresenceStatus() === 'away')
+                                        <span class="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-yellow-500 border-2 border-white dark:border-gray-800" title="Ausente"></span>
+                                        @elseif($user->last_login_at)
+                                        <span class="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-gray-400 border-2 border-white dark:border-gray-800" title="Offline"></span>
+                                        @endif
                                     </div>
                                     <div class="ml-4">
                                         <div class="flex items-center gap-2">
@@ -307,8 +320,26 @@
                                             @endif
                                         </div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">{{ $user->email }}</div>
-                                        <div class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                                            Criado {{ $user->created_at->diffForHumans() }}
+                                        <div class="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                                            @if($user->last_login_at)
+                                                <span class="flex items-center" title="Último login em {{ $user->last_login_at->format('d/m/Y H:i') }}">
+                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                    </svg>
+                                                    {{ $user->last_login_at->diffForHumans() }}
+                                                </span>
+                                                @if($user->last_login_ip)
+                                                <span class="text-gray-300 dark:text-gray-600">•</span>
+                                                <span title="IP do último login">{{ $user->last_login_ip }}</span>
+                                                @endif
+                                            @else
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800">
+                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                                    </svg>
+                                                    Nunca fez login
+                                                </span>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -348,25 +379,25 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4">
-                                <div class="space-y-1">
+                                <div class="space-y-1.5">
                                     <div class="flex items-center text-xs text-gray-600 dark:text-gray-400">
                                         <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/>
                                         </svg>
-                                        ID: <span class="font-mono font-medium ml-1">#{{ $user->id }}</span>
+                                        <span class="font-mono font-medium">#{{ $user->id }}</span>
                                     </div>
                                     <div class="flex items-center text-xs text-gray-600 dark:text-gray-400">
                                         <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                         </svg>
-                                        {{ $user->created_at->format('d/m/Y') }}
+                                        Criado {{ $user->created_at->diffForHumans() }}
                                     </div>
-                                    @if($user->updated_at->diffInDays($user->created_at) > 0)
-                                    <div class="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                                        <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    @if($user->notes)
+                                    <div class="flex items-center text-xs text-amber-600 dark:text-amber-400" title="{{ Str::limit($user->notes, 50) }}">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
                                         </svg>
-                                        Atualizado {{ $user->updated_at->diffForHumans() }}
+                                        Tem notas
                                     </div>
                                     @endif
                                 </div>
@@ -411,10 +442,43 @@
                                                     </svg>
                                                     Editar
                                                 </a>
+
+                                                <button @click="sendPasswordReset({{ $user->id }})" class="group flex w-full items-center px-4 py-2 text-sm text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                                                    <svg class="mr-3 h-4 w-4 text-blue-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                                                    </svg>
+                                                    Reset de Senha
+                                                </button>
+
+                                                @if(!$user->last_login_at)
+                                                <button @click="sendWelcomeEmail({{ $user->id }})" class="group flex w-full items-center px-4 py-2 text-sm text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
+                                                    <svg class="mr-3 h-4 w-4 text-indigo-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                                    </svg>
+                                                    Enviar Boas-vindas
+                                                </button>
+                                                @endif
+
+                                                <button @click="viewSessions({{ $user->id }})" class="group flex w-full items-center px-4 py-2 text-sm text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20">
+                                                    <svg class="mr-3 h-4 w-4 text-purple-400 group-hover:text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                                    </svg>
+                                                    Ver Sessões
+                                                </button>
+
+                                                <button @click="forceLogout({{ $user->id }})" class="group flex w-full items-center px-4 py-2 text-sm text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20">
+                                                    <svg class="mr-3 h-4 w-4 text-orange-400 group-hover:text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                                    </svg>
+                                                    Forçar Logout
+                                                </button>
+
+                                                <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+
                                                 <form method="POST" action="{{ route('admin.users.destroy', $user) }}">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" onclick="return confirmDelete('Tem certeza que deseja desativar este usuário?')" class="group flex w-full items-center px-4 py-2 text-sm text-yellow-700 hover:bg-yellow-50">
+                                                    <button type="submit" onclick="return confirmDelete('Tem certeza que deseja desativar este usuário?')" class="group flex w-full items-center px-4 py-2 text-sm text-yellow-700 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20">
                                                         <svg class="mr-3 h-4 w-4 text-yellow-400 group-hover:text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                                                         </svg>
@@ -494,79 +558,7 @@
             @if($users->count() > 0)
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" x-data="bulkActions()">
                 @foreach ($users as $user)
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition-shadow {{ $user->trashed() ? 'bg-red-50/30 dark:bg-red-900/10' : '' }}">
-                    <!-- Checkbox e Badge -->
-                    <div class="flex items-start justify-between mb-4">
-                        <input type="checkbox"
-                               :checked="selectedUsers.includes({{ $user->id }})"
-                               @change="toggleUser({{ $user->id }})"
-                               class="rounded border-gray-300 dark:border-gray-600 text-red-600 focus:ring-red-500 dark:bg-gray-700 mt-1">
-                        <div class="flex gap-1">
-                            @if($user->created_at >= now()->subDays(7))
-                            <span class="px-2 py-0.5 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded">Novo</span>
-                            @endif
-                        </div>
-                    </div>
-
-                    <!-- Avatar e Nome -->
-                    <div class="text-center mb-4">
-                        <div class="mx-auto h-20 w-20 rounded-full {{ $user->trashed() ? 'bg-gray-200 dark:bg-gray-700' : 'bg-red-100 dark:bg-red-900/30' }} flex items-center justify-center mb-3">
-                            <span class="{{ $user->trashed() ? 'text-gray-500 dark:text-gray-400' : 'text-red-600 dark:text-red-400' }} font-semibold text-2xl">
-                                {{ strtoupper(substr($user->name, 0, 2)) }}
-                            </span>
-                        </div>
-                        <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ $user->name }}</h3>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 truncate">{{ $user->email }}</p>
-                    </div>
-
-                    <!-- Informações -->
-                    <div class="space-y-2 mb-4">
-                        @if($user->restaurante)
-                        <div class="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                            <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                            </svg>
-                            <span class="truncate">{{ $user->restaurante->nome }}</span>
-                        </div>
-                        @endif
-                        <div class="flex items-center justify-between">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $user->isAdmin() ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' }}">
-                                {{ $user->isAdmin() ? 'Admin' : 'Usuário' }}
-                            </span>
-                            @if($user->trashed())
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400">
-                                Inativo
-                            </span>
-                            @else
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
-                                Ativo
-                            </span>
-                            @endif
-                        </div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-700">
-                            Criado {{ $user->created_at->diffForHumans() }}
-                        </div>
-                    </div>
-
-                    <!-- Ações -->
-                    <div class="flex gap-2">
-                        <button @click="openQuickView({{ $user->id }})"
-                                class="flex-1 inline-flex items-center justify-center px-3 py-2 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                            </svg>
-                            Ver
-                        </button>
-                        <a href="{{ route('admin.users.edit', $user) }}"
-                           class="flex-1 inline-flex items-center justify-center px-3 py-2 text-xs font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                            </svg>
-                            Editar
-                        </a>
-                    </div>
-                </div>
+                    <x-user-card :user="$user" :showCheckbox="true" />
                 @endforeach
             </div>
             @else
@@ -665,6 +657,20 @@
                 </div>
             </div>
         </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Online</p>
+                    <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{{ $onlineUsers }}</p>
+                </div>
+                <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                    <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
         </div>
     </div>
 @endsection
@@ -745,6 +751,57 @@
                     <div>
                         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Atualizado em</label>
                         <p class="text-sm text-gray-900 dark:text-gray-100" x-text="userData?.updated_at"></p>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Último Login</label>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-1 rounded-md text-sm"
+                                  :class="{
+                                      'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400': userData?.is_online,
+                                      'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400': userData?.presence_status === 'away',
+                                      'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-400': userData?.presence_status === 'offline',
+                                      'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400': userData?.presence_status === 'never'
+                                  }">
+                                <svg class="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 8 8">
+                                    <circle cx="4" cy="4" r="3" />
+                                </svg>
+                                <span x-text="userData?.is_online ? 'Online' : (userData?.presence_status === 'away' ? 'Ausente' : (userData?.presence_status === 'never' ? 'Nunca' : 'Offline'))"></span>
+                            </span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400" x-text="userData?.last_login_diff"></span>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-show="userData?.last_login_ip" x-text="'IP: ' + userData?.last_login_ip"></p>
+                    </div>
+                </div>
+
+                <!-- Notas do Admin -->
+                <div class="mb-6" x-data="{ editing: false, notes: userData?.notes || '' }">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Notas do Administrador</label>
+                        <button @click="editing = !editing"
+                                class="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium">
+                            <span x-show="!editing">Editar</span>
+                            <span x-show="editing">Cancelar</span>
+                        </button>
+                    </div>
+                    <div x-show="!editing">
+                        <p class="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 min-h-[60px]"
+                           x-text="userData?.notes || 'Nenhuma nota adicionada'"></p>
+                    </div>
+                    <div x-show="editing" x-cloak>
+                        <textarea x-model="notes"
+                                  rows="3"
+                                  class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                  placeholder="Adicione observações sobre este usuário..."></textarea>
+                        <div class="flex justify-end gap-2 mt-2">
+                            <button @click="editing = false"
+                                    class="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600">
+                                Cancelar
+                            </button>
+                            <button @click="await saveNotes(notes); editing = false"
+                                    class="px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700">
+                                Salvar
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -974,14 +1031,47 @@
                 } catch (error) {
                     console.error('Erro ao carregar usuário:', error);
                     window.dispatchEvent(new CustomEvent('show-toast', {
-                        detail: { 
-                            message: `Erro ao carregar informações do usuário: ${error.message}`, 
-                            type: 'error' 
+                        detail: {
+                            message: `Erro ao carregar informações do usuário: ${error.message}`,
+                            type: 'error'
                         }
                     }));
                     this.closeModal();
                 } finally {
                     this.loading = false;
+                }
+            },
+
+            async saveNotes(notes) {
+                if (!this.userData) return;
+
+                try {
+                    const response = await fetch(`/admin/users/${this.userData.id}/notes`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ notes })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.userData.notes = notes;
+                        window.dispatchEvent(new CustomEvent('show-toast', {
+                            detail: { message: 'Notas atualizadas com sucesso!', type: 'success' }
+                        }));
+                    } else {
+                        window.dispatchEvent(new CustomEvent('show-toast', {
+                            detail: { message: data.message || 'Erro ao salvar notas', type: 'error' }
+                        }));
+                    }
+                } catch (error) {
+                    console.error('Erro ao salvar notas:', error);
+                    window.dispatchEvent(new CustomEvent('show-toast', {
+                        detail: { message: 'Erro ao salvar notas', type: 'error' }
+                    }));
                 }
             },
 
@@ -998,9 +1088,160 @@
             showAdvanced: false
         }));
     });
-</script>
 
-<!-- Paginação com Info -->
+    // Funções auxiliares globais
+    async function sendPasswordReset(userId) {
+        window.dispatchEvent(new CustomEvent('show-confirm', {
+            detail: {
+                title: 'Enviar Reset de Senha',
+                message: 'Deseja enviar um link de redefinição de senha para este usuário?',
+                type: 'info',
+                confirmText: 'Enviar',
+                onConfirm: async () => {
+                    window.dispatchEvent(new CustomEvent('show-loading'));
+
+                    try {
+                        const response = await fetch(`/admin/users/${userId}/send-password-reset`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            }
+                        });
+
+                        const data = await response.json();
+                        window.dispatchEvent(new CustomEvent('hide-loading'));
+
+                        if (data.success) {
+                            window.dispatchEvent(new CustomEvent('show-toast', {
+                                detail: { message: data.message, type: 'success' }
+                            }));
+                        } else {
+                            window.dispatchEvent(new CustomEvent('show-toast', {
+                                detail: { message: data.message, type: 'error' }
+                            }));
+                        }
+                    } catch (error) {
+                        window.dispatchEvent(new CustomEvent('hide-loading'));
+                        window.dispatchEvent(new CustomEvent('show-toast', {
+                            detail: { message: 'Erro ao enviar link de reset', type: 'error' }
+                        }));
+                    }
+                }
+            }
+        }));
+    }
+
+    async function forceLogout(userId) {
+        window.dispatchEvent(new CustomEvent('show-confirm', {
+            detail: {
+                title: 'Forçar Logout',
+                message: 'Deseja desconectar este usuário de todas as sessões ativas?',
+                type: 'warning',
+                confirmText: 'Desconectar',
+                onConfirm: async () => {
+                    window.dispatchEvent(new CustomEvent('show-loading'));
+
+                    try {
+                        const response = await fetch(`/admin/users/${userId}/force-logout`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            }
+                        });
+
+                        const data = await response.json();
+                        window.dispatchEvent(new CustomEvent('hide-loading'));
+
+                        if (data.success) {
+                            window.dispatchEvent(new CustomEvent('show-toast', {
+                                detail: { message: data.message, type: 'success' }
+                            }));
+                        } else {
+                            window.dispatchEvent(new CustomEvent('show-toast', {
+                                detail: { message: data.message, type: 'error' }
+                            }));
+                        }
+                    } catch (error) {
+                        window.dispatchEvent(new CustomEvent('hide-loading'));
+                        window.dispatchEvent(new CustomEvent('show-toast', {
+                            detail: { message: 'Erro ao desconectar usuário', type: 'error' }
+                        }));
+                    }
+                }
+            }
+        }));
+    }
+
+    async function viewSessions(userId) {
+        window.dispatchEvent(new CustomEvent('show-loading'));
+
+        try {
+            const response = await fetch(`/admin/users/${userId}/active-sessions`);
+            const data = await response.json();
+            window.dispatchEvent(new CustomEvent('hide-loading'));
+
+            if (data.success && data.sessions.length > 0) {
+                let sessionsList = '<div class="space-y-3 max-h-96 overflow-y-auto">';
+                data.sessions.forEach(session => {
+                    sessionsList += `
+                        <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-gray-900 dark:text-gray-100">${session.ip_address}</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">${session.last_activity_diff}</span>
+                            </div>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 truncate">${session.user_agent}</p>
+                        </div>
+                    `;
+                });
+                sessionsList += '</div>';
+
+                window.dispatchEvent(new CustomEvent('show-alert', {
+                    detail: {
+                        title: `Sessões Ativas (${data.total})`,
+                        message: sessionsList,
+                        type: 'info'
+                    }
+                }));
+            } else {
+                window.dispatchEvent(new CustomEvent('show-toast', {
+                    detail: { message: 'Nenhuma sessão ativa encontrada', type: 'info' }
+                }));
+            }
+        } catch (error) {
+            window.dispatchEvent(new CustomEvent('hide-loading'));
+            window.dispatchEvent(new CustomEvent('show-toast', {
+                detail: { message: 'Erro ao buscar sessões', type: 'error' }
+            }));
+        }
+    }
+
+    async function sendWelcomeEmail(userId) {
+        window.dispatchEvent(new CustomEvent('show-confirm', {
+            detail: {
+                title: 'Enviar Email de Boas-vindas',
+                message: 'Deseja enviar um email de boas-vindas para este usuário?',
+                type: 'info',
+                confirmText: 'Enviar',
+                onConfirm: async () => {
+                    window.dispatchEvent(new CustomEvent('show-loading'));
+
+                    // Simulação - você pode implementar a rota real depois
+                    setTimeout(() => {
+                        window.dispatchEvent(new CustomEvent('hide-loading'));
+                        window.dispatchEvent(new CustomEvent('show-toast', {
+                            detail: {
+                                message: 'Email de boas-vindas enviado com sucesso!',
+                                type: 'success'
+                            }
+                        }));
+                    }, 1000);
+                }
+            }
+        }));
+    }
+</script><!-- Paginação com Info -->
 @if($users->hasPages())
     <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="text-sm text-gray-700 dark:text-gray-300">

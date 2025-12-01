@@ -24,6 +24,9 @@ class User extends Authenticatable
         'password',
         'restaurante_id',
         'role',
+        'last_login_at',
+        'last_login_ip',
+        'notes',
     ];
 
     /**
@@ -46,6 +49,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_login_at' => 'datetime',
         ];
     }
 
@@ -71,5 +75,52 @@ class User extends Authenticatable
     public function isUser(): bool
     {
         return $this->role === 'user';
+    }
+
+    /**
+     * Registrar o último login do usuário
+     */
+    public function recordLogin(?string $ip = null): void
+    {
+        $this->update([
+            'last_login_at' => now(),
+            'last_login_ip' => $ip ?? request()->ip(),
+        ]);
+    }
+
+    /**
+     * Verificar se o usuário está online (logou nos últimos 15 minutos)
+     */
+    public function isOnline(): bool
+    {
+        return $this->last_login_at && $this->last_login_at->gt(now()->subMinutes(15));
+    }
+
+    /**
+     * Obter o status de presença do usuário
+     */
+    public function getPresenceStatus(): string
+    {
+        if (!$this->last_login_at) {
+            return 'never';
+        }
+
+        if ($this->isOnline()) {
+            return 'online';
+        }
+
+        if ($this->last_login_at->gt(now()->subHours(24))) {
+            return 'away';
+        }
+
+        return 'offline';
+    }
+
+    /**
+     * Obter o avatar initials
+     */
+    public function getAvatarInitialsAttribute(): string
+    {
+        return strtoupper(substr($this->name, 0, 2));
     }
 }

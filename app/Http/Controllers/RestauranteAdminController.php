@@ -99,6 +99,59 @@ class RestauranteAdminController extends Controller
     }
 
     /**
+     * Toggle status do restaurante via AJAX
+     */
+    public function toggleStatus(Restaurante $restaurante)
+    {
+        $this->checkAdmin();
+
+        try {
+            $newStatus = $restaurante->status === 'ativo' ? 'inativo' : 'ativo';
+            $restaurante->update(['status' => $newStatus]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status alterado com sucesso!',
+                'status' => $newStatus
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao alterar status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Quick view - retornar dados do restaurante
+     */
+    public function quickView(Restaurante $restaurante)
+    {
+        $this->checkAdmin();
+
+        $restaurante->load(['users' => function($query) {
+            $query->select('id', 'name', 'email', 'restaurante_id')->limit(5);
+        }]);
+
+        return response()->json([
+            'success' => true,
+            'restaurante' => [
+                'id' => $restaurante->id,
+                'nome' => $restaurante->nome,
+                'cnpj' => $restaurante->cnpj,
+                'email' => $restaurante->email,
+                'telefone' => $restaurante->telefone,
+                'endereco' => $restaurante->endereco,
+                'status' => $restaurante->status,
+                'users_count' => $restaurante->users->count(),
+                'users' => $restaurante->users,
+                'created_at' => $restaurante->created_at->format('d/m/Y H:i'),
+                'updated_at' => $restaurante->updated_at->format('d/m/Y H:i')
+            ]
+        ]);
+    }
+
+    /**
      * Ações em massa para restaurantes
      */
     public function bulkAction(Request $request)

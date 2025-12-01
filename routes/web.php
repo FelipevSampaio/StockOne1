@@ -65,10 +65,17 @@ Route::middleware('auth')->group(function () {
         Route::get('admin/users/live-search', [UserAdminController::class, 'liveSearch'])->name('admin.users.live-search');
         Route::get('admin/users/{user}/quick-view', [UserAdminController::class, 'quickView'])->name('admin.users.quick-view');
         Route::post('admin/users/bulk-action', [UserAdminController::class, 'bulkAction'])->name('admin.users.bulk-action');
+        Route::post('admin/users/{user}/send-password-reset', [UserAdminController::class, 'sendPasswordReset'])->name('admin.users.send-password-reset');
+        Route::post('admin/users/{user}/force-logout', [UserAdminController::class, 'forceLogout'])->name('admin.users.force-logout');
+        Route::put('admin/users/{user}/notes', [UserAdminController::class, 'updateNotes'])->name('admin.users.update-notes');
+        Route::get('admin/users/{user}/active-sessions', [UserAdminController::class, 'getActiveSessions'])->name('admin.users.active-sessions');
+        Route::post('admin/users/clear-stats-cache', [UserAdminController::class, 'clearStatsCache'])->name('admin.users.clear-stats-cache');
 
         Route::resource('admin/restaurantes', RestauranteAdminController::class)->names('admin.restaurantes')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
         Route::get('admin/restaurantes/export/csv', [RestauranteAdminController::class, 'export'])->name('admin.restaurantes.export');
         Route::post('admin/restaurantes/bulk-action', [RestauranteAdminController::class, 'bulkAction'])->name('admin.restaurantes.bulk-action');
+        Route::post('admin/restaurantes/{restaurante}/toggle-status', [RestauranteAdminController::class, 'toggleStatus'])->name('admin.restaurantes.toggle-status');
+        Route::get('admin/restaurantes/{restaurante}/quick-view', [RestauranteAdminController::class, 'quickView'])->name('admin.restaurantes.quick-view');
 
         Route::get('admin/audit-logs/export/csv', [AuditLogController::class, 'export'])->name('admin.audit-logs.export');
 

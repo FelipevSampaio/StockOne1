@@ -28,11 +28,11 @@
         input[type="checkbox"] {
             transition: all 0.2s ease-in-out;
         }
-        
+
         input[type="checkbox"]:checked {
             animation: checkboxPulse 0.3s ease-out;
         }
-        
+
         @keyframes checkboxPulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.1); }
@@ -43,7 +43,7 @@
             background-color: rgba(239, 68, 68, 0.05);
             transition: background-color 0.2s ease;
         }
-        
+
         .dark tr.selected-row {
             background-color: rgba(239, 68, 68, 0.1);
         }
@@ -52,7 +52,7 @@
         .bulk-actions-bar {
             animation: slideInFromTop 0.3s ease-out;
         }
-        
+
         @keyframes slideInFromTop {
             from {
                 opacity: 0;
@@ -69,7 +69,7 @@
             position: relative;
             overflow: hidden;
         }
-        
+
         .btn-ripple::after {
             content: '';
             position: absolute;
@@ -82,7 +82,7 @@
             transform: translate(-50%, -50%);
             transition: width 0.6s, height 0.6s;
         }
-        
+
         .btn-ripple:active::after {
             width: 300px;
             height: 300px;

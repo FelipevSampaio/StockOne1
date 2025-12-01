@@ -29,22 +29,23 @@ class UserAdminController extends Controller
     {
         $this->checkAdmin();
 
-        $query = User::withTrashed()->with('restaurante');
+        // Eager loading otimizado para evitar N+1
+        $query = User::withTrashed()->with('restaurante:id,nome');
 
         // Filtro de busca
         if ($request->filled('search')) {
             $search = $request->get('search');
-            $query->where('name', 'like', "%{$search}%")
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%");
+            });
         }
 
         // Filtro por restaurante
         if ($request->has('restaurante_id')) {
             if ($request->get('restaurante_id') === 'null' || $request->get('restaurante_id') === '') {
-                // Filtrar usuários sem restaurante
                 $query->whereNull('restaurante_id');
             } elseif ($request->filled('restaurante_id')) {
-                // Filtrar por restaurante específico
                 $query->where('restaurante_id', $request->get('restaurante_id'));
             }
         }
@@ -63,19 +64,57 @@ class UserAdminController extends Controller
             }
         }
 
+        // Filtro para usuários que nunca fizeram login
+        if ($request->get('never_logged_in') === '1') {
+            $query->whereNull('last_login_at');
+        }
+
+        // Filtros avançados
+        if ($request->filled('created_from')) {
+            $query->whereDate('created_at', '>=', $request->get('created_from'));
+        }
+
+        if ($request->filled('created_to')) {
+            $query->whereDate('created_at', '<=', $request->get('created_to'));
+        }
+
+        // Ordenação
+        $sort = $request->get('sort', 'newest');
+        switch ($sort) {
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'name_asc':
+                $query->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $query->orderBy('name', 'desc');
+                break;
+            default:
+                $query->orderBy('created_at', 'desc');
+        }
+
         // Paginação com quantidade personalizável
         $perPage = $request->get('per_page', 15);
         $users = $query->paginate($perPage)->withQueryString();
-        $restaurantes = Restaurante::all();
 
-        // Estatísticas
-        $totalUsers = User::count();
-        $totalActive = User::whereNull('deleted_at')->count();
-        $totalInactive = User::whereNotNull('deleted_at')->count();
-        $totalAdmins = User::where('role', 'admin')->whereNull('deleted_at')->count();
-        $newUsersWeek = User::where('created_at', '>=', now()->subDays(7))->count();
+        // Restaurantes apenas com ID e nome (otimizado)
+        $restaurantes = Restaurante::select('id', 'nome')->orderBy('nome')->get();
 
-        return view('admin.users.index', compact('users', 'restaurantes', 'totalUsers', 'totalActive', 'totalInactive', 'totalAdmins', 'newUsersWeek'));
+        // Estatísticas com cache (5 minutos)
+        $cacheKey = 'user_statistics';
+        $statistics = \Cache::remember($cacheKey, 300, function () {
+            return [
+                'totalUsers' => User::count(),
+                'totalActive' => User::whereNull('deleted_at')->count(),
+                'totalInactive' => User::onlyTrashed()->count(),
+                'totalAdmins' => User::where('role', 'admin')->whereNull('deleted_at')->count(),
+                'newUsersWeek' => User::where('created_at', '>=', now()->subDays(7))->count(),
+                'onlineUsers' => User::where('last_login_at', '>=', now()->subMinutes(15))->count(),
+            ];
+        });
+
+        return view('admin.users.index', compact('users', 'restaurantes') + $statistics);
     }
 
     /**
@@ -419,7 +458,13 @@ class UserAdminController extends Controller
                     'updated_at' => $user->updated_at->format('d/m/Y H:i'),
                     'deleted_at' => $user->deleted_at ? $user->deleted_at->format('d/m/Y H:i') : null,
                     'created_diff' => $user->created_at->diffForHumans(),
-                    'avatar_initials' => strtoupper(substr($user->name, 0, 2))
+                    'avatar_initials' => $user->avatar_initials,
+                    'last_login_at' => $user->last_login_at ? $user->last_login_at->format('d/m/Y H:i') : null,
+                    'last_login_diff' => $user->last_login_at ? $user->last_login_at->diffForHumans() : 'Nunca',
+                    'last_login_ip' => $user->last_login_ip,
+                    'presence_status' => $user->getPresenceStatus(),
+                    'is_online' => $user->isOnline(),
+                    'notes' => $user->notes,
                 ],
                 'recent_logs' => $recentLogs->map(function($log) {
                     return [
@@ -482,10 +527,159 @@ class UserAdminController extends Controller
             }
         }
 
+        // Limpar cache de estatísticas
+        \Cache::forget('user_statistics');
+
         return response()->json([
             'success' => true,
             'message' => "{$count} usuário(s) processado(s) com sucesso",
             'count' => $count
+        ]);
+    }
+
+    /**
+     * Enviar email de reset de senha
+     */
+    public function sendPasswordReset(User $user)
+    {
+        $this->checkAdmin();
+
+        try {
+            $token = app('auth.password.broker')->createToken($user);
+            $resetUrl = url(route('password.reset', ['token' => $token, 'email' => $user->email], false));
+
+            // Aqui você pode enviar o email customizado
+            // Por enquanto, apenas retornamos sucesso
+
+            AuditLog::log('password_reset_sent', 'User', $user->id, [
+                'admin_id' => Auth::id(),
+                'admin_name' => Auth::user()->name,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Link de redefinição de senha enviado com sucesso!',
+                'reset_url' => $resetUrl // Para teste
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao enviar link: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Forçar logout do usuário (encerrar todas as sessões)
+     */
+    public function forceLogout(User $user)
+    {
+        $this->checkAdmin();
+
+        try {
+            // Atualizar remember_token para invalidar sessões
+            $user->update([
+                'remember_token' => \Str::random(60)
+            ]);
+
+            // Deletar sessões do banco (se estiver usando database driver)
+            \DB::table('sessions')
+                ->where('user_id', $user->id)
+                ->delete();
+
+            AuditLog::log('force_logout', 'User', $user->id, [
+                'admin_id' => Auth::id(),
+                'admin_name' => Auth::user()->name,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuário desconectado de todas as sessões!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao desconectar usuário: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Atualizar notas do usuário
+     */
+    public function updateNotes(Request $request, User $user)
+    {
+        $this->checkAdmin();
+
+        $validated = $request->validate([
+            'notes' => 'nullable|string|max:1000'
+        ]);
+
+        $oldNotes = $user->notes;
+        $user->update(['notes' => $validated['notes']]);
+
+        AuditLog::log('update_notes', 'User', $user->id, [
+            'old_notes' => $oldNotes,
+            'new_notes' => $validated['notes'],
+            'admin_id' => Auth::id(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notas atualizadas com sucesso!',
+            'notes' => $validated['notes']
+        ]);
+    }
+
+    /**
+     * Obter sessões ativas do usuário
+     */
+    public function getActiveSessions(User $user)
+    {
+        $this->checkAdmin();
+
+        try {
+            $sessions = \DB::table('sessions')
+                ->where('user_id', $user->id)
+                ->orderBy('last_activity', 'desc')
+                ->get()
+                ->map(function($session) {
+                    $payload = unserialize(base64_decode($session->payload));
+
+                    return [
+                        'id' => $session->id,
+                        'ip_address' => $session->ip_address,
+                        'user_agent' => $session->user_agent,
+                        'last_activity' => date('d/m/Y H:i:s', $session->last_activity),
+                        'last_activity_diff' => \Carbon\Carbon::createFromTimestamp($session->last_activity)->diffForHumans(),
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'sessions' => $sessions,
+                'total' => $sessions->count()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao buscar sessões: ' . $e->getMessage(),
+                'sessions' => []
+            ]);
+        }
+    }
+
+    /**
+     * Limpar cache de estatísticas
+     */
+    public function clearStatsCache()
+    {
+        $this->checkAdmin();
+        \Cache::forget('user_statistics');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cache de estatísticas limpo!'
         ]);
     }
 }

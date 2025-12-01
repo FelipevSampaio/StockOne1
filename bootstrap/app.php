@@ -15,6 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'restaurante.session' => \App\Http\Middleware\EnsureRestauranteSession::class,
             'admin' => \App\Http\Middleware\IsAdmin::class,
         ]);
+
+        // Registrar último login para usuários autenticados
+        $middleware->web(append: [
+            \App\Http\Middleware\RecordUserLogin::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
