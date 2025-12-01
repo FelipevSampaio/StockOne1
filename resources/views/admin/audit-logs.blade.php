@@ -46,14 +46,14 @@
 
     <!-- Timeline de Logs -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">Histórico de Ações</h3>
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Histórico de Ações</h3>
             <p class="text-sm text-gray-500 mt-1">Registro completo de todas as ações realizadas no sistema</p>
         </div>
 
         <div class="p-6">
             @forelse($logs as $log)
-                <div class="relative pb-8 {{ !$loop->last ? 'border-l-2 border-gray-200' : '' }} pl-8" x-data="{ expanded: false }">
+                <div class="relative pb-8 {{ !$loop->last ? 'border-l-2 border-gray-200 dark:border-gray-700' : '' }} pl-8" x-data="{ expanded: false }">
                     <!-- Timeline dot -->
                     <div class="absolute left-0 top-0 -ml-2 flex items-center justify-center">
                         <div class="h-4 w-4 rounded-full border-2 border-white
@@ -76,7 +76,7 @@
                                         {{ $log->action === 'restore' ? 'bg-yellow-100 text-yellow-800' : '' }}">
                                         {{ ucfirst($log->action) }}
                                     </span>
-                                    <span class="text-sm font-medium text-gray-900">{{ class_basename($log->model) }}</span>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ class_basename($log->model) }}</span>
                                     @if($log->model_id)
                                         <span class="text-sm text-gray-500">#{{ $log->model_id }}</span>
                                     @endif

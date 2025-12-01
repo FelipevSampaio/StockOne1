@@ -57,12 +57,12 @@
                     </td>
                     <td class="px-3 py-2 text-right">
                         <div class="relative inline-block text-left">
-                            <button class="inline-flex justify-center w-full px-2 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded" aria-haspopup="true">•••</button>
-                            <div class="origin-top-right absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden" role="menu">
+                            <button class="inline-flex justify-center w-full px-2 py-1 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded" aria-haspopup="true">•••</button>
+                            <div class="origin-top-right absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black dark:ring-gray-700 ring-opacity-5 hidden" role="menu">
                                 <div class="py-1">
-                                    <a href="{{ route('admin.audit-logs.show', $log->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Ver</a>
-                                    <a href="{{ route('admin.audit-logs.edit', $log->id) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Editar</a>
-                                    <button data-id="{{ $log->id }}" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 delete-btn">Apagar</button>
+                                    <a href="{{ route('admin.audit-logs.show', $log->id) }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Ver</a>
+                                    <a href="{{ route('admin.audit-logs.edit', $log->id) }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Editar</a>
+                                    <button data-id="{{ $log->id }}" class="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700 delete-btn">Apagar</button>
                                 </div>
                             </div>
                         </div>

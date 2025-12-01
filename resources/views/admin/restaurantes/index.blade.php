@@ -39,13 +39,13 @@
                                         </div>
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">{{ $restaurante->nome }}</div>
+                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $restaurante->nome }}</div>
                                         <div class="text-sm text-gray-500">{{ $restaurante->cnpj }}</div>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
-                                <div class="text-sm text-gray-900">{{ $restaurante->email }}</div>
+                                <div class="text-sm text-gray-900 dark:text-gray-100">{{ $restaurante->email }}</div>
                                 <div class="text-sm text-gray-500">{{ $restaurante->telefone }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
