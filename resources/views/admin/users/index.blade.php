@@ -4,8 +4,8 @@
 @section('page-title', 'Gerenciar Usuários')
 
 @section('topbar-actions')
-    <a href="{{ route('admin.users.create') }}" class="inline-flex items-center px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 font-medium shadow-sm hover:shadow transition-all">
-        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <a href="{{ route('admin.users.create') }}" class="btn-primary">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
         </svg>
         Novo Usuário
@@ -49,7 +49,7 @@
                 </svg>
             </button>
 
-            <button type="submit" class="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+            <button type="submit" class="btn-sm">
                 Filtrar
             </button>
 

@@ -84,10 +84,10 @@
                     </div>
 
                     <div class="flex gap-4 pt-4">
-                        <button type="submit" class="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium shadow-md hover:shadow-lg transition">
+                        <button type="submit" class="flex-1 btn-primary-lg">
                             ✓ Criar Restaurante
                         </button>
-                        <a href="{{ route('admin.restaurantes.index') }}" class="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 font-medium text-center transition">
+                        <a href="{{ route('admin.restaurantes.index') }}" class="flex-1 btn-secondary-lg text-center">
                             ✕ Cancelar
                         </a>
                     </div>

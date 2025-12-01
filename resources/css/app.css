@@ -7,3 +7,67 @@
         cursor: pointer;
     }
 }
+
+@layer components {
+    /* Botão Primário (Vermelho) */
+    .btn-primary {
+        @apply inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white font-medium rounded-lg shadow-sm hover:bg-red-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-200;
+    }
+
+    .btn-primary-lg {
+        @apply inline-flex items-center justify-center px-6 py-3 bg-red-600 text-white font-medium rounded-lg shadow-sm hover:bg-red-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-200;
+    }
+
+    /* Botão Secundário (Cinza) */
+    .btn-secondary {
+        @apply inline-flex items-center justify-center px-4 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-200;
+    }
+
+    .btn-secondary-lg {
+        @apply inline-flex items-center justify-center px-6 py-3 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-200;
+    }
+
+    /* Botão Pequeno */
+    .btn-sm {
+        @apply inline-flex items-center justify-center px-3 py-1.5 text-sm bg-red-600 text-white font-medium rounded-lg shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-200;
+    }
+
+    /* Botão de Sucesso (Verde) */
+    .btn-success {
+        @apply inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg shadow-sm hover:bg-green-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-200;
+    }
+
+    /* Botão de Perigo (Vermelho mais escuro) */
+    .btn-danger {
+        @apply inline-flex items-center justify-center px-4 py-2 bg-red-700 text-white font-medium rounded-lg shadow-sm hover:bg-red-800 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-200;
+    }
+
+    /* Botão de Aviso (Amarelo) */
+    .btn-warning {
+        @apply inline-flex items-center justify-center px-4 py-2 bg-yellow-500 text-white font-medium rounded-lg shadow-sm hover:bg-yellow-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-200;
+    }
+
+    /* Botão de Informação (Azul) */
+    .btn-info {
+        @apply inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg shadow-sm hover:bg-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-200;
+    }
+
+    /* Botão Ghost/Texto */
+    .btn-ghost {
+        @apply inline-flex items-center justify-center px-4 py-2 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-200;
+    }
+
+    /* Botão de Ícone */
+    .btn-icon {
+        @apply inline-flex items-center justify-center p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-200;
+    }
+
+    /* Botão Ativo/Toggle */
+    .btn-toggle-active {
+        @apply bg-red-600 text-white;
+    }
+
+    .btn-toggle-inactive {
+        @apply bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300;
+    }
+}

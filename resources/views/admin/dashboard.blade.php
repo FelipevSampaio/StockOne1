@@ -71,9 +71,9 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Usuários ativos nos últimos dias</p>
             </div>
             <div x-data="{ period: '7d' }" class="flex gap-2">
-                <button @click="period = '7d'; updateChart('7d')" :class="period === '7d' ? 'bg-red-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors">7 dias</button>
-                <button @click="period = '30d'; updateChart('30d')" :class="period === '30d' ? 'bg-red-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors">30 dias</button>
-                <button @click="period = '90d'; updateChart('90d')" :class="period === '90d' ? 'bg-red-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors">90 dias</button>
+                <button @click="period = '7d'; updateChart('7d')" :class="period === '7d' ? 'btn-toggle-active' : 'btn-toggle-inactive'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors">7 dias</button>
+                <button @click="period = '30d'; updateChart('30d')" :class="period === '30d' ? 'btn-toggle-active' : 'btn-toggle-inactive'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors">30 dias</button>
+                <button @click="period = '90d'; updateChart('90d')" :class="period === '90d' ? 'btn-toggle-active' : 'btn-toggle-inactive'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors">90 dias</button>
             </div>
         </div>
         <div class="h-64">
