@@ -62,7 +62,14 @@ class UserAdminController extends Controller
         $users = $query->paginate($perPage)->withQueryString();
         $restaurantes = Restaurante::all();
 
-        return view('admin.users.index', compact('users', 'restaurantes'));
+        // Estatísticas
+        $totalUsers = User::count();
+        $totalActive = User::whereNull('deleted_at')->count();
+        $totalInactive = User::whereNotNull('deleted_at')->count();
+        $totalAdmins = User::where('role', 'admin')->whereNull('deleted_at')->count();
+        $newUsersWeek = User::where('created_at', '>=', now()->subDays(7))->count();
+
+        return view('admin.users.index', compact('users', 'restaurantes', 'totalUsers', 'totalActive', 'totalInactive', 'totalAdmins', 'newUsersWeek'));
     }
 
     /**
@@ -326,6 +333,132 @@ class UserAdminController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Busca em tempo real (AJAX)
+     */
+    public function liveSearch(Request $request)
+    {
+        $this->checkAdmin();
+
+        $search = $request->get('q', '');
+        $limit = $request->get('limit', 10);
+
+        $users = User::withTrashed()
+            ->with('restaurante')
+            ->where(function($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%");
+            })
+            ->limit($limit)
+            ->get()
+            ->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'restaurante' => $user->restaurante?->nome ?? 'N/A',
+                    'role' => $user->role,
+                    'is_active' => !$user->trashed(),
+                    'avatar_initials' => strtoupper(substr($user->name, 0, 2))
+                ];
+            });
+
+        return response()->json($users);
+    }
+
+    /**
+     * Visualização rápida (Quick View)
+     */
+    public function quickView(User $user)
+    {
+        $this->checkAdmin();
+
+        $user->load('restaurante');
+
+        // Buscar últimas atividades (simplificado)
+        $recentLogs = AuditLog::where('model_type', 'User')
+            ->where('model_id', $user->id)
+            ->orWhere('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'restaurante' => $user->restaurante?->nome ?? 'N/A',
+                'restaurante_id' => $user->restaurante_id,
+                'is_active' => !$user->trashed(),
+                'created_at' => $user->created_at->format('d/m/Y H:i'),
+                'updated_at' => $user->updated_at->format('d/m/Y H:i'),
+                'deleted_at' => $user->deleted_at?->format('d/m/Y H:i'),
+                'created_diff' => $user->created_at->diffForHumans(),
+                'avatar_initials' => strtoupper(substr($user->name, 0, 2))
+            ],
+            'recent_logs' => $recentLogs->map(function($log) {
+                return [
+                    'action' => $log->action,
+                    'description' => $log->action . ' - ' . $log->model_type,
+                    'created_at' => $log->created_at->diffForHumans()
+                ];
+            })
+        ]);
+    }
+
+    /**
+     * Ações em massa
+     */
+    public function bulkAction(Request $request)
+    {
+        $this->checkAdmin();
+
+        $validated = $request->validate([
+            'action' => 'required|in:activate,deactivate,delete',
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'exists:users,id'
+        ]);
+
+        $userIds = $validated['user_ids'];
+        $action = $validated['action'];
+        $count = 0;
+
+        foreach ($userIds as $userId) {
+            $user = User::withTrashed()->find($userId);
+            if (!$user) continue;
+
+            switch ($action) {
+                case 'activate':
+                    if ($user->trashed()) {
+                        $user->restore();
+                        $count++;
+                        AuditLog::log('restore', 'User', $user->id, ['name' => $user->name]);
+                    }
+                    break;
+                case 'deactivate':
+                    if (!$user->trashed()) {
+                        $user->delete();
+                        $count++;
+                        AuditLog::log('soft_delete', 'User', $user->id, ['name' => $user->name]);
+                    }
+                    break;
+                case 'delete':
+                    $user->forceDelete();
+                    $count++;
+                    AuditLog::log('force_delete', 'User', $user->id, ['name' => $user->name]);
+                    break;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$count} usuário(s) processado(s) com sucesso",
+            'count' => $count
+        ]);
     }
 }
 

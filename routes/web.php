@@ -62,6 +62,9 @@ Route::middleware('auth')->group(function () {
         Route::post('admin/users/{id}/restore', [UserAdminController::class, 'restore'])->name('admin.users.restore');
         Route::delete('admin/users/{id}/force-delete', [UserAdminController::class, 'forceDelete'])->name('admin.users.forceDelete');
         Route::get('admin/users/export/csv', [UserAdminController::class, 'export'])->name('admin.users.export');
+        Route::get('admin/users/live-search', [UserAdminController::class, 'liveSearch'])->name('admin.users.live-search');
+        Route::get('admin/users/{user}/quick-view', [UserAdminController::class, 'quickView'])->name('admin.users.quick-view');
+        Route::post('admin/users/bulk-action', [UserAdminController::class, 'bulkAction'])->name('admin.users.bulk-action');
 
         Route::resource('admin/restaurantes', RestauranteAdminController::class)->names('admin.restaurantes')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
         Route::get('admin/restaurantes/export/csv', [RestauranteAdminController::class, 'export'])->name('admin.restaurantes.export');
