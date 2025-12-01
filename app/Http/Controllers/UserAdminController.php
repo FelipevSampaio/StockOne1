@@ -391,29 +391,37 @@ class UserAdminController extends Controller
             ->limit(5)
             ->get();
 
-        return response()->json([
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-                'restaurante' => $user->restaurante?->nome ?? 'N/A',
-                'restaurante_id' => $user->restaurante_id,
-                'is_active' => !$user->trashed(),
-                'created_at' => $user->created_at->format('d/m/Y H:i'),
-                'updated_at' => $user->updated_at->format('d/m/Y H:i'),
-                'deleted_at' => $user->deleted_at?->format('d/m/Y H:i'),
-                'created_diff' => $user->created_at->diffForHumans(),
-                'avatar_initials' => strtoupper(substr($user->name, 0, 2))
-            ],
-            'recent_logs' => $recentLogs->map(function($log) {
-                return [
-                    'action' => $log->action,
-                    'description' => $log->action . ' - ' . $log->model_type,
-                    'created_at' => $log->created_at->diffForHumans()
-                ];
-            })
-        ]);
+        try {
+            return response()->json([
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                    'restaurante' => $user->restaurante?->nome ?? 'N/A',
+                    'restaurante_id' => $user->restaurante_id,
+                    'is_active' => $user->deleted_at === null,
+                    'created_at' => $user->created_at->format('d/m/Y H:i'),
+                    'updated_at' => $user->updated_at->format('d/m/Y H:i'),
+                    'deleted_at' => $user->deleted_at ? $user->deleted_at->format('d/m/Y H:i') : null,
+                    'created_diff' => $user->created_at->diffForHumans(),
+                    'avatar_initials' => strtoupper(substr($user->name, 0, 2))
+                ],
+                'recent_logs' => $recentLogs->map(function($log) {
+                    return [
+                        'action' => $log->action,
+                        'description' => $log->action . ' - ' . $log->model_type,
+                        'created_at' => $log->created_at->diffForHumans()
+                    ];
+                })->toArray()
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Erro no quickView: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Erro ao carregar dados do usuário',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

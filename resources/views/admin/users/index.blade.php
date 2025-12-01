@@ -869,23 +869,39 @@
             recentLogs: [],
 
             async loadUserData(userId) {
+                console.log('Carregando dados do usuário:', userId);
                 this.isOpen = true;
                 this.loading = true;
                 this.userData = null;
                 this.recentLogs = [];
 
                 try {
-                    const response = await fetch(`/admin/users/${userId}/quick-view`);
+                    const url = `/admin/users/${userId}/quick-view`;
+                    console.log('Fazendo requisição para:', url);
+
+                    const response = await fetch(url, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    console.log('Status da resposta:', response.status);
+
                     if (!response.ok) {
-                        throw new Error('Erro na requisição');
+                        const errorText = await response.text();
+                        console.error('Resposta de erro:', errorText);
+                        throw new Error(`Erro ${response.status}: ${response.statusText}`);
                     }
+
                     const data = await response.json();
+                    console.log('Dados recebidos:', data);
 
                     this.userData = data.user;
-                    this.recentLogs = data.recent_logs;
+                    this.recentLogs = data.recent_logs || [];
                 } catch (error) {
-                    console.error('Erro ao carregar dados:', error);
-                    alert('Erro ao carregar informações do usuário');
+                    console.error('Erro completo:', error);
+                    alert(`Erro ao carregar informações do usuário: ${error.message}`);
                     this.closeModal();
                 } finally {
                     this.loading = false;
