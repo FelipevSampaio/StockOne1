@@ -260,32 +260,38 @@ class UserAdminController extends Controller
 
         $query = User::withTrashed()->with('restaurante');
 
-        // Aplicar mesmos filtros da listagem
-        if ($request->filled('search')) {
-            $search = $request->get('search');
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('restaurante_id')) {
-            if ($request->get('restaurante_id') === 'sem_restaurante') {
-                $query->whereNull('restaurante_id');
-            } else {
-                $query->where('restaurante_id', $request->get('restaurante_id'));
+        // Se tiver IDs específicos, exporta apenas eles
+        if ($request->filled('ids')) {
+            $ids = explode(',', $request->get('ids'));
+            $query->whereIn('id', $ids);
+        } else {
+            // Aplicar mesmos filtros da listagem
+            if ($request->filled('search')) {
+                $search = $request->get('search');
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%");
+                });
             }
-        }
 
-        if ($request->filled('role')) {
-            $query->where('role', $request->get('role'));
-        }
+            if ($request->filled('restaurante_id')) {
+                if ($request->get('restaurante_id') === 'sem_restaurante') {
+                    $query->whereNull('restaurante_id');
+                } else {
+                    $query->where('restaurante_id', $request->get('restaurante_id'));
+                }
+            }
 
-        if ($request->filled('status')) {
-            if ($request->get('status') === 'ativo') {
-                $query->whereNull('deleted_at');
-            } elseif ($request->get('status') === 'inativo') {
-                $query->whereNotNull('deleted_at');
+            if ($request->filled('role')) {
+                $query->where('role', $request->get('role'));
+            }
+
+            if ($request->filled('status')) {
+                if ($request->get('status') === 'ativo') {
+                    $query->whereNull('deleted_at');
+                } elseif ($request->get('status') === 'inativo') {
+                    $query->whereNotNull('deleted_at');
+                }
             }
         }
 
