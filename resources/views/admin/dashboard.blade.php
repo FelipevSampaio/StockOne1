@@ -148,7 +148,7 @@
         </a>
 
         <!-- Logs de Auditoria -->
-        <a href="{{ route('admin.audit-logs') }}" class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer block">
+        <a href="{{ route('admin.audit-logs.index') }}" class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer block">
             <div class="flex items-center justify-between mb-4">
                 <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg group-hover:scale-110 transition-transform duration-300">
                     <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
