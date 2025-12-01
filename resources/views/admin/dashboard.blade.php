@@ -60,6 +60,79 @@
             </div>
             <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Pedidos Hoje</h3>
             <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ $pedidosHoje }}</p>
+            @if($pedidosPendentes > 0)
+                <p class="text-xs text-orange-600 dark:text-orange-400 mt-2">
+                    <span class="font-medium">{{ $pedidosPendentes }}</span> pendentes
+                </p>
+            @endif
+        </div>
+
+        <!-- Insumos -->
+        <div class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                </div>
+                @if($insumosEstoqueBaixo > 0)
+                    <span class="text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded">
+                        <svg class="w-3 h-3 inline-block" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                    </span>
+                @endif
+            </div>
+            <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Insumos</h3>
+            <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ $totalInsumos }}</p>
+            @if($insumosEstoqueBaixo > 0)
+                <p class="text-xs text-orange-600 dark:text-orange-400 mt-2">
+                    <span class="font-medium">{{ $insumosEstoqueBaixo }}</span> com estoque baixo
+                </p>
+            @endif
+        </div>
+
+        <!-- Cardápio -->
+        <div class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Itens do Cardápio</h3>
+            <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ $totalCardapioItens }}</p>
+        </div>
+
+        <!-- Logs de Auditoria -->
+        <div class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Logs de Auditoria</h3>
+            <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ $totalAuditLogs }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Registros de atividades</p>
+        </div>
+
+        <!-- Total de Pedidos -->
+        <div class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Total de Pedidos</h3>
+            <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ $totalPedidos }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                <span class="text-blue-600 dark:text-blue-400 font-medium">{{ $pedidosEsteMes }}</span> este mês
+            </p>
         </div>
     </div>
 

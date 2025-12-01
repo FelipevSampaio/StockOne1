@@ -67,6 +67,9 @@ Route::middleware('auth')->group(function () {
         Route::get('admin/restaurantes/export/csv', [RestauranteAdminController::class, 'export'])->name('admin.restaurantes.export');
 
         Route::get('admin/audit-logs/export/csv', [AuditLogController::class, 'export'])->name('admin.audit-logs.export');
+
+        // Busca global
+        Route::get('admin/search', [\App\Http\Controllers\SearchController::class, 'search'])->name('admin.search');
     });
 
     // Rotas do restaurante

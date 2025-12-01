@@ -92,20 +92,101 @@
                  x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="opacity-0 scale-95"
                  x-transition:enter-end="opacity-100 scale-100">
-                <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="p-4 border-b border-gray-200 dark:border-gray-700"
+                     x-data="{
+                         searchQuery: '',
+                         searchResults: { users: [], restaurantes: [], pages: [] },
+                         isSearching: false,
+                         async performSearch() {
+                             if (this.searchQuery.length < 2) {
+                                 this.searchResults = { users: [], restaurantes: [], pages: [] };
+                                 return;
+                             }
+                             this.isSearching = true;
+                             try {
+                                 const response = await fetch(`/admin/search?q=${encodeURIComponent(this.searchQuery)}`);
+                                 this.searchResults = await response.json();
+                             } catch (error) {
+                                 console.error('Erro na busca:', error);
+                             } finally {
+                                 this.isSearching = false;
+                             }
+                         }
+                     }">
                     <div class="flex items-center">
                         <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
                         <input type="text"
+                               x-model="searchQuery"
+                               @input.debounce.300ms="performSearch()"
                                placeholder="Buscar usuários, restaurantes, configurações... (Ctrl+K)"
                                class="flex-1 ml-3 bg-transparent border-0 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-0 text-sm"
                                x-ref="searchInput"
                                @keydown.escape="searchOpen = false">
+                        <svg x-show="isSearching" class="animate-spin h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+
+                    <!-- Resultados da busca -->
+                    <div x-show="searchQuery.length >= 2" x-cloak class="mt-4 max-h-96 overflow-y-auto">
+                        <!-- Usuários -->
+                        <template x-if="searchResults.users && searchResults.users.length > 0">
+                            <div class="mb-4">
+                                <div class="px-2 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Usuários</div>
+                                <template x-for="user in searchResults.users" :key="user.id">
+                                    <a :href="`/admin/users/${user.id}/edit`" class="flex items-center px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                        <div class="flex-shrink-0 w-8 h-8 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                                            <span class="text-xs font-medium text-blue-600 dark:text-blue-400" x-text="user.name.charAt(0).toUpperCase()"></span>
+                                        </div>
+                                        <div class="ml-3 flex-1 min-w-0">
+                                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" x-text="user.name"></p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 truncate" x-text="user.email"></p>
+                                        </div>
+                                    </a>
+                                </template>
+                            </div>
+                        </template>
+
+                        <!-- Restaurantes -->
+                        <template x-if="searchResults.restaurantes && searchResults.restaurantes.length > 0">
+                            <div class="mb-4">
+                                <div class="px-2 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Restaurantes</div>
+                                <template x-for="rest in searchResults.restaurantes" :key="rest.id">
+                                    <a :href="`/admin/restaurantes/${rest.id}/edit`" class="flex items-center px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                        <div class="flex-shrink-0 w-8 h-8 bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3 flex-1 min-w-0">
+                                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" x-text="rest.nome"></p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 truncate" x-text="rest.cnpj"></p>
+                                        </div>
+                                    </a>
+                                </template>
+                            </div>
+                        </template>
+
+                        <!-- Nenhum resultado -->
+                        <template x-if="!isSearching && searchQuery.length >= 2 && searchResults.users.length === 0 && searchResults.restaurantes.length === 0">
+                            <div class="text-center py-8">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Nenhum resultado encontrado</p>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Páginas padrão (quando não há busca) -->
+                    <div x-show="searchQuery.length < 2" x-cloak class="mt-4">
+                        <div class="px-2 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Páginas</div>
                     </div>
                 </div>
-                <div class="max-h-96 overflow-y-auto p-2">
-                    <div class="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Páginas</div>
+                <div class="max-h-96 overflow-y-auto p-2" x-show="searchQuery.length < 2" x-cloak>
                     <a href="{{ route('admin.users.index') }}" class="flex items-center px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors group">
                         <div class="flex-shrink-0 w-10 h-10 bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center justify-center">
                             <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

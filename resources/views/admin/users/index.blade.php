@@ -251,11 +251,37 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-12 text-center">
-                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                                </svg>
-                                <p class="mt-2 text-sm text-gray-500">Nenhum usuário encontrado</p>
+                            <td colspan="5" class="px-6 py-16 text-center">
+                                <div class="flex flex-col items-center">
+                                    <div class="w-24 h-24 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-full flex items-center justify-center mb-4">
+                                        <svg class="w-12 h-12 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">Nenhum usuário encontrado</h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
+                                        @if(request()->anyFilled(['search', 'restaurante_id', 'role', 'status']))
+                                            Nenhum usuário corresponde aos filtros aplicados. Tente ajustar os critérios de busca.
+                                        @else
+                                            Comece adicionando o primeiro usuário ao sistema.
+                                        @endif
+                                    </p>
+                                    @if(request()->anyFilled(['search', 'restaurante_id', 'role', 'status']))
+                                        <a href="{{ route('admin.users.index') }}" class="btn-secondary">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                            Limpar Filtros
+                                        </a>
+                                    @else
+                                        <a href="{{ route('admin.users.create') }}" class="btn-primary">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                            </svg>
+                                            Criar Primeiro Usuário
+                                        </a>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @endforelse

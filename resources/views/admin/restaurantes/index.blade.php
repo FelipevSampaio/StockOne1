@@ -149,11 +149,37 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-12 text-center">
-                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                                </svg>
-                                <p class="mt-2 text-sm text-gray-500">Nenhum restaurante encontrado</p>
+                            <td colspan="4" class="px-6 py-16 text-center">
+                                <div class="flex flex-col items-center">
+                                    <div class="w-24 h-24 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-full flex items-center justify-center mb-4">
+                                        <svg class="w-12 h-12 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">Nenhum restaurante encontrado</h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
+                                        @if(request()->anyFilled(['search', 'status']))
+                                            Nenhum restaurante corresponde aos filtros aplicados. Tente ajustar os critérios de busca.
+                                        @else
+                                            Adicione o primeiro restaurante para começar a gerenciar o sistema.
+                                        @endif
+                                    </p>
+                                    @if(request()->anyFilled(['search', 'status']))
+                                        <a href="{{ route('admin.restaurantes.index') }}" class="btn-secondary">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                            Limpar Filtros
+                                        </a>
+                                    @else
+                                        <a href="{{ route('admin.restaurantes.create') }}" class="btn-primary">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                            </svg>
+                                            Criar Primeiro Restaurante
+                                        </a>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @endforelse

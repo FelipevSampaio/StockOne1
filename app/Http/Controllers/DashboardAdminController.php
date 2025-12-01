@@ -22,11 +22,13 @@ class DashboardAdminController extends Controller
 
         // Restaurantes
         $totalRestaurantes = Restaurante::count();
+        $restaurantesAtivos = Restaurante::where('status', 'ativo')->count();
 
         // Pedidos (se a tabela existir)
         $totalPedidos = 0;
         $pedidosHoje = 0;
         $pedidosEsteMes = 0;
+        $pedidosPendentes = 0;
 
         try {
             $totalPedidos = Pedido::count();
@@ -34,8 +36,26 @@ class DashboardAdminController extends Controller
             $pedidosEsteMes = Pedido::whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year)
                 ->count();
+            $pedidosPendentes = Pedido::where('status', 'pendente')->count();
         } catch (\Exception $e) {
             // Tabela pode não existir ainda
+        }
+
+        // Dados adicionais para novos cards
+        $totalInsumos = 0;
+        $insumosEstoqueBaixo = 0;
+        $totalCardapioItens = 0;
+        $totalAuditLogs = 0;
+
+        try {
+            $totalInsumos = \App\Models\Insumo::count();
+            $totalCardapioItens = \App\Models\CardapioItem::count();
+            $totalAuditLogs = \App\Models\AuditLog::count();
+
+            // Insumos com estoque baixo (menos de 20% do estoque total)
+            $insumosEstoqueBaixo = \App\Models\Estoque::whereRaw('quantidade < quantidade_minima')->count();
+        } catch (\Exception $e) {
+            // Ignorar se as tabelas não existirem
         }
 
         // Usuários recentes
@@ -59,9 +79,15 @@ class DashboardAdminController extends Controller
             'totalAdmins',
             'totalRegularUsers',
             'totalRestaurantes',
+            'restaurantesAtivos',
             'totalPedidos',
             'pedidosHoje',
             'pedidosEsteMes',
+            'pedidosPendentes',
+            'totalInsumos',
+            'insumosEstoqueBaixo',
+            'totalCardapioItens',
+            'totalAuditLogs',
             'usuariosRecentes',
             'usuariosPorRestaurante'
         ));
