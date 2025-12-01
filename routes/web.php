@@ -68,6 +68,7 @@ Route::middleware('auth')->group(function () {
 
         Route::resource('admin/restaurantes', RestauranteAdminController::class)->names('admin.restaurantes')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
         Route::get('admin/restaurantes/export/csv', [RestauranteAdminController::class, 'export'])->name('admin.restaurantes.export');
+        Route::post('admin/restaurantes/bulk-action', [RestauranteAdminController::class, 'bulkAction'])->name('admin.restaurantes.bulk-action');
 
         Route::get('admin/audit-logs/export/csv', [AuditLogController::class, 'export'])->name('admin.audit-logs.export');
 

@@ -147,12 +147,6 @@
                 </a>
             @endif
 
-            <button type="button" @click="saveCurrentFilter()" class="p-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" title="Salvar Filtro">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
-                </svg>
-            </button>
-
             <!-- Seletor de Visualização -->
             <div class="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden" x-data="{ viewMode: localStorage.getItem('users_view_mode') || 'table' }">
                 <button type="button"
@@ -199,18 +193,6 @@
             </div>
         </div>
 
-        <!-- Filtros Salvos -->
-        <div x-show="savedFilters.length > 0" x-cloak class="mt-3 flex flex-wrap gap-2">
-            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Filtros salvos:</span>
-            <template x-for="(filter, index) in savedFilters" :key="index">
-                <button type="button" @click="applyFilter(filter)" class="inline-flex items-center px-2 py-1 text-xs bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
-                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
-                    </svg>
-                    <span x-text="filter.name"></span>
-                </button>
-            </template>
-        </div>
     </form>
 
     <!-- Barra de Ações em Massa -->
@@ -375,15 +357,14 @@
                                     <!-- Botão Quick View -->
                                     <button @click="openQuickView({{ $user->id }})"
                                             type="button"
-                                            class="inline-flex items-center p-2 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                                            title="Visualização Rápida">
+                                            class="inline-flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium"
+                                            title="Ver detalhes completos e atividades recentes">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                         </svg>
-                                    </button>
-
-                                    <div class="relative inline-block text-left">
+                                        <span class="hidden xl:inline">Ver</span>
+                                    </button>                                    <div class="relative inline-block text-left">
                                         <button @click="open = !open" type="button" class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
                                             Ações
                                             <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -894,13 +875,22 @@
 
         // Função global para abrir Quick View
         window.openQuickView = async function(userId) {
-            const modal = Alpine.store('quickView') || document.querySelector('[x-data*="quickViewModal"]').__x.$data;
+            const modalElement = document.querySelector('[x-data*="quickViewModal"]');
+            if (!modalElement || !modalElement.__x) {
+                console.error('Modal não encontrado');
+                return;
+            }
+
+            const modal = modalElement.__x.$data;
 
             modal.isOpen = true;
             modal.loading = true;
 
             try {
-                const response = await fetch(`{{ route('admin.users.index') }}/${userId}/quick-view`);
+                const response = await fetch(`/admin/users/${userId}/quick-view`);
+                if (!response.ok) {
+                    throw new Error('Erro na requisição');
+                }
                 const data = await response.json();
 
                 modal.userData = data.user;
@@ -915,73 +905,7 @@
         };
 
         Alpine.data('filterManager', () => ({
-            showAdvanced: false,
-            savedFilters: [],
-
-            init() {
-                // Carregar filtros salvos do localStorage
-                const saved = localStorage.getItem('user_filters');
-                if (saved) {
-                    this.savedFilters = JSON.parse(saved);
-                }
-            },
-
-            saveCurrentFilter() {
-                const form = this.$el;
-                const formData = new FormData(form);
-                const filterData = {};
-                let filterName = '';
-
-                // Extrair dados do formulário
-                for (let [key, value] of formData.entries()) {
-                    if (value) {
-                        filterData[key] = value;
-                        if (!filterName && key !== '_token') {
-                            filterName += value.substring(0, 15);
-                        }
-                    }
-                }
-
-                if (Object.keys(filterData).length === 0) {
-                    alert('Configure pelo menos um filtro antes de salvar');
-                    return;
-                }
-
-                // Pedir nome do filtro
-                const name = prompt('Nome do filtro:', filterName || 'Meu Filtro');
-                if (!name) return;
-
-                // Adicionar à lista
-                this.savedFilters.push({
-                    name: name,
-                    data: filterData
-                });
-
-                // Salvar no localStorage
-                localStorage.setItem('user_filters', JSON.stringify(this.savedFilters));
-
-                // Feedback
-                const toast = document.createElement('div');
-                toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-                toast.textContent = 'Filtro salvo com sucesso!';
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 3000);
-            },
-
-            applyFilter(filter) {
-                const form = this.$el;
-
-                // Aplicar cada campo do filtro salvo
-                for (let [key, value] of Object.entries(filter.data)) {
-                    const input = form.querySelector(`[name="${key}"]`);
-                    if (input) {
-                        input.value = value;
-                    }
-                }
-
-                // Submeter o formulário
-                form.submit();
-            }
+            showAdvanced: false
         }));
     });
 </script>
