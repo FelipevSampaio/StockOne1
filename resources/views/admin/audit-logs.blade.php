@@ -5,9 +5,9 @@
 
 @section('content')
     <!-- Filtros Minimalistas -->
-    <form method="GET" action="{{ route('admin.audit-logs.index') }}" class="bg-white rounded-lg shadow-sm border border-gray-100 p-4 mb-6">
+    <form method="GET" action="{{ route('admin.audit-logs.index') }}" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-6">
         <div class="flex flex-wrap items-center gap-3">
-            <select name="action" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500">
+            <select name="action" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500">
                 <option value="">Ação</option>
                 <option value="create" @selected(request('action') === 'create')>Criação</option>
                 <option value="update" @selected(request('action') === 'update')>Atualização</option>
@@ -15,22 +15,22 @@
                 <option value="restore" @selected(request('action') === 'restore')>Restauração</option>
             </select>
 
-            <select name="model" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500">
+            <select name="model" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500">
                 <option value="">Modelo</option>
                 <option value="User" @selected(request('model') === 'User')>Usuário</option>
                 <option value="Restaurante" @selected(request('model') === 'Restaurante')>Restaurante</option>
                 <option value="Setting" @selected(request('model') === 'Setting')>Configuração</option>
             </select>
 
-            <select name="user_id" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500">
+            <select name="user_id" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500">
                 <option value="">Usuário</option>
                 @foreach($users as $user)
                     <option value="{{ $user->id }}" @selected(request('user_id') == $user->id)>{{ $user->name }}</option>
                 @endforeach
             </select>
 
-            <input type="date" name="date_from" value="{{ request('date_from') }}" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500" placeholder="De">
-            <input type="date" name="date_to" value="{{ request('date_to') }}" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500" placeholder="Até">
+            <input type="date" name="date_from" value="{{ request('date_from') }}" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500" placeholder="De">
+            <input type="date" name="date_to" value="{{ request('date_to') }}" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500" placeholder="Até">
 
             <button type="submit" class="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
                 Filtrar
@@ -45,7 +45,7 @@
     </form>
 
     <!-- Timeline de Logs -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
             <h3 class="text-lg font-semibold text-gray-900">Histórico de Ações</h3>
             <p class="text-sm text-gray-500 mt-1">Registro completo de todas as ações realizadas no sistema</p>
@@ -82,7 +82,7 @@
                                     @endif
                                 </div>
 
-                                <p class="text-sm text-gray-700 mb-2">
+                                <p class="text-sm text-gray-700 dark:text-gray-300 mb-2">
                                     Por <span class="font-medium">{{ $log->user->name ?? 'Sistema' }}</span>
                                     <span class="text-gray-400">•</span>
                                     <time class="text-gray-500" datetime="{{ $log->created_at }}">
@@ -103,7 +103,7 @@
                                          x-transition:enter="transition ease-out duration-200"
                                          x-transition:enter-start="opacity-0 transform -translate-y-2"
                                          x-transition:enter-end="opacity-100 transform translate-y-0"
-                                         class="mt-3 bg-white rounded-lg p-3 border border-gray-200">
+                                         class="mt-3 bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                                         <h4 class="text-xs font-semibold text-gray-700 uppercase mb-2">Alterações:</h4>
                                         <pre class="text-xs text-gray-600 overflow-x-auto">{{ json_encode(json_decode($log->changes), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                                     </div>
