@@ -4,12 +4,20 @@
 @section('page-title', 'Gerenciar Usuários')
 
 @section('topbar-actions')
-    <a href="{{ route('admin.users.create') }}" class="btn-primary">
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-        </svg>
-        Novo Usuário
-    </a>
+    <div class="flex items-center gap-3">
+        <a href="{{ route('admin.users.export') }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}" class="btn-secondary">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Exportar CSV
+        </a>
+        <a href="{{ route('admin.users.create') }}" class="btn-primary">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Novo Usuário
+        </a>
+    </div>
 @endsection
 
 @section('content')
@@ -41,6 +49,13 @@
                 <option value="">Status</option>
                 <option value="ativo" @selected(request('status') === 'ativo')>Ativo</option>
                 <option value="inativo" @selected(request('status') === 'inativo')>Inativo</option>
+            </select>
+
+            <select name="per_page" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                <option value="10" @selected(request('per_page') == 10)>10 por página</option>
+                <option value="25" @selected(request('per_page') == 25)>25 por página</option>
+                <option value="50" @selected(request('per_page') == 50)>50 por página</option>
+                <option value="100" @selected(request('per_page') == 100)>100 por página</option>
             </select>
 
             <button type="button" @click="showAdvanced = !showAdvanced" class="p-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" title="Filtros Avançados">
@@ -329,4 +344,18 @@
         }));
     });
 </script>
+
+<!-- Paginação com Info -->
+@if($users->hasPages())
+    <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="text-sm text-gray-700 dark:text-gray-300">
+            Exibindo <span class="font-semibold">{{ $users->firstItem() }}</span>
+            a <span class="font-semibold">{{ $users->lastItem() }}</span>
+            de <span class="font-semibold">{{ $users->total() }}</span> resultados
+        </div>
+        <div>
+            {{ $users->links() }}
+        </div>
+    </div>
+@endif
 @endsection

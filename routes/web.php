@@ -61,7 +61,12 @@ Route::middleware('auth')->group(function () {
         Route::resource('admin/users', UserAdminController::class)->names('admin.users')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
         Route::post('admin/users/{id}/restore', [UserAdminController::class, 'restore'])->name('admin.users.restore');
         Route::delete('admin/users/{id}/force-delete', [UserAdminController::class, 'forceDelete'])->name('admin.users.forceDelete');
+        Route::get('admin/users/export/csv', [UserAdminController::class, 'export'])->name('admin.users.export');
+
         Route::resource('admin/restaurantes', RestauranteAdminController::class)->names('admin.restaurantes')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+        Route::get('admin/restaurantes/export/csv', [RestauranteAdminController::class, 'export'])->name('admin.restaurantes.export');
+
+        Route::get('admin/audit-logs/export/csv', [AuditLogController::class, 'export'])->name('admin.audit-logs.export');
     });
 
     // Rotas do restaurante

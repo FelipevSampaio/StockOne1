@@ -113,4 +113,88 @@ class AuditLogController extends Controller
 
         return redirect()->back()->with('success', "Apagados: {$deleted} registros.");
     }
+
+    /**
+     * Exportar logs de auditoria para CSV
+     */
+    public function export(Request $request)
+    {
+        $this->checkAdmin();
+
+        $query = AuditLog::with('user')->orderBy('created_at', 'desc');
+
+        // Aplicar mesmos filtros da listagem
+        if ($request->filled('action')) {
+            $query->where('action', $request->get('action'));
+        }
+
+        if ($request->filled('model')) {
+            $query->where('model', $request->get('model'));
+        }
+
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->get('user_id'));
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->get('date_from'));
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->get('date_to'));
+        }
+
+        $logs = $query->get();
+
+        $filename = 'audit_logs_' . date('Y-m-d_His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0'
+        ];
+
+        $callback = function() use ($logs) {
+            $file = fopen('php://output', 'w');
+
+            // BOM para UTF-8
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // Cabeçalhos
+            fputcsv($file, [
+                'ID',
+                'Usuário',
+                'Ação',
+                'Modelo',
+                'ID do Registro',
+                'Mudanças',
+                'IP',
+                'User Agent',
+                'Data'
+            ], ';');
+
+            // Dados
+            foreach ($logs as $log) {
+                $changes = is_array($log->changes) ? json_encode($log->changes, JSON_UNESCAPED_UNICODE) : $log->changes;
+
+                fputcsv($file, [
+                    $log->id,
+                    $log->user ? $log->user->name : 'Sistema',
+                    $log->action,
+                    $log->model,
+                    $log->model_id,
+                    $changes,
+                    $log->ip_address ?? '-',
+                    $log->user_agent ?? '-',
+                    $log->created_at->format('d/m/Y H:i:s')
+                ], ';');
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

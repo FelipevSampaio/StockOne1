@@ -57,7 +57,9 @@ class UserAdminController extends Controller
             }
         }
 
-        $users = $query->paginate(15);
+        // Paginação com quantidade personalizável
+        $perPage = $request->get('per_page', 15);
+        $users = $query->paginate($perPage)->withQueryString();
         $restaurantes = Restaurante::all();
 
         return view('admin.users.index', compact('users', 'restaurantes'));
@@ -234,6 +236,96 @@ class UserAdminController extends Controller
 
         return redirect()->route('admin.users.index')
             ->with('success', 'Usuário deletado permanentemente!');
+    }
+
+    /**
+     * Exportar usuários para CSV
+     */
+    public function export(Request $request)
+    {
+        $this->checkAdmin();
+
+        $query = User::withTrashed()->with('restaurante');
+
+        // Aplicar mesmos filtros da listagem
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+        }
+
+        if ($request->filled('restaurante_id')) {
+            $query->where('restaurante_id', $request->get('restaurante_id'));
+        }
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->get('role'));
+        }
+
+        if ($request->filled('status')) {
+            if ($request->get('status') === 'ativo') {
+                $query->whereNull('deleted_at');
+            } elseif ($request->get('status') === 'inativo') {
+                $query->whereNotNull('deleted_at');
+            }
+        }
+
+        $users = $query->get();
+
+        // Registrar auditoria
+        AuditLog::log('export', 'User', 0, [
+            'total_exported' => $users->count(),
+            'filters' => $request->only(['search', 'restaurante_id', 'role', 'status'])
+        ]);
+
+        $filename = 'usuarios_' . date('Y-m-d_His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0'
+        ];
+
+        $callback = function() use ($users) {
+            $file = fopen('php://output', 'w');
+
+            // BOM para UTF-8
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // Cabeçalhos
+            fputcsv($file, [
+                'ID',
+                'Nome',
+                'Email',
+                'Restaurante',
+                'Papel',
+                'Status',
+                'Criado em',
+                'Atualizado em',
+                'Deletado em'
+            ], ';');
+
+            // Dados
+            foreach ($users as $user) {
+                fputcsv($file, [
+                    $user->id,
+                    $user->name,
+                    $user->email,
+                    $user->restaurante ? $user->restaurante->nome : 'N/A',
+                    $user->role === 'admin' ? 'Administrador' : 'Usuário',
+                    $user->deleted_at ? 'Inativo' : 'Ativo',
+                    $user->created_at->format('d/m/Y H:i:s'),
+                    $user->updated_at->format('d/m/Y H:i:s'),
+                    $user->deleted_at ? $user->deleted_at->format('d/m/Y H:i:s') : '-'
+                ], ';');
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }
 

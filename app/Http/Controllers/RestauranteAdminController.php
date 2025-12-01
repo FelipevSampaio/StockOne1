@@ -15,10 +15,29 @@ class RestauranteAdminController extends Controller
         }
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $this->checkAdmin();
-        $restaurantes = Restaurante::paginate(15);
+
+        $query = Restaurante::withCount('users');
+
+        // Filtro de busca
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where('nome', 'like', "%{$search}%")
+                  ->orWhere('cnpj', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+        }
+
+        // Filtro por status
+        if ($request->filled('status')) {
+            $query->where('status', $request->get('status'));
+        }
+
+        // Paginação com quantidade personalizável
+        $perPage = $request->get('per_page', 15);
+        $restaurantes = $query->paginate($perPage)->withQueryString();
+
         return view('admin.restaurantes.index', compact('restaurantes'));
     }
 
@@ -77,6 +96,67 @@ class RestauranteAdminController extends Controller
 
         return redirect()->route('admin.restaurantes.index')
             ->with('success', 'Restaurante deletado com sucesso!');
+    }
+
+    /**
+     * Exportar restaurantes para CSV
+     */
+    public function export(Request $request)
+    {
+        $this->checkAdmin();
+
+        $restaurantes = Restaurante::withCount('users')->get();
+
+        $filename = 'restaurantes_' . date('Y-m-d_His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0'
+        ];
+
+        $callback = function() use ($restaurantes) {
+            $file = fopen('php://output', 'w');
+
+            // BOM para UTF-8
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // Cabeçalhos
+            fputcsv($file, [
+                'ID',
+                'Nome',
+                'CNPJ',
+                'Email',
+                'Telefone',
+                'Endereço',
+                'Status',
+                'Total de Usuários',
+                'Criado em',
+                'Atualizado em'
+            ], ';');
+
+            // Dados
+            foreach ($restaurantes as $restaurante) {
+                fputcsv($file, [
+                    $restaurante->id,
+                    $restaurante->nome,
+                    $restaurante->cnpj,
+                    $restaurante->email,
+                    $restaurante->telefone ?? '-',
+                    $restaurante->endereco ?? '-',
+                    $restaurante->status === 'ativo' ? 'Ativo' : 'Inativo',
+                    $restaurante->users_count,
+                    $restaurante->created_at->format('d/m/Y H:i:s'),
+                    $restaurante->updated_at->format('d/m/Y H:i:s')
+                ], ';');
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }
 
