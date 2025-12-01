@@ -66,4 +66,58 @@ class DashboardAdminController extends Controller
             'usuariosPorRestaurante'
         ));
     }
+
+    /**
+     * Retornar dados de atividade para gráfico
+     */
+    public function activityData()
+    {
+        $period = request('period', '7d');
+
+        $days = match($period) {
+            '7d' => 7,
+            '30d' => 30,
+            '90d' => 90,
+            default => 7
+        };
+
+        $dates = [];
+        $userData = [];
+        $orderData = [];
+
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $dates[] = $date->format('d/m');
+
+            // Contar usuários criados nesse dia
+            $userData[] = User::whereDate('created_at', $date->toDateString())->count();
+
+            // Contar pedidos do dia (se existir)
+            try {
+                $orderData[] = Pedido::whereDate('created_at', $date->toDateString())->count();
+            } catch (\Exception $e) {
+                $orderData[] = 0;
+            }
+        }
+
+        return response()->json([
+            'labels' => $dates,
+            'datasets' => [
+                [
+                    'label' => 'Novos Usuários',
+                    'data' => $userData,
+                    'borderColor' => 'rgb(220, 38, 38)',
+                    'backgroundColor' => 'rgba(220, 38, 38, 0.1)',
+                    'tension' => 0.4
+                ],
+                [
+                    'label' => 'Pedidos',
+                    'data' => $orderData,
+                    'borderColor' => 'rgb(59, 130, 246)',
+                    'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
+                    'tension' => 0.4
+                ]
+            ]
+        ]);
+    }
 }

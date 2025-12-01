@@ -263,12 +263,12 @@
                     </button>
 
                     <!-- Notifications -->
-                    <div x-data="{ open: false }" class="relative">
-                        <button @click="open = !open" class="relative p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all hover:scale-110" title="Notificações">
+                    <div x-data="notificationManager()" x-init="init()" class="relative">
+                        <button @click="toggleDropdown()" class="relative p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all hover:scale-110" title="Notificações">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                             </svg>
-                            <span class="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-800"></span>
+                            <span x-show="unreadCount > 0" x-text="unreadCount" class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-500 rounded-full"></span>
                         </button>
 
                         <!-- Dropdown Notifications -->
@@ -281,42 +281,59 @@
                              x-transition:leave-start="opacity-100 scale-100"
                              x-transition:leave-end="opacity-0 scale-95"
                              x-cloak
-                             class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50">
-                            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                             class="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50">
+                            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                                 <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Notificações</h3>
+                                <button @click="markAllAsRead()" class="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium">
+                                    Marcar todas como lidas
+                                </button>
                             </div>
                             <div class="max-h-96 overflow-y-auto">
-                                <a href="#" class="flex items-start p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700">
-                                    <div class="flex-shrink-0">
-                                        <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                                            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"></path>
-                                            </svg>
+                                <template x-if="loading">
+                                    <div class="p-8 text-center">
+                                        <svg class="animate-spin h-8 w-8 mx-auto text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    </div>
+                                </template>
+
+                                <template x-if="!loading && notifications.length === 0">
+                                    <div class="p-8 text-center">
+                                        <svg class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                                        </svg>
+                                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Nenhuma notificação</p>
+                                    </div>
+                                </template>
+
+                                <template x-for="notification in notifications" :key="notification.id">
+                                    <div @click="markAsRead(notification.id)"
+                                         :class="notification.read_at ? 'bg-transparent' : 'bg-blue-50 dark:bg-blue-900/10'"
+                                         class="flex items-start p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 cursor-pointer">
+                                        <div class="flex-shrink-0">
+                                            <div :class="getNotificationColor(notification.type)" class="w-10 h-10 rounded-full flex items-center justify-center">
+                                                <svg x-html="getNotificationIcon(notification.type)" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"></svg>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="ml-3 flex-1">
-                                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Novo usuário cadastrado</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">João Silva se registrou no sistema</p>
-                                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">5 minutos atrás</p>
-                                    </div>
-                                </a>
-                                <a href="#" class="flex items-start p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                    <div class="flex-shrink-0">
-                                        <div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                                            <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                                            </svg>
+                                        <div class="ml-3 flex-1">
+                                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100" x-text="notification.title"></p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-text="notification.message"></p>
+                                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1" x-text="notification.time_ago"></p>
                                         </div>
+                                        <button x-show="!notification.read_at" class="ml-2 text-blue-600 dark:text-blue-400">
+                                            <svg class="w-2 h-2" fill="currentColor" viewBox="0 0 8 8">
+                                                <circle cx="4" cy="4" r="3"/>
+                                            </svg>
+                                        </button>
                                     </div>
-                                    <div class="ml-3 flex-1">
-                                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">Sistema atualizado</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Versão 2.0 instalada com sucesso</p>
-                                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">1 hora atrás</p>
-                                    </div>
-                                </a>
+                                </template>
                             </div>
-                            <div class="p-3 border-t border-gray-200 dark:border-gray-700">
-                                <a href="#" class="text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">Ver todas as notificações</a>
+                            <div class="p-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                                <label class="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                                    <input type="checkbox" x-model="soundEnabled" @change="toggleSound()" class="mr-2 rounded border-gray-300 text-red-600 focus:ring-red-500">
+                                    Som de notificações
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -407,6 +424,141 @@
         function confirmDelete(message = 'Tem certeza que deseja deletar?') {
             return confirm(message);
         }
+
+        // Notification Manager Component
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('notificationManager', () => ({
+                open: false,
+                notifications: [],
+                unreadCount: 0,
+                loading: false,
+                soundEnabled: localStorage.getItem('notification_sound') === 'true',
+                pollInterval: null,
+                lastNotificationId: 0,
+
+                init() {
+                    this.fetchNotifications();
+                    // Poll a cada 30 segundos
+                    this.pollInterval = setInterval(() => {
+                        this.fetchNotifications();
+                    }, 30000);
+                },
+
+                async fetchNotifications() {
+                    try {
+                        const response = await fetch('/admin/notifications');
+                        const data = await response.json();
+
+                        // Verificar novas notificações
+                        if (data.notifications.length > 0) {
+                            const newestId = data.notifications[0].id;
+                            if (newestId > this.lastNotificationId && this.lastNotificationId !== 0) {
+                                this.playSound();
+                                this.showNewNotificationToast(data.notifications[0]);
+                            }
+                            this.lastNotificationId = newestId;
+                        }
+
+                        this.notifications = data.notifications;
+                        this.unreadCount = data.unread_count;
+                    } catch (error) {
+                        console.error('Erro ao buscar notificações:', error);
+                    }
+                },
+
+                toggleDropdown() {
+                    this.open = !this.open;
+                    if (this.open) {
+                        this.fetchNotifications();
+                    }
+                },
+
+                async markAsRead(notificationId) {
+                    try {
+                        await fetch(`/admin/notifications/${notificationId}/read`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            }
+                        });
+                        this.fetchNotifications();
+                    } catch (error) {
+                        console.error('Erro ao marcar notificação como lida:', error);
+                    }
+                },
+
+                async markAllAsRead() {
+                    try {
+                        await fetch('/admin/notifications/mark-all-read', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            }
+                        });
+                        this.fetchNotifications();
+                    } catch (error) {
+                        console.error('Erro ao marcar todas como lidas:', error);
+                    }
+                },
+
+                toggleSound() {
+                    localStorage.setItem('notification_sound', this.soundEnabled);
+                },
+
+                playSound() {
+                    if (this.soundEnabled) {
+                        // Criar um som simples usando Web Audio API
+                        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+
+                        oscillator.frequency.value = 800;
+                        oscillator.type = 'sine';
+
+                        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.5);
+                    }
+                },
+
+                showNewNotificationToast(notification) {
+                    window.dispatchEvent(new CustomEvent('show-toast', {
+                        detail: { message: notification.title, type: 'info' }
+                    }));
+                },
+
+                getNotificationIcon(type) {
+                    const icons = {
+                        'user_created': '<path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"></path>',
+                        'user_updated': '<path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>',
+                        'user_deleted': '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>',
+                        'system': '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>',
+                        'warning': '<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>',
+                        'default': '<path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path>'
+                    };
+                    return icons[type] || icons['default'];
+                },
+
+                getNotificationColor(type) {
+                    const colors = {
+                        'user_created': 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+                        'user_updated': 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400',
+                        'user_deleted': 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
+                        'system': 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
+                        'warning': 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400',
+                        'default': 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                    };
+                    return colors[type] || colors['default'];
+                }
+            }));
+        });
     </script>
 
     @yield('scripts')

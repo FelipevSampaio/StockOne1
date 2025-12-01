@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Restaurante;
 use App\Models\AuditLog;
+use App\Models\AdminNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -98,6 +99,14 @@ class UserAdminController extends Controller
             'restaurante_id' => $user->restaurante_id,
         ]);
 
+        // Criar notificação
+        AdminNotification::createNotification(
+            'user_created',
+            'Novo usuário cadastrado',
+            "{$user->name} foi adicionado ao sistema como " . ($user->role === 'admin' ? 'administrador' : 'usuário'),
+            ['user_id' => $user->id, 'user_name' => $user->name]
+        );
+
         return redirect()->route('admin.users.index')
             ->with('success', 'Usuário criado com sucesso!');
     }
@@ -148,6 +157,14 @@ class UserAdminController extends Controller
         // Registrar auditoria se houve mudanças
         if (!empty($changes)) {
             AuditLog::log('update', 'User', $user->id, $changes);
+            
+            // Criar notificação
+            AdminNotification::createNotification(
+                'user_updated',
+                'Usuário atualizado',
+                "As informações de {$user->name} foram atualizadas",
+                ['user_id' => $user->id, 'changes' => array_keys($changes)]
+            );
         }
 
         return redirect()->route('admin.users.index')
@@ -167,6 +184,14 @@ class UserAdminController extends Controller
             'name' => $user->name,
             'email' => $user->email,
         ]);
+
+        // Criar notificação
+        AdminNotification::createNotification(
+            'user_deleted',
+            'Usuário desativado',
+            "{$user->name} foi desativado do sistema",
+            ['user_id' => $user->id, 'user_name' => $user->name]
+        );
 
         return redirect()->route('admin.users.index')
             ->with('success', 'Usuário desativado com sucesso!');

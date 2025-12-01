@@ -14,8 +14,8 @@
 
 @section('content')
 
-    <!-- Filtros Minimalistas -->
-    <form method="GET" action="{{ route('admin.users.index') }}" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-6">
+    <!-- Filtros Avançados -->
+    <form method="GET" action="{{ route('admin.users.index') }}" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-6" x-data="filterManager()">
         <div class="flex flex-wrap items-center gap-3">
             <div class="relative flex-1 min-w-[200px]">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,15 +43,66 @@
                 <option value="inativo" @selected(request('status') === 'inativo')>Inativo</option>
             </select>
 
+            <button type="button" @click="showAdvanced = !showAdvanced" class="p-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" title="Filtros Avançados">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                </svg>
+            </button>
+
             <button type="submit" class="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
                 Filtrar
             </button>
 
             @if(request()->anyFilled(['search', 'restaurante_id', 'role', 'status']))
-                <a href="{{ route('admin.users.index') }}" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                    Limpar
+                <a href="{{ route('admin.users.index') }}" class="inline-flex items-center px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Limpar Todos
                 </a>
             @endif
+
+            <button type="button" @click="saveCurrentFilter()" class="p-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" title="Salvar Filtro">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Filtros Avançados -->
+        <div x-show="showAdvanced" x-cloak x-transition class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Criação (De)</label>
+                    <input type="date" name="created_from" value="{{ request('created_from') }}" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Criação (Até)</label>
+                    <input type="date" name="created_to" value="{{ request('created_to') }}" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Ordenar por</label>
+                    <select name="sort" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                        <option value="newest">Mais Recentes</option>
+                        <option value="oldest">Mais Antigos</option>
+                        <option value="name_asc">Nome (A-Z)</option>
+                        <option value="name_desc">Nome (Z-A)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros Salvos -->
+        <div x-show="savedFilters.length > 0" x-cloak class="mt-3 flex flex-wrap gap-2">
+            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Filtros salvos:</span>
+            <template x-for="(filter, index) in savedFilters" :key="index">
+                <button type="button" @click="applyFilter(filter)" class="inline-flex items-center px-2 py-1 text-xs bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
+                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                    </svg>
+                    <span x-text="filter.name"></span>
+                </button>
+            </template>
         </div>
     </form>
 
@@ -202,4 +253,80 @@
     <div class="mt-6">
         {{ $users->links() }}
     </div>
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('filterManager', () => ({
+            showAdvanced: false,
+            savedFilters: [],
+
+            init() {
+                // Carregar filtros salvos do localStorage
+                const saved = localStorage.getItem('user_filters');
+                if (saved) {
+                    this.savedFilters = JSON.parse(saved);
+                }
+            },
+
+            saveCurrentFilter() {
+                const form = this.$el;
+                const formData = new FormData(form);
+                const filterData = {};
+                let filterName = '';
+
+                // Extrair dados do formulário
+                for (let [key, value] of formData.entries()) {
+                    if (value) {
+                        filterData[key] = value;
+                        if (!filterName && key !== '_token') {
+                            filterName += value.substring(0, 15);
+                        }
+                    }
+                }
+
+                if (Object.keys(filterData).length === 0) {
+                    alert('Configure pelo menos um filtro antes de salvar');
+                    return;
+                }
+
+                // Pedir nome do filtro
+                const name = prompt('Nome do filtro:', filterName || 'Meu Filtro');
+                if (!name) return;
+
+                // Adicionar à lista
+                this.savedFilters.push({
+                    name: name,
+                    data: filterData
+                });
+
+                // Salvar no localStorage
+                localStorage.setItem('user_filters', JSON.stringify(this.savedFilters));
+
+                // Feedback
+                const toast = document.createElement('div');
+                toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                toast.textContent = 'Filtro salvo com sucesso!';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            },
+
+            applyFilter(filter) {
+                const form = this.$el;
+
+                // Aplicar cada campo do filtro salvo
+                for (let [key, value] of Object.entries(filter.data)) {
+                    const input = form.querySelector(`[name="${key}"]`);
+                    if (input) {
+                        input.value = value;
+                    }
+                }
+
+                // Submeter o formulário
+                form.submit();
+            }
+        }));
+    });
+</script>
 @endsection

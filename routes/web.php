@@ -17,6 +17,7 @@ use App\Http\Controllers\RestauranteAdminController;
 use App\Http\Controllers\DashboardAdminController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -40,6 +41,12 @@ Route::middleware('auth')->group(function () {
     Route::middleware('admin')->group(function () {
         // Dashboard administrativo
         Route::get('admin/dashboard', [DashboardAdminController::class, 'index'])->name('admin.dashboard');
+        Route::get('admin/dashboard/activity-data', [DashboardAdminController::class, 'activityData'])->name('admin.dashboard.activity-data');
+
+        // Notificações
+        Route::get('admin/notifications', [NotificationController::class, 'index'])->name('admin.notifications.index');
+        Route::post('admin/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('admin.notifications.read');
+        Route::post('admin/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('admin.notifications.mark-all-read');
 
         // Logs de auditoria
         Route::get('admin/audit-logs', [AuditLogController::class, 'index'])->name('admin.audit-logs.index');

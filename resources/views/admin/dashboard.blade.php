@@ -63,6 +63,24 @@
         </div>
     </div>
 
+    <!-- Gráfico de Atividade -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Atividade do Sistema</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Usuários ativos nos últimos dias</p>
+            </div>
+            <div x-data="{ period: '7d' }" class="flex gap-2">
+                <button @click="period = '7d'; updateChart('7d')" :class="period === '7d' ? 'bg-red-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors">7 dias</button>
+                <button @click="period = '30d'; updateChart('30d')" :class="period === '30d' ? 'bg-red-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors">30 dias</button>
+                <button @click="period = '90d'; updateChart('90d')" :class="period === '90d' ? 'bg-red-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors">90 dias</button>
+            </div>
+        </div>
+        <div class="h-64">
+            <canvas id="activityChart"></canvas>
+        </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Usuários Recentes -->
         <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
@@ -142,4 +160,125 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    let activityChart;
+    let isLoading = false;
+
+    // Inicializar gráfico
+    async function initChart() {
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#e5e7eb' : '#374151';
+        const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+        const ctx = document.getElementById('activityChart').getContext('2d');
+        activityChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: []
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            color: textColor,
+                            usePointStyle: true,
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: isDark ? '#1f2937' : '#ffffff',
+                        titleColor: isDark ? '#e5e7eb' : '#111827',
+                        bodyColor: isDark ? '#e5e7eb' : '#374151',
+                        borderColor: isDark ? '#374151' : '#e5e7eb',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: true
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: gridColor,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: textColor,
+                            precision: 0
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: textColor
+                        }
+                    }
+                }
+            }
+        });
+
+        // Carregar dados iniciais
+        await loadChartData('7d');
+    }
+
+    // Carregar dados do backend
+    async function loadChartData(period) {
+        if (isLoading) return;
+
+        isLoading = true;
+        const canvas = document.getElementById('activityChart');
+        canvas.style.opacity = '0.5';
+
+        try {
+            const response = await fetch(`{{ route('admin.dashboard.activity-data') }}?period=${period}`);
+            const data = await response.json();
+
+            activityChart.data.labels = data.labels;
+            activityChart.data.datasets = data.datasets;
+            activityChart.update();
+        } catch (error) {
+            console.error('Erro ao carregar dados do gráfico:', error);
+        } finally {
+            canvas.style.opacity = '1';
+            isLoading = false;
+        }
+    }
+
+    // Atualizar gráfico quando mudar o período
+    window.updateChart = function(period) {
+        loadChartData(period);
+    };
+
+    // Inicializar quando a página carregar
+    document.addEventListener('DOMContentLoaded', () => {
+        initChart();
+
+        // Recarregar quando o modo escuro mudar
+        const observer = new MutationObserver(() => {
+            if (activityChart) {
+                activityChart.destroy();
+                initChart();
+            }
+        });
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+    });
+</script>
 @endsection
