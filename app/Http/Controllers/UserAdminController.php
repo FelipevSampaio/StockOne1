@@ -39,8 +39,14 @@ class UserAdminController extends Controller
         }
 
         // Filtro por restaurante
-        if ($request->filled('restaurante_id')) {
-            $query->where('restaurante_id', $request->get('restaurante_id'));
+        if ($request->has('restaurante_id')) {
+            if ($request->get('restaurante_id') === 'null' || $request->get('restaurante_id') === '') {
+                // Filtrar usuários sem restaurante
+                $query->whereNull('restaurante_id');
+            } elseif ($request->filled('restaurante_id')) {
+                // Filtrar por restaurante específico
+                $query->where('restaurante_id', $request->get('restaurante_id'));
+            }
         }
 
         // Filtro por papel

@@ -42,7 +42,7 @@
             </svg>
             Admins
         </a>
-        <a href="{{ route('admin.users.index', ['restaurante_id' => '']) }}" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+        <a href="{{ route('admin.users.index', ['restaurante_id' => 'null']) }}" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg {{ request('restaurante_id') === 'null' || (request()->has('restaurante_id') && request('restaurante_id') === '') ? 'bg-orange-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }} transition-colors">
             <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
             </svg>
