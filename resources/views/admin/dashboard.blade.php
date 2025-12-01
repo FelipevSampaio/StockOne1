@@ -4,10 +4,36 @@
 @section('page-title', 'Dashboard Administrativo')
 
 @section('content')
+    <!-- Ações Rápidas -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-3">
+            <a href="{{ route('admin.users.create') }}" class="btn-primary">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Novo Usuário
+            </a>
+            <a href="{{ route('admin.restaurantes.create') }}" class="btn-secondary">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+                Novo Restaurante
+            </a>
+        </div>
+        <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+            <svg class="w-4 h-4 animate-pulse text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span>Sistema operacional</span>
+            <span class="text-xs">•</span>
+            <span id="lastUpdate">Atualizado agora</span>
+        </div>
+    </div>
+
     <!-- Cards de Estatísticas -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <!-- Total de Usuários -->
-        <div class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+        <a href="{{ route('admin.users.index') }}" class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer block">
             <div class="flex items-center justify-between mb-4">
                 <div class="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg group-hover:scale-110 transition-transform duration-300">
                     <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -17,13 +43,23 @@
                 <span class="text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded">+12%</span>
             </div>
             <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Total de Usuários</h3>
-            <p class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">{{ $totalUsers }}</p>
+            <div class="flex items-end gap-2 mb-2">
+                <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ $totalUsers }}</p>
+                <span class="text-xs text-green-600 dark:text-green-400 font-medium mb-1 flex items-center">
+                    <svg class="w-3 h-3 mr-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                    12%
+                </span>
+            </div>
             <p class="text-xs text-gray-500 dark:text-gray-400">
                 <span class="text-green-600 dark:text-green-400 font-medium">{{ $totalUsersActive }}</span> ativos •
                 <span class="text-red-600 dark:text-red-400 font-medium">{{ $totalUsersInactive }}</span> inativos
             </p>
-        </div>        <!-- Administradores -->
-        <div class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+        </a>
+
+        <!-- Administradores -->
+        <a href="{{ route('admin.users.index', ['role' => 'admin']) }}" class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer block">
             <div class="flex items-center justify-between mb-4">
                 <div class="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
                     <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,10 +69,13 @@
             </div>
             <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Administradores</h3>
             <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ $totalAdmins }}</p>
-        </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                {{ $totalRegularUsers }} usuários regulares
+            </p>
+        </a>
 
         <!-- Restaurantes -->
-        <div class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+        <a href="{{ route('admin.restaurantes.index') }}" class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer block">
             <div class="flex items-center justify-between mb-4">
                 <div class="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
                     <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -46,10 +85,13 @@
             </div>
             <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Restaurantes</h3>
             <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ $totalRestaurantes }}</p>
-        </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                <span class="text-green-600 dark:text-green-400 font-medium">{{ $restaurantesAtivos }}</span> ativos
+            </p>
+        </a>
 
         <!-- Pedidos Hoje -->
-        <div class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+        <a href="#" class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer block">
             <div class="flex items-center justify-between mb-4">
                 <div class="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
                     <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,10 +107,10 @@
                     <span class="font-medium">{{ $pedidosPendentes }}</span> pendentes
                 </p>
             @endif
-        </div>
+        </a>
 
         <!-- Insumos -->
-        <div class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+        <a href="#" class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer block">
             <div class="flex items-center justify-between mb-4">
                 <div class="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg group-hover:scale-110 transition-transform duration-300">
                     <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,10 +132,10 @@
                     <span class="font-medium">{{ $insumosEstoqueBaixo }}</span> com estoque baixo
                 </p>
             @endif
-        </div>
+        </a>
 
         <!-- Cardápio -->
-        <div class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+        <a href="#" class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer block">
             <div class="flex items-center justify-between mb-4">
                 <div class="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg group-hover:scale-110 transition-transform duration-300">
                     <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,10 +145,10 @@
             </div>
             <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Itens do Cardápio</h3>
             <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ $totalCardapioItens }}</p>
-        </div>
+        </a>
 
         <!-- Logs de Auditoria -->
-        <div class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+        <a href="{{ route('admin.audit-logs') }}" class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer block">
             <div class="flex items-center justify-between mb-4">
                 <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg group-hover:scale-110 transition-transform duration-300">
                     <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -117,10 +159,10 @@
             <h3 class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Logs de Auditoria</h3>
             <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ $totalAuditLogs }}</p>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Registros de atividades</p>
-        </div>
+        </a>
 
         <!-- Total de Pedidos -->
-        <div class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+        <a href="#" class="group bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer block">
             <div class="flex items-center justify-between mb-4">
                 <div class="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg group-hover:scale-110 transition-transform duration-300">
                     <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,24 +175,110 @@
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 <span class="text-blue-600 dark:text-blue-400 font-medium">{{ $pedidosEsteMes }}</span> este mês
             </p>
-        </div>
+        </a>
     </div>
 
-    <!-- Gráfico de Atividade -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6">
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Atividade do Sistema</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Usuários ativos nos últimos dias</p>
+    <!-- Widget de Alertas Críticos -->
+    @if($insumosEstoqueBaixo > 0 || $pedidosPendentes > 0)
+    <div class="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-xl shadow-sm p-6 border border-orange-200 dark:border-orange-800 mb-8">
+        <div class="flex items-start gap-4">
+            <div class="p-3 bg-orange-500 rounded-lg">
+                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
             </div>
-            <div x-data="{ period: '7d' }" class="flex gap-2">
-                <button @click="period = '7d'; updateChart('7d')" :class="period === '7d' ? 'btn-toggle-active' : 'btn-toggle-inactive'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors">7 dias</button>
-                <button @click="period = '30d'; updateChart('30d')" :class="period === '30d' ? 'btn-toggle-active' : 'btn-toggle-inactive'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors">30 dias</button>
-                <button @click="period = '90d'; updateChart('90d')" :class="period === '90d' ? 'btn-toggle-active' : 'btn-toggle-inactive'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors">90 dias</button>
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    🚨 Alertas Críticos que Requerem Atenção
+                </h3>
+                <div class="space-y-2">
+                    @if($insumosEstoqueBaixo > 0)
+                    <a href="#" class="flex items-center gap-2 text-orange-700 dark:text-orange-300 hover:text-orange-900 dark:hover:text-orange-100 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                        <span class="font-medium">{{ $insumosEstoqueBaixo }} insumo(s) com estoque baixo</span>
+                        <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                    @endif
+                    @if($pedidosPendentes > 0)
+                    <a href="#" class="flex items-center gap-2 text-orange-700 dark:text-orange-300 hover:text-orange-900 dark:hover:text-orange-100 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                        </svg>
+                        <span class="font-medium">{{ $pedidosPendentes }} pedido(s) aguardando processamento</span>
+                        <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                    @endif
+                </div>
             </div>
         </div>
-        <div class="h-64">
-            <canvas id="activityChart"></canvas>
+    </div>
+    @endif
+
+    <!-- Gráficos -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <!-- Gráfico de Atividade -->
+        <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Atividade do Sistema</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Usuários ativos nos últimos dias</p>
+                </div>
+                <div x-data="{ period: '7d' }" class="flex gap-2">
+                    <button @click="period = '7d'; updateChart('7d')" :class="period === '7d' ? 'btn-toggle-active' : 'btn-toggle-inactive'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors">7 dias</button>
+                    <button @click="period = '30d'; updateChart('30d')" :class="period === '30d' ? 'btn-toggle-active' : 'btn-toggle-inactive'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors">30 dias</button>
+                    <button @click="period = '90d'; updateChart('90d')" :class="period === '90d' ? 'btn-toggle-active' : 'btn-toggle-inactive'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors">90 dias</button>
+                </div>
+            </div>
+            <div class="h-64">
+                <canvas id="activityChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Gráfico de Pizza - Distribuição -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Distribuição</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Usuários por tipo</p>
+            </div>
+            <div class="h-64 flex items-center justify-center">
+                <canvas id="distributionChart"></canvas>
+            </div>
+            <div class="mt-4 space-y-2">
+                <div class="flex items-center justify-between text-sm">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <span class="text-gray-600 dark:text-gray-400">Administradores</span>
+                    </div>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">{{ $totalAdmins }}</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                        <span class="text-gray-600 dark:text-gray-400">Usuários</span>
+                    </div>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">{{ $totalRegularUsers }}</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                        <span class="text-gray-600 dark:text-gray-400">Ativos</span>
+                    </div>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">{{ $totalUsersActive }}</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-gray-500"></div>
+                        <span class="text-gray-600 dark:text-gray-400">Inativos</span>
+                    </div>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">{{ $totalUsersInactive }}</span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -239,9 +367,59 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
     let activityChart;
+    let distributionChart;
     let isLoading = false;
 
-    // Inicializar gráfico
+    // Inicializar gráfico de pizza
+    function initDistributionChart() {
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#e5e7eb' : '#374151';
+
+        const ctx = document.getElementById('distributionChart').getContext('2d');
+        distributionChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Admins', 'Usuários'],
+                datasets: [{
+                    data: [{{ $totalAdmins }}, {{ $totalRegularUsers }}],
+                    backgroundColor: [
+                        'rgb(220, 38, 38)',
+                        'rgb(59, 130, 246)'
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: isDark ? '#1f2937' : '#ffffff',
+                        titleColor: isDark ? '#e5e7eb' : '#111827',
+                        bodyColor: isDark ? '#e5e7eb' : '#374151',
+                        borderColor: isDark ? '#374151' : '#e5e7eb',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Inicializar gráfico de atividade
     async function initChart() {
         const isDark = document.documentElement.classList.contains('dark');
         const textColor = isDark ? '#e5e7eb' : '#374151';
@@ -340,6 +518,14 @@
     // Inicializar quando a página carregar
     document.addEventListener('DOMContentLoaded', () => {
         initChart();
+        initDistributionChart();
+
+        // Auto-refresh a cada 5 minutos
+        setInterval(() => {
+            const currentPeriod = document.querySelector('[class*="btn-toggle-active"]')?.dataset?.period || '7d';
+            loadChartData(currentPeriod);
+            updateLastUpdateTime();
+        }, 300000); // 5 minutos
 
         // Recarregar quando o modo escuro mudar
         const observer = new MutationObserver(() => {
@@ -347,11 +533,25 @@
                 activityChart.destroy();
                 initChart();
             }
+            if (distributionChart) {
+                distributionChart.destroy();
+                initDistributionChart();
+            }
         });
         observer.observe(document.documentElement, {
             attributes: true,
             attributeFilter: ['class']
         });
     });
+
+    // Atualizar timestamp de última atualização
+    function updateLastUpdateTime() {
+        const lastUpdateEl = document.getElementById('lastUpdate');
+        if (lastUpdateEl) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            lastUpdateEl.textContent = `Atualizado às ${timeStr}`;
+        }
+    }
 </script>
 @endsection
