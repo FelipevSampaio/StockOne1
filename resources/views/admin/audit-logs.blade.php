@@ -7,7 +7,14 @@
     <!-- Filtros Minimalistas -->
     <form method="GET" action="{{ route('admin.audit-logs.index') }}" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-6">
         <div class="flex flex-wrap items-center gap-3">
-            <select name="action" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500">
+            <div class="relative flex-1 min-w-[200px]">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text" name="search" placeholder="Buscar..." value="{{ request('search') }}" class="pl-10 w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
+            </div>
+
+            <select name="action" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                 <option value="">Ação</option>
                 <option value="create" @selected(request('action') === 'create')>Criação</option>
                 <option value="update" @selected(request('action') === 'update')>Atualização</option>
@@ -15,29 +22,29 @@
                 <option value="restore" @selected(request('action') === 'restore')>Restauração</option>
             </select>
 
-            <select name="model" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500">
+            <select name="model" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                 <option value="">Modelo</option>
                 <option value="User" @selected(request('model') === 'User')>Usuário</option>
                 <option value="Restaurante" @selected(request('model') === 'Restaurante')>Restaurante</option>
                 <option value="Setting" @selected(request('model') === 'Setting')>Configuração</option>
             </select>
 
-            <select name="user_id" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500">
+            <select name="user_id" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                 <option value="">Usuário</option>
                 @foreach($users as $user)
                     <option value="{{ $user->id }}" @selected(request('user_id') == $user->id)>{{ $user->name }}</option>
                 @endforeach
             </select>
 
-            <input type="date" name="date_from" value="{{ request('date_from') }}" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500" placeholder="De">
-            <input type="date" name="date_to" value="{{ request('date_to') }}" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500" placeholder="Até">
+            <input type="date" name="date_from" value="{{ request('date_from') }}" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="De">
+            <input type="date" name="date_to" value="{{ request('date_to') }}" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Até">
 
             <button type="submit" class="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
                 Filtrar
             </button>
 
-            @if(request()->anyFilled(['action', 'model', 'user_id', 'date_from', 'date_to']))
-                <a href="{{ route('admin.audit-logs.index') }}" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors">
+            @if(request()->anyFilled(['search', 'action', 'model', 'user_id', 'date_from', 'date_to']))
+                <a href="{{ route('admin.audit-logs.index') }}" class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
                     Limpar
                 </a>
             @endif
