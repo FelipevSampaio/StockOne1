@@ -157,7 +157,7 @@ class UserAdminController extends Controller
         // Registrar auditoria se houve mudanças
         if (!empty($changes)) {
             AuditLog::log('update', 'User', $user->id, $changes);
-            
+
             // Criar notificação
             AdminNotification::createNotification(
                 'user_updated',
