@@ -491,7 +491,11 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## 👥 Autores
 
-- **Felipe Sampaio** - [@FelipevSampaio](https://github.com/FelipevSampaio)
+- **Clayton Silva** - [@CLSilva2](https://github.com/CLSilva2).
+- **Felipe Sampaio** - [@FelipevSampaio](https://github.com/FelipevSampaio).
+- **PedroSantos719** - [@PedroSantos719](https://github.com/PedroSantos719).
+- **Rodrigo Nascimento** -[@RD57L1](https://github.com/RD57L1).
+- **ThiagoSantos** - [@ThiagoSantos19](https://github.com/ThiagoSantos19).
 
 ---
 
