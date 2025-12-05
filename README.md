@@ -455,7 +455,96 @@ $schedule->call(function () {
 
 ## 📸 Capturas de Tela
 
-> 🚧 Em desenvolvimento - Screenshots serão adicionados em breve
+### 🎨 Dashboard Administrativo
+
+<div align="center">
+
+#### Visão Geral do Dashboard
+![Dashboard Admin](./docs/screenshots/dashboard-admin.png)
+*Dashboard com métricas em tempo real, gráficos de atividade e estatísticas gerais*
+
+---
+
+#### Gestão de Restaurantes com Health Score
+![Gestão de Restaurantes](./docs/screenshots/restaurantes-list.png)
+*Lista de restaurantes com filtros avançados e badges de Health Score*
+
+---
+
+#### Quick View - Análise Detalhada
+![Quick View Modal](./docs/screenshots/quick-view-modal.png)
+*Modal com análise completa do Health Score, tendências e ações recomendadas*
+
+</div>
+
+### 🍽️ Área do Restaurante
+
+<div align="center">
+
+#### Gestão de Estoque
+![Gestão de Estoque](./docs/screenshots/estoque.png)
+*Controle completo de insumos com alertas de estoque baixo*
+
+---
+
+#### Cardápio Digital
+![Cardápio](./docs/screenshots/cardapio.png)
+*Gerenciamento de itens do cardápio com categorização*
+
+---
+
+#### Sistema de Pedidos
+![Pedidos](./docs/screenshots/pedidos.png)
+*Visualização e gestão de pedidos em tempo real*
+
+</div>
+
+### 🌐 Área Pública
+
+<div align="center">
+
+#### Cardápio Online
+![Menu Público](./docs/screenshots/menu-publico.png)
+*Interface responsiva do cardápio para clientes*
+
+---
+
+#### Sistema de Notificações
+![Notificações](./docs/screenshots/notificacoes.png)
+*Central de notificações com prioridades e filtros*
+
+</div>
+
+### 🎨 Temas
+
+<div align="center">
+
+#### Modo Claro
+![Tema Claro](./docs/screenshots/tema-claro.png)
+
+#### Modo Escuro
+![Tema Escuro](./docs/screenshots/tema-escuro.png)
+
+</div>
+
+---
+
+> 💡 **Como adicionar screenshots:**
+> 
+> 1. Tire prints das telas do sistema
+> 2. Salve os arquivos na pasta `docs/screenshots/` com os nomes correspondentes:
+>    - `dashboard-admin.png`
+>    - `restaurantes-list.png`
+>    - `quick-view-modal.png`
+>    - `estoque.png`
+>    - `cardapio.png`
+>    - `pedidos.png`
+>    - `menu-publico.png`
+>    - `notificacoes.png`
+>    - `tema-claro.png`
+>    - `tema-escuro.png`
+> 3. Faça commit e push das imagens
+> 4. As imagens aparecerão automaticamente no README!
 
 ---
 

@@ -1,0 +1,44 @@
+# Screenshots do Projeto
+
+Esta pasta contém as capturas de tela do sistema StockOne.
+
+## Imagens Necessárias:
+
+### Dashboard Administrativo
+- [ ] dashboard-admin.png - Dashboard principal com métricas
+- [ ] restaurantes-list.png - Lista de restaurantes com Health Score
+- [ ] quick-view-modal.png - Modal de análise detalhada
+
+### Área do Restaurante
+- [ ] estoque.png - Gestão de estoque
+- [ ] cardapio.png - Gerenciamento do cardápio
+- [ ] pedidos.png - Sistema de pedidos
+
+### Área Pública
+- [ ] menu-publico.png - Cardápio online para clientes
+- [ ] notificacoes.png - Central de notificações
+
+### Temas
+- [ ] tema-claro.png - Interface em modo claro
+- [ ] tema-escuro.png - Interface em modo escuro
+
+## Recomendações para Screenshots:
+
+- **Resolução:** 1920x1080 ou superior
+- **Formato:** PNG (melhor qualidade)
+- **Conteúdo:** Use dados de exemplo realistas
+- **Browser:** Chrome/Firefox em modo sem extensões
+- **Zoom:** 100% (sem zoom aplicado)
+- **Comprimir:** Use TinyPNG ou similar antes do commit
+
+## Como Adicionar:
+
+1. Tire os prints conforme a lista acima
+2. Salve com os nomes exatos listados
+3. Adicione nesta pasta `docs/screenshots/`
+4. Execute:
+   ```bash
+   git add docs/screenshots/*.png
+   git commit -m "docs: Adiciona screenshots do sistema"
+   git push
+   ```
