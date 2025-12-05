@@ -28,6 +28,19 @@ class AuditLogController extends Controller
 
         $query = AuditLog::with('user')->orderBy('created_at', 'desc');
 
+        // Filtro por busca geral (ID, modelo, usuário)
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('model', 'like', "%{$search}%")
+                  ->orWhere('model_id', 'like', "%{$search}%")
+                  ->orWhere('action', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
         // Filtro por ação
         if ($request->filled('action')) {
             $query->where('action', $request->get('action'));
@@ -43,7 +56,34 @@ class AuditLogController extends Controller
             $query->where('user_id', $request->get('user_id'));
         }
 
-        // Filtro por data
+        // Filtro por período pré-definido
+        if ($request->filled('period')) {
+            $period = $request->get('period');
+            switch ($period) {
+                case 'today':
+                    $query->whereDate('created_at', today());
+                    break;
+                case 'yesterday':
+                    $query->whereDate('created_at', today()->subDay());
+                    break;
+                case 'last_7_days':
+                    $query->where('created_at', '>=', now()->subDays(7));
+                    break;
+                case 'last_30_days':
+                    $query->where('created_at', '>=', now()->subDays(30));
+                    break;
+                case 'this_month':
+                    $query->whereMonth('created_at', now()->month)
+                          ->whereYear('created_at', now()->year);
+                    break;
+                case 'last_month':
+                    $query->whereMonth('created_at', now()->subMonth()->month)
+                          ->whereYear('created_at', now()->subMonth()->year);
+                    break;
+            }
+        }
+
+        // Filtro por data customizada
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->get('date_from'));
         }
@@ -52,20 +92,49 @@ class AuditLogController extends Controller
             $query->whereDate('created_at', '<=', $request->get('date_to'));
         }
 
-        $logs = $query->paginate(20);
-        $users = \App\Models\User::all();
+        // Quantidade por página
+        $perPage = $request->get('per_page', 20);
 
-        // Counters for dashboard cards
-        $usersCount = \App\Models\User::count();
-        $restaurantsCount = \App\Models\Restaurante::count();
-        $transactionsCount = \App\Models\Pedido::count();
+        $logs = $query->paginate($perPage)->appends($request->except('page'));
+        $users = \App\Models\User::orderBy('name')->get();
+
+        // Estatísticas
+        $stats = [
+            'total' => AuditLog::count(),
+            'today' => AuditLog::whereDate('created_at', today())->count(),
+            'this_week' => AuditLog::where('created_at', '>=', now()->startOfWeek())->count(),
+            'this_month' => AuditLog::whereMonth('created_at', now()->month)
+                                    ->whereYear('created_at', now()->year)
+                                    ->count(),
+            'by_action' => [
+                'create' => AuditLog::where('action', 'create')->count(),
+                'update' => AuditLog::where('action', 'update')->count(),
+                'delete' => AuditLog::where('action', 'delete')->count(),
+                'restore' => AuditLog::where('action', 'restore')->count(),
+            ],
+            'top_users' => AuditLog::selectRaw('user_id, COUNT(*) as total')
+                                   ->whereNotNull('user_id')
+                                   ->groupBy('user_id')
+                                   ->orderByDesc('total')
+                                   ->limit(5)
+                                   ->with('user')
+                                   ->get(),
+            'top_models' => AuditLog::selectRaw('model, COUNT(*) as total')
+                                    ->groupBy('model')
+                                    ->orderByDesc('total')
+                                    ->limit(5)
+                                    ->get(),
+        ];
+
+        // Modelos únicos para filtro
+        $models = AuditLog::distinct('model')->pluck('model')->sort()->values();
 
         // If AJAX request, return only the table fragment (for faster pagination)
         if ($request->ajax()) {
             return view('admin.partials.audit-logs-table', compact('logs'));
         }
 
-        return view('admin.audit-logs', compact('logs', 'users', 'usersCount', 'restaurantsCount', 'transactionsCount'));
+        return view('admin.audit-logs', compact('logs', 'users', 'stats', 'models'));
     }
 
     /**
