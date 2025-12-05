@@ -28,7 +28,8 @@ Route::get('/', function () {
 
 Route::get('/menu', [\App\Http\Controllers\PublicMenuController::class, 'index'])->name('public.menu');
 
-Route::get('/login', [AuthController::class, 'showLogin'])->name('auth.login');
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login'); // Nome padrão do Laravel
+Route::get('/entrar', [AuthController::class, 'showLogin'])->name('auth.login'); // Alias
 Route::post('/login', [AuthController::class, 'authenticate'])->name('auth.login.submit');
 
 Route::post('/carrinho', [PublicCartController::class, 'store'])->name('public.cart.store');
@@ -85,7 +86,10 @@ Route::middleware('auth')->group(function () {
 
     // Rotas do restaurante
     Route::middleware('restaurante.session')->group(function () {
-        Route::view('/dashboard', 'dashboard')->name('dashboard');
+        Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard/chart-data', [\App\Http\Controllers\DashboardController::class, 'chartData'])->name('dashboard.chart-data');
+        Route::get('/dashboard/refresh-stats', [\App\Http\Controllers\DashboardController::class, 'refreshStats'])->name('dashboard.refresh-stats');
+        Route::post('/dashboard/clear-cache', [\App\Http\Controllers\DashboardController::class, 'clearCache'])->name('dashboard.clear-cache');
 
         Route::resource('insumos', InsumoController::class)->except(['show']);
         Route::resource('cardapio-itens', CardapioItemController::class)

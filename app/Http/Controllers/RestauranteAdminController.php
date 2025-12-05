@@ -38,7 +38,17 @@ class RestauranteAdminController extends Controller
         $perPage = $request->get('per_page', 15);
         $restaurantes = $query->paginate($perPage)->withQueryString();
 
-        return view('admin.restaurantes.index', compact('restaurantes'));
+        // Estatísticas
+        $stats = [
+            'total' => Restaurante::count(),
+            'ativos' => Restaurante::where('status', 'ativo')->count(),
+            'inativos' => Restaurante::where('status', 'inativo')->count(),
+            'novos' => Restaurante::where('created_at', '>=', now()->subDays(7))->count(),
+            'total_usuarios' => Restaurante::withCount('users')->get()->sum('users_count'),
+            'media_usuarios' => round(Restaurante::withCount('users')->get()->avg('users_count'), 1),
+        ];
+
+        return view('admin.restaurantes.index', compact('restaurantes', 'stats'));
     }
 
     public function create()

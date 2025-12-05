@@ -10,16 +10,64 @@ use Illuminate\Validation\Rule;
 
 class ReceitaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $restauranteId = $this->restauranteId();
 
-        $receitas = Receita::with(['cardapioItem', 'insumo'])
-            ->whereHas('cardapioItem', fn ($query) => $query->where('restaurante_id', $restauranteId))
-            ->orderBy('cardapio_item_id')
-            ->paginate(15);
+        $query = Receita::with(['cardapioItem', 'insumo'])
+            ->whereHas('cardapioItem', fn ($q) => $q->where('restaurante_id', $restauranteId));
 
-        return view('receitas.index', compact('receitas'));
+        // Filtro de busca
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('cardapioItem', fn ($q2) => $q2->where('nome', 'like', "%{$search}%"))
+                  ->orWhereHas('insumo', fn ($q2) => $q2->where('nome', 'like', "%{$search}%"));
+            });
+        }
+
+        // Filtro por essencial
+        if ($request->filled('essencial')) {
+            $query->where('essencial', $request->essencial === 'sim');
+        }
+
+        // Filtro por item do cardápio
+        if ($request->filled('cardapio_item')) {
+            $query->where('cardapio_item_id', $request->cardapio_item);
+        }
+
+        // Ordenação
+        $sortField = $request->get('sort', 'cardapio_item_id');
+        $query->orderBy($sortField);
+
+        $perPage = $request->get('per_page', 15);
+        $receitas = $query->paginate($perPage)->withQueryString();
+
+        // Estatísticas
+        $totalReceitas = Receita::whereHas('cardapioItem', fn ($q) => $q->where('restaurante_id', $restauranteId))->count();
+        $itensComReceita = Receita::whereHas('cardapioItem', fn ($q) => $q->where('restaurante_id', $restauranteId))
+            ->distinct('cardapio_item_id')
+            ->count('cardapio_item_id');
+        $insumosUsados = Receita::whereHas('cardapioItem', fn ($q) => $q->where('restaurante_id', $restauranteId))
+            ->distinct('insumo_id')
+            ->count('insumo_id');
+        $essenciais = Receita::whereHas('cardapioItem', fn ($q) => $q->where('restaurante_id', $restauranteId))
+            ->where('essencial', true)
+            ->count();
+
+        $stats = [
+            'total' => $totalReceitas,
+            'itens_com_receita' => $itensComReceita,
+            'insumos_usados' => $insumosUsados,
+            'essenciais' => $essenciais,
+        ];
+
+        // Lista de itens do cardápio para o filtro
+        $cardapioItens = CardapioItem::where('restaurante_id', $restauranteId)
+            ->orderBy('nome')
+            ->get(['id', 'nome']);
+
+        return view('receitas.index', compact('receitas', 'stats', 'cardapioItens'));
     }
 
     public function create()

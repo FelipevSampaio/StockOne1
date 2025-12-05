@@ -8,16 +8,67 @@ use Illuminate\Http\Request;
 
 class PedidoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $restauranteId = $this->restauranteId();
 
-        $pedidos = Pedido::with(['restaurante', 'usuario'])
-            ->where('restaurante_id', $restauranteId)
-            ->orderByDesc('data_hora_pedido')
-            ->paginate(12);
+        $query = Pedido::with(['restaurante', 'usuario'])
+            ->where('restaurante_id', $restauranteId);
 
-        return view('pedidos.index', compact('pedidos'));
+        // Filtro de busca
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('numero_pedido_externo', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtro por status
+        if ($request->filled('status')) {
+            $query->where('status', $request->get('status'));
+        }
+
+        // Filtro por plataforma
+        if ($request->filled('plataforma')) {
+            $query->where('plataforma_origem', $request->get('plataforma'));
+        }
+
+        // Filtro por data
+        if ($request->filled('data_inicio')) {
+            $query->whereDate('data_hora_pedido', '>=', $request->get('data_inicio'));
+        }
+        if ($request->filled('data_fim')) {
+            $query->whereDate('data_hora_pedido', '<=', $request->get('data_fim'));
+        }
+
+        // Ordenação
+        $sortBy = $request->get('sort', 'data_hora_pedido');
+        $sortOrder = $request->get('order', 'desc');
+        $query->orderBy($sortBy, $sortOrder);
+
+        $perPage = $request->get('per_page', 15);
+        $pedidos = $query->paginate($perPage)->withQueryString();
+
+        // Estatísticas
+        $stats = [
+            'total' => Pedido::where('restaurante_id', $restauranteId)->count(),
+            'hoje' => Pedido::where('restaurante_id', $restauranteId)
+                ->whereDate('data_hora_pedido', today())->count(),
+            'pendentes' => Pedido::where('restaurante_id', $restauranteId)
+                ->where('status', 'pendente')->count(),
+            'receita_hoje' => Pedido::where('restaurante_id', $restauranteId)
+                ->whereDate('data_hora_pedido', today())
+                ->sum('valor_total'),
+        ];
+
+        // Plataformas disponíveis
+        $plataformas = Pedido::where('restaurante_id', $restauranteId)
+            ->distinct()
+            ->orderBy('plataforma_origem')
+            ->pluck('plataforma_origem');
+
+        return view('pedidos.index', compact('pedidos', 'stats', 'plataformas'));
     }
 
     public function create()

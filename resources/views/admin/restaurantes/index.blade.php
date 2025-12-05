@@ -22,6 +22,28 @@
 
 @section('content')
 
+    <!-- Toggle de Visualização -->
+    <div class="mb-4 flex justify-end" x-data="{ currentView: localStorage.getItem('restaurantes_view') || 'table' }">
+        <div class="inline-flex rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-1">
+            <button @click="currentView = 'table'; localStorage.setItem('restaurantes_view', 'table')"
+                    :class="currentView === 'table' ? 'bg-red-600 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+                Tabela
+            </button>
+            <button @click="currentView = 'grid'; localStorage.setItem('restaurantes_view', 'grid')"
+                    :class="currentView === 'grid' ? 'bg-red-600 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                </svg>
+                Grid
+            </button>
+        </div>
+    </div>
+
     <!-- Filtros -->
     <form method="GET" action="{{ route('admin.restaurantes.index') }}" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-6">
         <div class="flex flex-wrap items-center gap-3">
@@ -106,8 +128,33 @@
         </div>
     </div>
 
+    <!-- Container de Visualização -->
+    <div x-data="{ currentView: localStorage.getItem('restaurantes_view') || 'table', isLoading: false }">
+
+    <!-- Skeleton Loading -->
+    <div x-show="isLoading" x-cloak class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
+        <div class="overflow-x-auto">
+            <div class="animate-pulse p-6 space-y-4">
+                @for($i = 0; $i < 8; $i++)
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
+                    <div class="flex-1 space-y-2">
+                        <div class="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
+                        <div class="h-3 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div>
+                    </div>
+                    <div class="w-20 h-6 bg-gray-300 dark:bg-gray-700 rounded"></div>
+                    <div class="flex gap-2">
+                        <div class="w-16 h-8 bg-gray-300 dark:bg-gray-700 rounded"></div>
+                        <div class="w-16 h-8 bg-gray-300 dark:bg-gray-700 rounded"></div>
+                    </div>
+                </div>
+                @endfor
+            </div>
+        </div>
+    </div>
+
     <!-- Tabela -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden" x-data="bulkActions()">
+    <div x-show="!isLoading && currentView === 'table'" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden" x-data="bulkActions()" x-transition>
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-gray-50 dark:bg-gray-900">
@@ -146,8 +193,36 @@
                                         </div>
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $restaurante->nome }}</div>
+                                        <div class="flex items-center gap-2">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $restaurante->nome }}</div>
+                                            @if($restaurante->created_at >= now()->subDays(7))
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
+                                                    <svg class="w-3 h-3 mr-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                                    </svg>
+                                                    Novo
+                                                </span>
+                                            @endif
+                                            @php
+                                                $usersCount = $restaurante->users_count;
+                                                $badgeColor = $usersCount === 0 ? 'red' : ($usersCount < 5 ? 'yellow' : 'green');
+                                            @endphp
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-{{ $badgeColor }}-100 dark:bg-{{ $badgeColor }}-900/30 text-{{ $badgeColor }}-800 dark:text-{{ $badgeColor }}-400" title="{{ $usersCount }} usuário(s) vinculado(s)">
+                                                <svg class="w-3 h-3 mr-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                                                </svg>
+                                                {{ $usersCount }}
+                                            </span>
+                                        </div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">{{ $restaurante->cnpj }}</div>
+                                        @if($restaurante->updated_at >= now()->subDays(7))
+                                            <div class="mt-1 flex items-center text-xs">
+                                                <svg class="w-3 h-3 mr-1 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                                </svg>
+                                                <span class="text-green-600 dark:text-green-400 font-medium">Ativo recentemente</span>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </td>
@@ -167,11 +242,11 @@
                                     {{ ucfirst($restaurante->status) }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <td class="px-6 py-4 whitespace-nowrap text-right" x-data="{ open: false }">
                                 <div class="flex items-center justify-end gap-2">
                                     <!-- Botão Ver Detalhes -->
                                     <button @click="quickView({{ $restaurante->id }})"
-                                            class="btn-ripple inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 rounded-lg transition-all duration-200 border border-purple-200 dark:border-purple-800 hover:scale-105"
+                                            class="inline-flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium"
                                             title="Ver detalhes">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -180,42 +255,58 @@
                                         <span class="hidden xl:inline">Ver</span>
                                     </button>
 
-                                    <!-- Botão Editar -->
-                                    <a href="{{ route('admin.restaurantes.edit', $restaurante) }}"
-                                       class="btn-ripple inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-all duration-200 border border-blue-200 dark:border-blue-800 hover:scale-105"
-                                       title="Editar restaurante">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                        </svg>
-                                        <span class="hidden xl:inline">Editar</span>
-                                    </a>
-
-                                    <!-- Botão Toggle Status -->
-                                    <button @click="toggleStatus({{ $restaurante->id }}, '{{ $restaurante->status }}')"
-                                            class="btn-ripple inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium {{ $restaurante->status === 'ativo' ? 'text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 border-yellow-200 dark:border-yellow-800' : 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 border-green-200 dark:border-green-800' }} rounded-lg transition-all duration-200 border hover:scale-105"
-                                            title="{{ $restaurante->status === 'ativo' ? 'Desativar' : 'Ativar' }} restaurante">
-                                        @if($restaurante->status === 'ativo')
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                    <!-- Dropdown de Ações -->
+                                    <div class="relative inline-block text-left">
+                                        <button @click="open = !open" type="button" class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                                            Ações
+                                            <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                             </svg>
-                                            <span class="hidden xl:inline">Desativar</span>
-                                        @else
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                            </svg>
-                                            <span class="hidden xl:inline">Ativar</span>
-                                        @endif
-                                    </button>
+                                        </button>
 
-                                    <!-- Botão Deletar -->
-                                    <button @click="deleteRestaurante({{ $restaurante->id }}, '{{ $restaurante->nome }}')"
-                                            class="btn-ripple inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-all duration-200 border border-red-200 dark:border-red-800 hover:scale-105"
-                                            title="Excluir restaurante">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
-                                        <span class="hidden xl:inline">Excluir</span>
-                                    </button>
+                                        <div x-show="open"
+                                             @click.away="open = false"
+                                             x-cloak
+                                             x-transition:enter="transition ease-out duration-100"
+                                             x-transition:enter-start="transform opacity-0 scale-95"
+                                             x-transition:enter-end="transform opacity-100 scale-100"
+                                             x-transition:leave="transition ease-in duration-75"
+                                             x-transition:leave-start="transform opacity-100 scale-100"
+                                             x-transition:leave-end="transform opacity-0 scale-95"
+                                             class="origin-top-right absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black dark:ring-gray-700 ring-opacity-5 z-10">
+                                            <div class="py-1">
+                                                <a href="{{ route('admin.restaurantes.edit', $restaurante) }}" class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100">
+                                                    <svg class="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                    </svg>
+                                                    Editar
+                                                </a>
+
+                                                <button @click="toggleStatus({{ $restaurante->id }}, '{{ $restaurante->status }}'); open = false" class="group flex w-full items-center px-4 py-2 text-sm {{ $restaurante->status === 'ativo' ? 'text-yellow-700 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20' : 'text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20' }}">
+                                                    @if($restaurante->status === 'ativo')
+                                                        <svg class="mr-3 h-4 w-4 text-yellow-400 group-hover:text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                                        </svg>
+                                                        Desativar
+                                                    @else
+                                                        <svg class="mr-3 h-4 w-4 text-green-400 group-hover:text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                        </svg>
+                                                        Ativar
+                                                    @endif
+                                                </button>
+
+                                                <div class="border-t border-gray-100 dark:border-gray-700"></div>
+
+                                                <button @click="deleteRestaurante({{ $restaurante->id }}, '{{ $restaurante->nome }}'); open = false" class="group flex w-full items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                                    <svg class="mr-3 h-4 w-4 text-red-400 group-hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                    </svg>
+                                                    Excluir
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -260,6 +351,144 @@
         </div>
     </div>
 
+    <!-- Visualização em Grid -->
+    <div x-show="!isLoading && currentView === 'grid'" x-cloak x-transition class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" x-data="bulkActions()">
+        @foreach($restaurantes as $restaurante)
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200 overflow-hidden"
+                 :class="{ 'ring-2 ring-red-500': selectedRestaurantes.includes({{ $restaurante->id }}) }">
+                <div class="p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox"
+                                   :checked="selectedRestaurantes.includes({{ $restaurante->id }})"
+                                   @change="toggleRestaurante({{ $restaurante->id }})"
+                                   class="rounded border-gray-300 dark:border-gray-600 text-red-600 focus:ring-red-500 dark:bg-gray-700 dark:checked:bg-red-600 transition-all duration-200 cursor-pointer">
+                            <div class="h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $restaurante->status === 'ativo' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300' }}">
+                            {{ ucfirst($restaurante->status) }}
+                        </span>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $restaurante->nome }}</h3>
+                            @if($restaurante->created_at >= now()->subDays(7))
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
+                                    <svg class="w-3 h-3 mr-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                    Novo
+                                </span>
+                            @endif
+                        </div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ $restaurante->cnpj }}</p>
+                    </div>
+
+                    <div class="space-y-2 mb-4">
+                        <div class="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                            <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            {{ $restaurante->email }}
+                        </div>
+                        <div class="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                            <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                            </svg>
+                            {{ $restaurante->telefone ?: 'Não informado' }}
+                        </div>
+                        @php
+                            $usersCount = $restaurante->users_count;
+                            $badgeColor = $usersCount === 0 ? 'red' : ($usersCount < 5 ? 'yellow' : 'green');
+                        @endphp
+                        <div class="flex items-center text-sm">
+                            <svg class="w-4 h-4 mr-2 text-{{ $badgeColor }}-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                            </svg>
+                            <span class="text-{{ $badgeColor }}-600 dark:text-{{ $badgeColor }}-400 font-medium">{{ $usersCount }} usuário(s)</span>
+                        </div>
+                        @if($restaurante->updated_at >= now()->subDays(7))
+                            <div class="flex items-center text-sm">
+                                <svg class="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                                <span class="text-green-600 dark:text-green-400 font-medium">Ativo recentemente</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="flex items-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-700" x-data="{ open: false }">
+                        <button @click="quickView({{ $restaurante->id }})"
+                                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                            Ver
+                        </button>
+
+                        <div class="flex-1 relative">
+                            <button @click="open = !open" type="button" class="w-full btn-ripple inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg transition-all duration-200">
+                                Ações
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+
+                            <div x-show="open"
+                                 @click.away="open = false"
+                                 x-cloak
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="transform opacity-0 scale-95"
+                                 x-transition:enter-end="transform opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-75"
+                                 x-transition:leave-start="transform opacity-100 scale-100"
+                                 x-transition:leave-end="transform opacity-0 scale-95"
+                                 class="origin-top-right absolute right-0 bottom-full mb-2 w-48 rounded-lg shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black dark:ring-gray-700 ring-opacity-5 z-10">
+                                <div class="py-1">
+                                    <a href="{{ route('admin.restaurantes.edit', $restaurante) }}" class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100">
+                                        <svg class="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                        Editar
+                                    </a>
+
+                                    <button @click="toggleStatus({{ $restaurante->id }}, '{{ $restaurante->status }}'); open = false" class="group flex w-full items-center px-4 py-2 text-sm {{ $restaurante->status === 'ativo' ? 'text-yellow-700 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20' : 'text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20' }}">
+                                        @if($restaurante->status === 'ativo')
+                                            <svg class="mr-3 h-4 w-4 text-yellow-400 group-hover:text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                            </svg>
+                                            Desativar
+                                        @else
+                                            <svg class="mr-3 h-4 w-4 text-green-400 group-hover:text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            Ativar
+                                        @endif
+                                    </button>
+
+                                    <div class="border-t border-gray-100 dark:border-gray-700"></div>
+
+                                    <button @click="deleteRestaurante({{ $restaurante->id }}, '{{ $restaurante->nome }}'); open = false" class="group flex w-full items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                        <svg class="mr-3 h-4 w-4 text-red-400 group-hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                        Excluir
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+
     <!-- Paginação com Info -->
     @if($restaurantes->hasPages())
         <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -273,6 +502,82 @@
             </div>
         </div>
     @endif
+    </div>
+
+    <!-- Cards Estatísticos -->
+    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-blue-600 dark:text-blue-400">Total de Restaurantes</p>
+                    <p class="text-3xl font-bold text-blue-900 dark:text-blue-100 mt-2">{{ $stats['total'] }}</p>
+                    <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                        {{ $stats['ativos'] }} ativos · {{ $stats['inativos'] }} inativos
+                    </p>
+                </div>
+                <div class="h-12 w-12 bg-blue-500 dark:bg-blue-600 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-6 border border-green-200 dark:border-green-800">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-green-600 dark:text-green-400">Novos (7 dias)</p>
+                    <p class="text-3xl font-bold text-green-900 dark:text-green-100 mt-2">{{ $stats['novos'] }}</p>
+                    <p class="text-xs text-green-700 dark:text-green-300 mt-1">
+                        @if($stats['total'] > 0)
+                            {{ round(($stats['novos'] / $stats['total']) * 100, 1) }}% do total
+                        @else
+                            0% do total
+                        @endif
+                    </p>
+                </div>
+                <div class="h-12 w-12 bg-green-500 dark:bg-green-600 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-6 border border-purple-200 dark:border-purple-800">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-purple-600 dark:text-purple-400">Total de Usuários</p>
+                    <p class="text-3xl font-bold text-purple-900 dark:text-purple-100 mt-2">{{ $stats['total_usuarios'] }}</p>
+                    <p class="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                        Vinculados aos restaurantes
+                    </p>
+                </div>
+                <div class="h-12 w-12 bg-purple-500 dark:bg-purple-600 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-xl p-6 border border-orange-200 dark:border-orange-800">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-orange-600 dark:text-orange-400">Média de Usuários</p>
+                    <p class="text-3xl font-bold text-orange-900 dark:text-orange-100 mt-2">{{ $stats['media_usuarios'] }}</p>
+                    <p class="text-xs text-orange-700 dark:text-orange-300 mt-1">
+                        Por restaurante
+                    </p>
+                </div>
+                <div class="h-12 w-12 bg-orange-500 dark:bg-orange-600 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('scripts')
@@ -543,8 +848,8 @@
 
                     if (data.success) {
                         const restaurante = data.restaurante;
-                        
-                        const usersHtml = restaurante.users.length > 0 
+
+                        const usersHtml = restaurante.users.length > 0
                             ? restaurante.users.map(user => `
                                 <div class="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
                                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -612,7 +917,7 @@
                                 </div>
 
                                 <div class="flex justify-end gap-2 pt-4">
-                                    <button onclick="window.location.href='/admin/restaurantes/${restaurante.id}/edit'" 
+                                    <button onclick="window.location.href='/admin/restaurantes/${restaurante.id}/edit'"
                                             class="btn-ripple inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>

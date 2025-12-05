@@ -9,16 +9,72 @@ use Illuminate\Validation\Rule;
 
 class CompraSugestaoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $restauranteId = $this->restauranteId();
 
-        $sugestoes = CompraSugestao::with('insumo')
-            ->whereHas('insumo', fn ($query) => $query->where('restaurante_id', $restauranteId))
-            ->orderByDesc('data_geracao')
-            ->paginate(15);
+        $query = CompraSugestao::with('insumo')
+            ->whereHas('insumo', fn ($q) => $q->where('restaurante_id', $restauranteId));
 
-        return view('compras_sugestoes.index', compact('sugestoes'));
+        // Filtro de busca
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('insumo', fn ($q2) => $q2->where('nome', 'like', "%{$search}%"))
+                  ->orWhere('justificativa', 'like', "%{$search}%")
+                  ->orWhere('status', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtro por status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filtro por período
+        if ($request->filled('data_inicio')) {
+            $query->whereDate('data_geracao', '>=', $request->data_inicio);
+        }
+        if ($request->filled('data_fim')) {
+            $query->whereDate('data_geracao', '<=', $request->data_fim);
+        }
+
+        // Ordenação
+        $sortField = $request->get('sort', 'data_geracao');
+        $sortDirection = $request->get('direction', 'desc');
+        $query->orderBy($sortField, $sortDirection);
+
+        $perPage = $request->get('per_page', 15);
+        $sugestoes = $query->paginate($perPage)->withQueryString();
+
+        // Estatísticas
+        $totalSugestoes = CompraSugestao::whereHas('insumo', fn ($q) => $q->where('restaurante_id', $restauranteId))->count();
+
+        $pendentes = CompraSugestao::whereHas('insumo', fn ($q) => $q->where('restaurante_id', $restauranteId))
+            ->where('status', 'pendente')
+            ->count();
+
+        $aprovadas = CompraSugestao::whereHas('insumo', fn ($q) => $q->where('restaurante_id', $restauranteId))
+            ->where('status', 'aprovada')
+            ->count();
+
+        $valorTotal = CompraSugestao::whereHas('insumo', fn ($q) => $q->where('restaurante_id', $restauranteId))
+            ->join('insumos', 'compras_sugestoes.insumo_id', '=', 'insumos.id')
+            ->sum(\DB::raw('compras_sugestoes.quantidade_sugerida * insumos.custo_unitario'));
+
+        $stats = [
+            'total' => $totalSugestoes,
+            'pendentes' => $pendentes,
+            'aprovadas' => $aprovadas,
+            'valor_total' => $valorTotal,
+        ];
+
+        // Lista de status únicos
+        $statusList = CompraSugestao::whereHas('insumo', fn ($q) => $q->where('restaurante_id', $restauranteId))
+            ->distinct('status')
+            ->pluck('status');
+
+        return view('compras_sugestoes.index', compact('sugestoes', 'stats', 'statusList'));
     }
 
     public function create()

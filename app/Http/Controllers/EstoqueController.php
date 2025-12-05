@@ -9,16 +9,72 @@ use Illuminate\Validation\Rule;
 
 class EstoqueController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $restauranteId = $this->restauranteId();
 
-        $estoques = Estoque::with('insumo')
-            ->whereHas('insumo', fn ($query) => $query->where('restaurante_id', $restauranteId))
-            ->orderByDesc('updated_at')
-            ->paginate(12);
+        $query = Estoque::with('insumo.restaurante')
+            ->whereHas('insumo', fn ($q) => $q->where('restaurante_id', $restauranteId));
 
-        return view('estoque.index', compact('estoques'));
+        // Filtro de busca
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('insumo', function ($q) use ($search) {
+                $q->where('nome', 'like', "%{$search}%");
+            })->orWhere('localizacao', 'like', "%{$search}%");
+        }
+
+        // Filtro por nível de estoque
+        if ($request->filled('nivel')) {
+            $query->whereHas('insumo', function ($q) use ($request) {
+                if ($request->nivel === 'baixo') {
+                    $q->whereRaw('estoque.quantidade_atual <= insumos.estoque_minimo');
+                } elseif ($request->nivel === 'ok') {
+                    $q->whereRaw('estoque.quantidade_atual > insumos.estoque_minimo');
+                }
+            });
+        }
+
+        // Ordenação
+        $sortField = $request->get('sort', 'updated_at');
+        $sortDirection = $request->get('direction', 'desc');
+
+        if ($sortField === 'insumo') {
+            $query->join('insumos', 'estoque.insumo_id', '=', 'insumos.id')
+                  ->orderBy('insumos.nome', $sortDirection)
+                  ->select('estoque.*');
+        } else {
+            $query->orderBy($sortField, $sortDirection);
+        }
+
+        $perPage = $request->get('per_page', 15);
+        $estoques = $query->paginate($perPage)->withQueryString();
+
+        // Estatísticas
+        $totalItens = Estoque::whereHas('insumo', fn ($q) => $q->where('restaurante_id', $restauranteId))->count();
+
+        $estoqueBaixo = Estoque::whereHas('insumo', function ($q) use ($restauranteId) {
+            $q->where('restaurante_id', $restauranteId)
+              ->whereRaw('estoque.quantidade_atual <= insumos.estoque_minimo');
+        })->count();
+
+        $valorTotal = Estoque::whereHas('insumo', fn ($q) => $q->where('restaurante_id', $restauranteId))
+            ->join('insumos', 'estoque.insumo_id', '=', 'insumos.id')
+            ->sum(\DB::raw('estoque.quantidade_atual * insumos.custo_unitario'));
+
+        $localizacoes = Estoque::whereHas('insumo', fn ($q) => $q->where('restaurante_id', $restauranteId))
+            ->whereNotNull('localizacao')
+            ->distinct('localizacao')
+            ->count('localizacao');
+
+        $stats = [
+            'total' => $totalItens,
+            'estoque_baixo' => $estoqueBaixo,
+            'valor_total' => $valorTotal,
+            'localizacoes' => $localizacoes,
+        ];
+
+        return view('estoque.index', compact('estoques', 'stats'));
     }
 
     public function create()

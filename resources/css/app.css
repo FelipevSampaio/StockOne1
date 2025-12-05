@@ -9,6 +9,32 @@
 }
 
 @layer components {
+    /* Animações Personalizadas */
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+
+    @keyframes shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+    }
+
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+        50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.6); }
+    }
+
+    .animate-float {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    .animate-shimmer {
+        animation: shimmer 2s infinite linear;
+        background: linear-gradient(to right, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+        background-size: 1000px 100%;
+    }
+
     /* Botão Primário (Vermelho) */
     .btn-primary {
         @apply inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white font-medium rounded-lg shadow-sm hover:bg-red-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-200;

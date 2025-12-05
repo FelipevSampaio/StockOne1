@@ -257,9 +257,66 @@
         <div x-data="{ viewMode: localStorage.getItem('users_view_mode') || 'table' }"
              @view-changed.window="viewMode = $event.detail">
 
+        <!-- Skeleton Loading -->
+        <div x-show="viewMode === 'table'"
+             x-data="{ isLoading: false }"
+             @htmx:before-request.window="isLoading = true"
+             @htmx:after-request.window="isLoading = false"
+             class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+
+            <!-- Skeleton Loader -->
+            <div x-show="isLoading" x-cloak class="animate-pulse">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 dark:bg-gray-900">
+                            <tr>
+                                <th class="px-4 py-4 w-12"><div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-4"></div></th>
+                                <th class="px-6 py-4"><div class="h-3 bg-gray-300 dark:bg-gray-600 rounded w-20"></div></th>
+                                <th class="px-6 py-4"><div class="h-3 bg-gray-300 dark:bg-gray-600 rounded w-24"></div></th>
+                                <th class="px-6 py-4"><div class="h-3 bg-gray-300 dark:bg-gray-600 rounded w-16"></div></th>
+                                <th class="px-6 py-4"><div class="h-3 bg-gray-300 dark:bg-gray-600 rounded w-16"></div></th>
+                                <th class="px-6 py-4"><div class="h-3 bg-gray-300 dark:bg-gray-600 rounded w-20"></div></th>
+                                <th class="px-6 py-4"><div class="h-3 bg-gray-300 dark:bg-gray-600 rounded w-16"></div></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            @for($i = 0; $i < 8; $i++)
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td class="px-4 py-4"><div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4"></div></td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                                        <div class="space-y-2 flex-1">
+                                            <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+                                            <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded w-48"></div>
+                                            <div class="h-1.5 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4"><div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-28"></div></td>
+                                <td class="px-6 py-4"><div class="h-5 bg-gray-200 dark:bg-gray-700 rounded-full w-16"></div></td>
+                                <td class="px-6 py-4"><div class="h-5 bg-gray-200 dark:bg-gray-700 rounded-full w-14"></div></td>
+                                <td class="px-6 py-4">
+                                    <div class="space-y-1.5">
+                                        <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                                        <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex justify-end gap-2">
+                                        <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                                        <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endfor
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         <!-- Visualização em Tabela -->
-        <div x-show="viewMode === 'table'" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <div class="overflow-x-auto">
+        <div x-show="!isLoading" class="overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-gray-50 dark:bg-gray-900">
                     <tr>
@@ -320,27 +377,32 @@
                                             @endif
                                         </div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">{{ $user->email }}</div>
-                                        <div class="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                                            @if($user->last_login_at)
-                                                <span class="flex items-center" title="Último login em {{ $user->last_login_at->format('d/m/Y H:i') }}">
-                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                                    </svg>
+
+                                        <!-- Indicador Visual de Atividade -->
+                                        @if($user->last_login_at)
+                                            @php
+                                                $daysSinceLogin = $user->last_login_at->diffInDays(now());
+                                                $activityPercentage = max(0, min(100, 100 - ($daysSinceLogin * 3.33))); // 30 dias = 0%
+                                                $activityColor = $activityPercentage > 66 ? 'green' : ($activityPercentage > 33 ? 'yellow' : 'red');
+                                            @endphp
+                                            <div class="mt-2 flex items-center text-xs">
+                                                <svg class="w-3 h-3 mr-1 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                </svg>
+                                                <span class="text-{{ $activityColor }}-600 dark:text-{{ $activityColor }}-400 font-medium">
                                                     {{ $user->last_login_at->diffForHumans() }}
                                                 </span>
-                                                @if($user->last_login_ip)
-                                                <span class="text-gray-300 dark:text-gray-600">•</span>
-                                                <span title="IP do último login">{{ $user->last_login_ip }}</span>
-                                                @endif
-                                            @else
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800">
+                                            </div>
+                                        @else
+                                            <div class="mt-2">
+                                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-700">
                                                     <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                                                     </svg>
                                                     Nunca fez login
                                                 </span>
-                                            @endif
-                                        </div>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </td>
@@ -1087,6 +1149,25 @@
         Alpine.data('filterManager', () => ({
             showAdvanced: false
         }));
+
+        // Interceptar submissão de formulário para mostrar skeleton
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterForm = document.querySelector('form[action="{{ route('admin.users.index') }}"]');
+            if (filterForm) {
+                filterForm.addEventListener('submit', function() {
+                    window.dispatchEvent(new CustomEvent('htmx:before-request'));
+                });
+            }
+
+            // Interceptar mudanças nos filtros rápidos
+            document.querySelectorAll('a[href*="admin.users.index"]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    if (this.href !== window.location.href) {
+                        window.dispatchEvent(new CustomEvent('htmx:before-request'));
+                    }
+                });
+            });
+        });
     });
 
     // Funções auxiliares globais

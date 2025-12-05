@@ -7,16 +7,70 @@ use Illuminate\Http\Request;
 
 class InsumoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $restauranteId = $this->restauranteId();
 
-        $insumos = Insumo::with('restaurante')
-            ->where('restaurante_id', $restauranteId)
-            ->orderBy('nome')
-            ->paginate(12);
+        $query = Insumo::with(['restaurante', 'estoque'])
+            ->where('restaurante_id', $restauranteId);
 
-        return view('insumos.index', compact('insumos'));
+        // Filtro de busca
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('nome', 'like', "%{$search}%")
+                  ->orWhere('descricao', 'like', "%{$search}%")
+                  ->orWhere('categoria', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtro por categoria
+        if ($request->filled('categoria')) {
+            $query->where('categoria', $request->get('categoria'));
+        }
+
+        // Filtro por estoque
+        if ($request->filled('estoque')) {
+            $estoque = $request->get('estoque');
+            if ($estoque === 'baixo') {
+                $query->whereHas('estoque', function($q) {
+                    $q->whereColumn('quantidade_atual', '<=', 'insumos.ponto_reposicao_minimo');
+                });
+            } elseif ($estoque === 'ok') {
+                $query->whereHas('estoque', function($q) {
+                    $q->whereColumn('quantidade_atual', '>', 'insumos.ponto_reposicao_minimo');
+                });
+            }
+        }
+
+        // Ordenação
+        $sortBy = $request->get('sort', 'nome');
+        $sortOrder = $request->get('order', 'asc');
+        $query->orderBy($sortBy, $sortOrder);
+
+        $perPage = $request->get('per_page', 15);
+        $insumos = $query->paginate($perPage)->withQueryString();
+
+        // Estatísticas
+        $stats = [
+            'total' => Insumo::where('restaurante_id', $restauranteId)->count(),
+            'estoque_baixo' => Insumo::where('restaurante_id', $restauranteId)
+                ->whereHas('estoque', function($q) {
+                    $q->whereColumn('quantidade_atual', '<=', 'insumos.ponto_reposicao_minimo');
+                })->count(),
+            'categorias' => Insumo::where('restaurante_id', $restauranteId)
+                ->distinct()
+                ->count('categoria'),
+        ];
+
+        // Categorias disponíveis
+        $categorias = Insumo::where('restaurante_id', $restauranteId)
+            ->whereNotNull('categoria')
+            ->distinct()
+            ->orderBy('categoria')
+            ->pluck('categoria');
+
+        return view('insumos.index', compact('insumos', 'stats', 'categorias'));
     }
 
     public function create()

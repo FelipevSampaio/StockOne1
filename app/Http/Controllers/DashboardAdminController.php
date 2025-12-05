@@ -23,6 +23,15 @@ class DashboardAdminController extends Controller
         // Restaurantes
         $totalRestaurantes = Restaurante::count();
         $restaurantesAtivos = Restaurante::where('status', 'ativo')->count();
+        $restaurantesInativos = Restaurante::where('status', 'inativo')->count();
+
+        // Métricas avançadas de restaurantes
+        $restaurantesNovosEsteMes = Restaurante::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+        $restaurantesNovosEstaSemana = Restaurante::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count();
+        $restaurantesSemUsuarios = Restaurante::doesntHave('users')->count();
+        $mediaUsuariosPorRestaurante = $totalRestaurantes > 0 ? round($totalUsersActive / $totalRestaurantes, 1) : 0;
 
         // Pedidos (se a tabela existir)
         $totalPedidos = 0;
@@ -70,7 +79,44 @@ class DashboardAdminController extends Controller
             ->whereNull('deleted_at')
             ->with('restaurante')
             ->groupBy('restaurante_id')
+            ->orderByDesc('total')
+            ->limit(10)
             ->get();
+
+        // Top Restaurantes por pedidos
+        $topRestaurantesPedidos = [];
+        try {
+            $topRestaurantesPedidos = Restaurante::withCount(['users', 'pedidos'])
+                ->orderByDesc('pedidos_count')
+                ->limit(5)
+                ->get();
+        } catch (\Exception $e) {
+            // Ignorar se não houver relação
+        }
+
+        // Health Score dos Restaurantes
+        $restaurantesHealth = $this->calcularHealthScore();
+
+        // Atividades recentes
+        $atividadesRecentes = $this->obterAtividadesRecentes();
+
+        // Comparação com mês anterior
+        $restaurantesMesAnterior = Restaurante::whereMonth('created_at', now()->subMonth()->month)
+            ->whereYear('created_at', now()->subMonth()->year)
+            ->count();
+        $crescimentoRestaurantes = $restaurantesMesAnterior > 0
+            ? round((($restaurantesNovosEsteMes - $restaurantesMesAnterior) / $restaurantesMesAnterior) * 100, 1)
+            : 0;
+
+        $usersMesAnterior = User::whereMonth('created_at', now()->subMonth()->month)
+            ->whereYear('created_at', now()->subMonth()->year)
+            ->count();
+        $usersEsteMes = User::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+        $crescimentoUsuarios = $usersMesAnterior > 0
+            ? round((($usersEsteMes - $usersMesAnterior) / $usersMesAnterior) * 100, 1)
+            : 0;
 
         return view('admin.dashboard', compact(
             'totalUsers',
@@ -80,6 +126,13 @@ class DashboardAdminController extends Controller
             'totalRegularUsers',
             'totalRestaurantes',
             'restaurantesAtivos',
+            'restaurantesInativos',
+            'restaurantesNovosEsteMes',
+            'restaurantesNovosEstaSemana',
+            'restaurantesSemUsuarios',
+            'mediaUsuariosPorRestaurante',
+            'crescimentoRestaurantes',
+            'crescimentoUsuarios',
             'totalPedidos',
             'pedidosHoje',
             'pedidosEsteMes',
@@ -89,7 +142,10 @@ class DashboardAdminController extends Controller
             'totalCardapioItens',
             'totalAuditLogs',
             'usuariosRecentes',
-            'usuariosPorRestaurante'
+            'usuariosPorRestaurante',
+            'topRestaurantesPedidos',
+            'restaurantesHealth',
+            'atividadesRecentes'
         ));
     }
 
@@ -145,5 +201,152 @@ class DashboardAdminController extends Controller
                 ]
             ]
         ]);
+    }
+
+    /**
+     * Calcular Health Score dos restaurantes
+     */
+    private function calcularHealthScore()
+    {
+        $restaurantes = Restaurante::withCount('users')->get();
+        $healthData = [
+            'saudavel' => 0,
+            'atencao' => 0,
+            'critico' => 0,
+            'inativo' => 0,
+            'detalhes' => []
+        ];
+
+        foreach ($restaurantes as $restaurante) {
+            $score = 0;
+            $status = '';
+            $motivos = [];
+
+            // Critérios de saúde
+            if ($restaurante->status === 'ativo') {
+                $score += 25;
+            } else {
+                $motivos[] = 'Status inativo';
+            }
+
+            // Tem usuários?
+            if ($restaurante->users_count > 0) {
+                $score += 25;
+            } else {
+                $motivos[] = 'Sem usuários';
+            }
+
+            // Atividade recente
+            try {
+                $pedidosRecentes = \App\Models\Pedido::where('restaurante_id', $restaurante->id)
+                    ->where('created_at', '>=', now()->subDays(30))
+                    ->count();
+
+                if ($pedidosRecentes > 10) {
+                    $score += 30;
+                } elseif ($pedidosRecentes > 0) {
+                    $score += 15;
+                } else {
+                    $motivos[] = 'Sem pedidos recentes';
+                }
+            } catch (\Exception $e) {
+                // Ignorar se não houver tabela de pedidos
+            }
+
+            // Tem itens no cardápio?
+            try {
+                $itensCardapio = \App\Models\CardapioItem::where('restaurante_id', $restaurante->id)->count();
+                if ($itensCardapio > 0) {
+                    $score += 20;
+                } else {
+                    $motivos[] = 'Sem itens no cardápio';
+                }
+            } catch (\Exception $e) {
+                // Ignorar
+            }
+
+            // Definir status baseado no score
+            if ($score >= 80) {
+                $status = 'saudavel';
+                $healthData['saudavel']++;
+            } elseif ($score >= 50) {
+                $status = 'atencao';
+                $healthData['atencao']++;
+            } elseif ($score >= 25) {
+                $status = 'critico';
+                $healthData['critico']++;
+            } else {
+                $status = 'inativo';
+                $healthData['inativo']++;
+            }
+
+            if ($status === 'critico' || $status === 'inativo') {
+                $healthData['detalhes'][] = [
+                    'restaurante' => $restaurante->nome,
+                    'status' => $status,
+                    'score' => $score,
+                    'motivos' => $motivos
+                ];
+            }
+        }
+
+        return $healthData;
+    }
+
+    /**
+     * Obter atividades recentes do sistema
+     */
+    private function obterAtividadesRecentes()
+    {
+        $atividades = [];
+
+        // Novos restaurantes
+        $novosRestaurantes = Restaurante::orderBy('created_at', 'desc')
+            ->limit(3)
+            ->get()
+            ->map(fn($r) => [
+                'tipo' => 'restaurante_novo',
+                'icone' => 'building',
+                'titulo' => 'Novo restaurante cadastrado',
+                'descricao' => $r->nome,
+                'tempo' => $r->created_at->diffForHumans(),
+                'created_at' => $r->created_at
+            ]);
+
+        // Novos usuários
+        $novosUsuarios = User::orderBy('created_at', 'desc')
+            ->limit(3)
+            ->get()
+            ->map(fn($u) => [
+                'tipo' => 'usuario_novo',
+                'icone' => 'user',
+                'titulo' => 'Novo usuário registrado',
+                'descricao' => $u->name . ' (' . $u->email . ')',
+                'tempo' => $u->created_at->diffForHumans(),
+                'created_at' => $u->created_at
+            ]);
+
+        // Logs de auditoria recentes
+        try {
+            $logsRecentes = \App\Models\AuditLog::with('user')
+                ->orderBy('created_at', 'desc')
+                ->limit(3)
+                ->get()
+                ->map(fn($log) => [
+                    'tipo' => 'auditoria',
+                    'icone' => 'clipboard',
+                    'titulo' => $log->action ?? 'Ação administrativa',
+                    'descricao' => ($log->user ? $log->user->name : 'Sistema') . ' - ' . ($log->description ?? ''),
+                    'tempo' => $log->created_at->diffForHumans(),
+                    'created_at' => $log->created_at
+                ]);
+
+            $atividades = $novosRestaurantes->concat($novosUsuarios)->concat($logsRecentes);
+        } catch (\Exception $e) {
+            $atividades = $novosRestaurantes->concat($novosUsuarios);
+        }
+
+        // Ordenar por data e limitar
+        return $atividades->sortByDesc('created_at')->take(10)->values()->all();
     }
 }

@@ -9,16 +9,67 @@ use Illuminate\Validation\Rule;
 
 class AlertaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $restauranteId = $this->restauranteId();
 
-        $alertas = Alerta::with('insumo')
-            ->whereHas('insumo', fn ($query) => $query->where('restaurante_id', $restauranteId))
-            ->orderByDesc('data_hora_alerta')
-            ->paginate(15);
+        $query = Alerta::with('insumo')
+            ->whereHas('insumo', fn ($q) => $q->where('restaurante_id', $restauranteId));
 
-        return view('alertas.index', compact('alertas'));
+        // Filtro de busca
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('mensagem', 'like', "%{$search}%")
+                  ->orWhere('tipo_alerta', 'like', "%{$search}%")
+                  ->orWhereHas('insumo', fn($q2) => $q2->where('nome', 'like', "%{$search}%"));
+            });
+        }
+
+        // Filtro por tipo
+        if ($request->filled('tipo')) {
+            $query->where('tipo_alerta', $request->get('tipo'));
+        }
+
+        // Filtro por status
+        if ($request->filled('status')) {
+            $status = $request->get('status');
+            if ($status === 'pendente') {
+                $query->where('visualizado', false);
+            } elseif ($status === 'visualizado') {
+                $query->where('visualizado', true);
+            } elseif ($status === 'aberto') {
+                $query->where('resolvido', false);
+            } elseif ($status === 'resolvido') {
+                $query->where('resolvido', true);
+            }
+        }
+
+        $sortBy = $request->get('sort', 'data_hora_alerta');
+        $sortOrder = $request->get('order', 'desc');
+        $query->orderBy($sortBy, $sortOrder);
+
+        $perPage = $request->get('per_page', 15);
+        $alertas = $query->paginate($perPage)->withQueryString();
+
+        // Estatísticas
+        $stats = [
+            'total' => Alerta::whereHas('insumo', fn($q) => $q->where('restaurante_id', $restauranteId))->count(),
+            'pendentes' => Alerta::whereHas('insumo', fn($q) => $q->where('restaurante_id', $restauranteId))
+                ->where('visualizado', false)->count(),
+            'abertos' => Alerta::whereHas('insumo', fn($q) => $q->where('restaurante_id', $restauranteId))
+                ->where('resolvido', false)->count(),
+            'criticos' => Alerta::whereHas('insumo', fn($q) => $q->where('restaurante_id', $restauranteId))
+                ->where('tipo_alerta', 'estoque_baixo')->where('resolvido', false)->count(),
+        ];
+
+        // Tipos disponíveis
+        $tipos = Alerta::whereHas('insumo', fn($q) => $q->where('restaurante_id', $restauranteId))
+            ->distinct()
+            ->orderBy('tipo_alerta')
+            ->pluck('tipo_alerta');
+
+        return view('alertas.index', compact('alertas', 'stats', 'tipos'));
     }
 
     public function create()

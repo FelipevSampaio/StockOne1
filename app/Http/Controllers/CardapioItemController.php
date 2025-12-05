@@ -8,16 +8,65 @@ use Illuminate\Support\Facades\Storage;
 
 class CardapioItemController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $restauranteId = $this->restauranteId();
 
-        $itens = CardapioItem::with('restaurante')
-            ->where('restaurante_id', $restauranteId)
-            ->orderBy('nome')
-            ->paginate(12);
+        $query = CardapioItem::with('restaurante')
+            ->where('restaurante_id', $restauranteId);
 
-        return view('cardapio_itens.index', compact('itens'));
+        // Filtro de busca
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('nome', 'like', "%{$search}%")
+                  ->orWhere('descricao', 'like', "%{$search}%")
+                  ->orWhere('categoria', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtro por categoria
+        if ($request->filled('categoria')) {
+            $query->where('categoria', $request->get('categoria'));
+        }
+
+        // Filtro por status
+        if ($request->filled('status')) {
+            $status = $request->get('status');
+            if ($status === 'online') {
+                $query->where('ativo_online', true);
+            } elseif ($status === 'offline') {
+                $query->where('ativo_online', false);
+            }
+        }
+
+        // Ordenação
+        $sortBy = $request->get('sort', 'nome');
+        $sortOrder = $request->get('order', 'asc');
+        $query->orderBy($sortBy, $sortOrder);
+
+        $perPage = $request->get('per_page', 15);
+        $itens = $query->paginate($perPage)->withQueryString();
+
+        // Estatísticas
+        $stats = [
+            'total' => CardapioItem::where('restaurante_id', $restauranteId)->count(),
+            'online' => CardapioItem::where('restaurante_id', $restauranteId)
+                ->where('ativo_online', true)->count(),
+            'offline' => CardapioItem::where('restaurante_id', $restauranteId)
+                ->where('ativo_online', false)->count(),
+            'categorias' => CardapioItem::where('restaurante_id', $restauranteId)
+                ->distinct()->count('categoria'),
+        ];
+
+        // Categorias disponíveis
+        $categorias = CardapioItem::where('restaurante_id', $restauranteId)
+            ->whereNotNull('categoria')
+            ->distinct()
+            ->orderBy('categoria')
+            ->pluck('categoria');
+
+        return view('cardapio_itens.index', compact('itens', 'stats', 'categorias'));
     }
 
     public function create()
