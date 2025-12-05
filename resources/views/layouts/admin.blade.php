@@ -907,6 +907,7 @@
                 onCancel: null,
 
                 showConfirm({ title, message, type = 'warning', confirmText = 'Confirmar', cancelText = 'Cancelar', onConfirm, onCancel }) {
+                    console.log('Modal showConfirm chamado', { title, message, onConfirm: typeof onConfirm });
                     this.title = title;
                     this.message = message;
                     this.type = type;
@@ -918,9 +919,13 @@
                 },
 
                 confirm() {
+                    console.log('Modal confirm() chamado, onConfirm:', typeof this.onConfirm);
                     this.visible = false;
-                    if (this.onConfirm) {
+                    if (this.onConfirm && typeof this.onConfirm === 'function') {
+                        console.log('Executando onConfirm...');
                         this.onConfirm();
+                    } else {
+                        console.error('onConfirm não é uma função válida:', this.onConfirm);
                     }
                 },
 

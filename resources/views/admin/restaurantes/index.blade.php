@@ -23,9 +23,9 @@
 @section('content')
 
     <!-- Toggle de Visualização -->
-    <div class="mb-4 flex justify-end" x-data="{ currentView: localStorage.getItem('restaurantes_view') || 'table' }">
+    <div class="mb-4 flex justify-end" x-data="viewToggle()">
         <div class="inline-flex rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-1">
-            <button @click="currentView = 'table'; localStorage.setItem('restaurantes_view', 'table')"
+            <button @click="setView('table')"
                     :class="currentView === 'table' ? 'bg-red-600 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
                     class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,7 +33,7 @@
                 </svg>
                 Tabela
             </button>
-            <button @click="currentView = 'grid'; localStorage.setItem('restaurantes_view', 'grid')"
+            <button @click="setView('grid')"
                     :class="currentView === 'grid' ? 'bg-red-600 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
                     class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,6 +60,14 @@
                 <option value="inativo" @selected(request('status') === 'inativo')>Inativo</option>
             </select>
 
+            <select name="health_risk" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                <option value="">📊 Health Score</option>
+                <option value="baixo" @selected(request('health_risk') === 'baixo')>✅ Baixo Risco (60-100)</option>
+                <option value="medio" @selected(request('health_risk') === 'medio')>⚠️ Risco Médio (40-59)</option>
+                <option value="alto" @selected(request('health_risk') === 'alto')>🔶 Alto Risco (20-39)</option>
+                <option value="critico" @selected(request('health_risk') === 'critico')>🔴 Crítico (0-19)</option>
+            </select>
+
             <select name="per_page" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                 <option value="10" @selected(request('per_page') == 10)>10 por página</option>
                 <option value="25" @selected(request('per_page') == 25)>25 por página</option>
@@ -71,7 +79,7 @@
                 Filtrar
             </button>
 
-            @if(request()->anyFilled(['search', 'status']))
+            @if(request()->anyFilled(['search', 'status', 'health_risk']))
                 <a href="{{ route('admin.restaurantes.index') }}" class="inline-flex items-center px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -154,7 +162,7 @@
     </div>
 
     <!-- Tabela -->
-    <div x-show="!isLoading && currentView === 'table'" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden" x-data="bulkActions()" x-transition>
+    <div x-show="!isLoading && currentView === 'table'" x-data="{ ...viewToggle(), ...bulkActions() }" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden" x-transition>
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-gray-50 dark:bg-gray-900">
@@ -231,21 +239,37 @@
                                 <div class="text-sm text-gray-500 dark:text-gray-400">{{ $restaurante->telefone }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-all duration-200 {{ $restaurante->status === 'ativo' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300' }}">
-                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        @if($restaurante->status === 'ativo')
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                        @else
-                                            <path fill-rule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clip-rule="evenodd"/>
-                                        @endif
-                                    </svg>
-                                    {{ ucfirst($restaurante->status) }}
-                                </span>
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-all duration-200 {{ $restaurante->status === 'ativo' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300' }}">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            @if($restaurante->status === 'ativo')
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                            @else
+                                                <path fill-rule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clip-rule="evenodd"/>
+                                            @endif
+                                        </svg>
+                                        {{ ucfirst($restaurante->status) }}
+                                    </span>
+                                    @php
+                                        $healthData = $restaurante->health_data;
+                                        $colorMap = [
+                                            'green' => 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 border-green-300 dark:border-green-700',
+                                            'blue' => 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 border-blue-300 dark:border-blue-700',
+                                            'yellow' => 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 border-yellow-300 dark:border-yellow-700',
+                                            'orange' => 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400 border-orange-300 dark:border-orange-700',
+                                            'red' => 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 border-red-300 dark:border-red-700',
+                                        ];
+                                        $colorClass = $colorMap[$healthData['color']] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 border-gray-300 dark:border-gray-600';
+                                    @endphp
+                                    <button @click="window.quickView({{ $restaurante->id }})" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border transition-all duration-200 hover:scale-105 {{ $colorClass }}" title="Clique para ver análise detalhada">
+                                        📊 {{ $healthData['score'] }}
+                                    </button>
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right" x-data="{ open: false }">
                                 <div class="flex items-center justify-end gap-2">
                                     <!-- Botão Ver Detalhes -->
-                                    <button @click="quickView({{ $restaurante->id }})"
+                                    <button @click="window.quickView({{ $restaurante->id }})"
                                             class="inline-flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium"
                                             title="Ver detalhes">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -282,7 +306,7 @@
                                                     Editar
                                                 </a>
 
-                                                <button @click="toggleStatus({{ $restaurante->id }}, '{{ $restaurante->status }}'); open = false" class="group flex w-full items-center px-4 py-2 text-sm {{ $restaurante->status === 'ativo' ? 'text-yellow-700 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20' : 'text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20' }}">
+                                                <button @click="window.toggleStatus({{ $restaurante->id }}, '{{ $restaurante->status }}'); open = false" class="group flex w-full items-center px-4 py-2 text-sm {{ $restaurante->status === 'ativo' ? 'text-yellow-700 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20' : 'text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20' }}">
                                                     @if($restaurante->status === 'ativo')
                                                         <svg class="mr-3 h-4 w-4 text-yellow-400 group-hover:text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
@@ -298,7 +322,7 @@
 
                                                 <div class="border-t border-gray-100 dark:border-gray-700"></div>
 
-                                                <button @click="deleteRestaurante({{ $restaurante->id }}, '{{ $restaurante->nome }}'); open = false" class="group flex w-full items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                                <button @click="window.deleteRestaurante({{ $restaurante->id }}, '{{ $restaurante->nome }}'); open = false" class="group flex w-full items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
                                                     <svg class="mr-3 h-4 w-4 text-red-400 group-hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                                     </svg>
@@ -352,7 +376,7 @@
     </div>
 
     <!-- Visualização em Grid -->
-    <div x-show="!isLoading && currentView === 'grid'" x-cloak x-transition class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" x-data="bulkActions()">
+    <div x-show="!isLoading && currentView === 'grid'" x-data="{ ...viewToggle(), ...bulkActions() }" x-cloak x-transition class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @foreach($restaurantes as $restaurante)
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200 overflow-hidden"
                  :class="{ 'ring-2 ring-red-500': selectedRestaurantes.includes({{ $restaurante->id }}) }">
@@ -423,7 +447,7 @@
                     </div>
 
                     <div class="flex items-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-700" x-data="{ open: false }">
-                        <button @click="quickView({{ $restaurante->id }})"
+                        <button @click="window.quickView({{ $restaurante->id }})"
                                 class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -458,7 +482,7 @@
                                         Editar
                                     </a>
 
-                                    <button @click="toggleStatus({{ $restaurante->id }}, '{{ $restaurante->status }}'); open = false" class="group flex w-full items-center px-4 py-2 text-sm {{ $restaurante->status === 'ativo' ? 'text-yellow-700 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20' : 'text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20' }}">
+                                    <button @click="window.toggleStatus({{ $restaurante->id }}, '{{ $restaurante->status }}'); open = false" class="group flex w-full items-center px-4 py-2 text-sm {{ $restaurante->status === 'ativo' ? 'text-yellow-700 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20' : 'text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20' }}">
                                         @if($restaurante->status === 'ativo')
                                             <svg class="mr-3 h-4 w-4 text-yellow-400 group-hover:text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
@@ -474,7 +498,7 @@
 
                                     <div class="border-t border-gray-100 dark:border-gray-700"></div>
 
-                                    <button @click="deleteRestaurante({{ $restaurante->id }}, '{{ $restaurante->nome }}'); open = false" class="group flex w-full items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                    <button @click="window.deleteRestaurante({{ $restaurante->id }}, '{{ $restaurante->nome }}'); open = false" class="group flex w-full items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
                                         <svg class="mr-3 h-4 w-4 text-red-400 group-hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                         </svg>
@@ -582,7 +606,28 @@
 
 @section('scripts')
 <script>
+    // Definir funções globais ANTES do Alpine inicializar
+    console.log('Definindo window.restauranteActions...');
+
+    window.restauranteActions = {};
+
     document.addEventListener('alpine:init', () => {
+        Alpine.data('viewToggle', () => ({
+            currentView: localStorage.getItem('restaurantes_view') || 'table',
+
+            init() {
+                window.addEventListener('view-changed', () => {
+                    this.currentView = localStorage.getItem('restaurantes_view') || 'table';
+                });
+            },
+
+            setView(view) {
+                this.currentView = view;
+                localStorage.setItem('restaurantes_view', view);
+                window.dispatchEvent(new CustomEvent('view-changed'));
+            }
+        }));
+
         Alpine.data('bulkActions', () => ({
             selectedRestaurantes: [],
 
@@ -609,10 +654,17 @@
 
             deselectAll() {
                 this.selectedRestaurantes = [];
-            },
+            }
+        }));
 
-            async bulkAction(action) {
-                if (this.selectedRestaurantes.length === 0) {
+        // Funções globais disponíveis para todos os componentes
+        window.restauranteActions = {
+            bulkAction(action) {
+                const bulkActionsComponent = Alpine.$data(document.querySelector('[x-data*="bulkActions"]'));
+                if (!bulkActionsComponent) return;
+
+                const selectedRestaurantes = bulkActionsComponent.selectedRestaurantes;
+                if (selectedRestaurantes.length === 0) {
                     window.dispatchEvent(new CustomEvent('show-toast', {
                         detail: { message: 'Selecione pelo menos um restaurante', type: 'warning' }
                     }));
@@ -626,41 +678,35 @@
                 switch(action) {
                     case 'activate':
                         confirmTitle = 'Ativar Restaurantes';
-                        confirmMessage = `Deseja ativar ${this.selectedRestaurantes.length} restaurante(s)?`;
+                        confirmMessage = `Deseja ativar ${selectedRestaurantes.length} restaurante(s)?`;
                         confirmType = 'info';
                         break;
                     case 'deactivate':
                         confirmTitle = 'Desativar Restaurantes';
-                        confirmMessage = `Deseja desativar ${this.selectedRestaurantes.length} restaurante(s)?`;
+                        confirmMessage = `Deseja desativar ${selectedRestaurantes.length} restaurante(s)?`;
                         confirmType = 'warning';
                         break;
                     case 'delete':
                         confirmTitle = 'Excluir Restaurantes';
-                        confirmMessage = `Deseja realmente excluir ${this.selectedRestaurantes.length} restaurante(s)? Esta ação NÃO pode ser desfeita.`;
+                        confirmMessage = `Deseja realmente excluir ${selectedRestaurantes.length} restaurante(s)? Esta ação NÃO pode ser desfeita.`;
                         confirmType = 'danger';
                         break;
                     case 'export':
                         confirmTitle = 'Exportar Restaurantes';
-                        confirmMessage = `Deseja exportar ${this.selectedRestaurantes.length} restaurante(s) para CSV?`;
+                        confirmMessage = `Deseja exportar ${selectedRestaurantes.length} restaurante(s) para CSV?`;
                         confirmType = 'info';
                         break;
                 }
 
-                const confirmed = await new Promise(resolve => {
-                    window.dispatchEvent(new CustomEvent('show-confirm', {
-                        detail: {
-                            title: confirmTitle,
-                            message: confirmMessage,
-                            type: confirmType,
-                            onConfirm: () => resolve(true),
-                            onCancel: () => resolve(false)
-                        }
-                    }));
-                });
+                const selectedIds = [...selectedRestaurantes];
 
-                if (!confirmed) return;
-
-                window.dispatchEvent(new CustomEvent('show-loading'));
+                window.dispatchEvent(new CustomEvent('show-confirm', {
+                    detail: {
+                        title: confirmTitle,
+                        message: confirmMessage,
+                        type: confirmType,
+                        onConfirm: async () => {
+                            window.dispatchEvent(new CustomEvent('show-loading'));
 
                 try {
                     if (action === 'export') {
@@ -669,167 +715,175 @@
                         form.action = '{{ route("admin.restaurantes.bulk-action") }}';
 
                         const csrfInput = document.createElement('input');
-                        csrfInput.type = 'hidden';
-                        csrfInput.name = '_token';
-                        csrfInput.value = '{{ csrf_token() }}';
-                        form.appendChild(csrfInput);
+                                csrfInput.type = 'hidden';
+                                csrfInput.name = '_token';
+                                csrfInput.value = '{{ csrf_token() }}';
+                                form.appendChild(csrfInput);
 
-                        const actionInput = document.createElement('input');
-                        actionInput.type = 'hidden';
-                        actionInput.name = 'action';
-                        actionInput.value = action;
-                        form.appendChild(actionInput);
+                                const actionInput = document.createElement('input');
+                                actionInput.type = 'hidden';
+                                actionInput.name = 'action';
+                                actionInput.value = action;
+                                form.appendChild(actionInput);
 
-                        this.selectedRestaurantes.forEach(id => {
-                            const idInput = document.createElement('input');
-                            idInput.type = 'hidden';
-                            idInput.name = 'ids[]';
-                            idInput.value = id;
-                            form.appendChild(idInput);
-                        });
+                                selectedIds.forEach(id => {
+                                    const idInput = document.createElement('input');
+                                    idInput.type = 'hidden';
+                                    idInput.name = 'ids[]';
+                                    idInput.value = id;
+                                    form.appendChild(idInput);
+                                });
 
-                        document.body.appendChild(form);
-                        form.submit();
-                        document.body.removeChild(form);
+                                document.body.appendChild(form);
+                                form.submit();
+                                document.body.removeChild(form);
 
-                        window.dispatchEvent(new CustomEvent('hide-loading'));
-                        window.dispatchEvent(new CustomEvent('show-toast', {
-                            detail: { message: 'Download iniciado!', type: 'success' }
-                        }));
-                        return;
-                    }
+                                window.dispatchEvent(new CustomEvent('hide-loading'));
+                                window.dispatchEvent(new CustomEvent('show-toast', {
+                                    detail: { message: 'Download iniciado!', type: 'success' }
+                                }));
+                                return;
+                            }
 
-                    const response = await fetch('{{ route("admin.restaurantes.bulk-action") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            const response = await fetch('{{ route("admin.restaurantes.bulk-action") }}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({
+                                    action: action,
+                                    ids: selectedIds
+                                })
+                            });
+
+                            const data = await response.json();
+
+                            window.dispatchEvent(new CustomEvent('hide-loading'));
+
+                            if (data.success) {
+                                window.dispatchEvent(new CustomEvent('show-toast', {
+                                    detail: { message: data.message, type: 'success' }
+                                }));
+                                setTimeout(() => window.location.reload(), 1000);
+                            } else {
+                                window.dispatchEvent(new CustomEvent('show-toast', {
+                                    detail: { message: data.message, type: 'error' }
+                                }));
+                            }
+                            } catch (error) {
+                                window.dispatchEvent(new CustomEvent('hide-loading'));
+                                console.error('Erro:', error);
+                                window.dispatchEvent(new CustomEvent('show-toast', {
+                                    detail: { message: 'Erro ao processar ação', type: 'error' }
+                                }));
+                            }
                         },
-                        body: JSON.stringify({
-                            action: action,
-                            ids: this.selectedRestaurantes
-                        })
-                    });
-
-                    const data = await response.json();
-
-                    window.dispatchEvent(new CustomEvent('hide-loading'));
-
-                    if (data.success) {
-                        window.dispatchEvent(new CustomEvent('show-toast', {
-                            detail: { message: data.message, type: 'success' }
-                        }));
-                        setTimeout(() => window.location.reload(), 1000);
-                    } else {
-                        window.dispatchEvent(new CustomEvent('show-toast', {
-                            detail: { message: data.message, type: 'error' }
-                        }));
+                        onCancel: () => {}
                     }
-
-                } catch (error) {
-                    window.dispatchEvent(new CustomEvent('hide-loading'));
-                    console.error('Erro:', error);
-                    window.dispatchEvent(new CustomEvent('show-toast', {
-                        detail: { message: 'Erro ao processar ação', type: 'error' }
-                    }));
-                }
+                }));
             },
 
-            async toggleStatus(id, currentStatus) {
+            toggleStatus(id, currentStatus) {
+                console.log('toggleStatus chamado:', id, currentStatus);
                 const newStatus = currentStatus === 'ativo' ? 'inativo' : 'ativo';
                 const action = newStatus === 'ativo' ? 'ativar' : 'desativar';
 
-                const confirmed = await new Promise(resolve => {
-                    window.dispatchEvent(new CustomEvent('show-confirm', {
-                        detail: {
-                            title: `${action.charAt(0).toUpperCase() + action.slice(1)} Restaurante`,
-                            message: `Deseja ${action} este restaurante?`,
-                            type: 'info',
-                            onConfirm: () => resolve(true),
-                            onCancel: () => resolve(false)
+                window.dispatchEvent(new CustomEvent('show-confirm', {
+                    detail: {
+                        title: `${action.charAt(0).toUpperCase() + action.slice(1)} Restaurante`,
+                        message: `Deseja ${action} este restaurante?`,
+                        type: 'info',
+                        onConfirm: async () => {
+                            console.log('onConfirm chamado - iniciando requisição');
+                            window.dispatchEvent(new CustomEvent('show-loading'));
+
+                            try {
+                                console.log('Fazendo requisição para:', `/admin/restaurantes/${id}/toggle-status`);
+                                const response = await fetch(`/admin/restaurantes/${id}/toggle-status`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                    }
+                                });
+
+                                console.log('Status HTTP:', response.status);
+                                const data = await response.json();
+                                console.log('Resposta recebida:', data);
+
+                                window.dispatchEvent(new CustomEvent('hide-loading'));
+
+                                if (data.success) {
+                                    console.log('Status alterado com sucesso! Novo status:', data.status);
+                                    window.dispatchEvent(new CustomEvent('show-toast', {
+                                        detail: { message: data.message, type: 'success' }
+                                    }));
+                                    console.log('Aguardando 1 segundo para recarregar...');
+                                    setTimeout(() => {
+                                        console.log('Recarregando página...');
+                                        window.location.reload();
+                                    }, 1000);
+                                } else {
+                                    console.error('Falha na alteração:', data.message);
+                                    window.dispatchEvent(new CustomEvent('show-toast', {
+                                        detail: { message: data.message, type: 'error' }
+                                    }));
+                                }
+                            } catch (error) {
+                                window.dispatchEvent(new CustomEvent('hide-loading'));
+                                console.error('Erro na requisição:', error);
+                                window.dispatchEvent(new CustomEvent('show-toast', {
+                                    detail: { message: 'Erro ao alterar status: ' + error.message, type: 'error' }
+                                }));
+                            }
+                        },
+                        onCancel: () => {
+                            console.log('Ação cancelada');
                         }
-                    }));
-                });
-
-                if (!confirmed) return;
-
-                window.dispatchEvent(new CustomEvent('show-loading'));
-
-                try {
-                    const response = await fetch(`/admin/restaurantes/${id}/toggle-status`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        }
-                    });
-
-                    const data = await response.json();
-
-                    window.dispatchEvent(new CustomEvent('hide-loading'));
-
-                    if (data.success) {
-                        window.dispatchEvent(new CustomEvent('show-toast', {
-                            detail: { message: data.message, type: 'success' }
-                        }));
-                        setTimeout(() => window.location.reload(), 1000);
-                    } else {
-                        window.dispatchEvent(new CustomEvent('show-toast', {
-                            detail: { message: data.message, type: 'error' }
-                        }));
                     }
-                } catch (error) {
-                    window.dispatchEvent(new CustomEvent('hide-loading'));
-                    console.error('Erro:', error);
-                    window.dispatchEvent(new CustomEvent('show-toast', {
-                        detail: { message: 'Erro ao alterar status', type: 'error' }
-                    }));
-                }
+                }));
             },
 
-            async deleteRestaurante(id, nome) {
-                const confirmed = await new Promise(resolve => {
-                    window.dispatchEvent(new CustomEvent('show-confirm', {
-                        detail: {
-                            title: 'Excluir Restaurante',
-                            message: `Deseja realmente excluir o restaurante "${nome}"? Esta ação NÃO pode ser desfeita e irá desvincular todos os usuários associados.`,
-                            type: 'danger',
-                            onConfirm: () => resolve(true),
-                            onCancel: () => resolve(false)
-                        }
-                    }));
-                });
+            deleteRestaurante(id, nome) {
+                window.dispatchEvent(new CustomEvent('show-confirm', {
+                    detail: {
+                        title: 'Excluir Restaurante',
+                        message: `Deseja realmente excluir o restaurante "${nome}"? Esta ação NÃO pode ser desfeita e irá desvincular todos os usuários associados.`,
+                        type: 'danger',
+                        onConfirm: () => {
+                            window.dispatchEvent(new CustomEvent('show-loading'));
 
-                if (!confirmed) return;
+                            try {
+                                const form = document.createElement('form');
+                                form.method = 'POST';
+                                form.action = `/admin/restaurantes/${id}`;
 
-                window.dispatchEvent(new CustomEvent('show-loading'));
+                                const csrfInput = document.createElement('input');
+                                csrfInput.type = 'hidden';
+                                csrfInput.name = '_token';
+                                csrfInput.value = '{{ csrf_token() }}';
+                                form.appendChild(csrfInput);
 
-                try {
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = `/admin/restaurantes/${id}`;
+                                const methodInput = document.createElement('input');
+                                methodInput.type = 'hidden';
+                                methodInput.name = '_method';
+                                methodInput.value = 'DELETE';
+                                form.appendChild(methodInput);
 
-                    const csrfInput = document.createElement('input');
-                    csrfInput.type = 'hidden';
-                    csrfInput.name = '_token';
-                    csrfInput.value = '{{ csrf_token() }}';
-                    form.appendChild(csrfInput);
-
-                    const methodInput = document.createElement('input');
-                    methodInput.type = 'hidden';
-                    methodInput.name = '_method';
-                    methodInput.value = 'DELETE';
-                    form.appendChild(methodInput);
-
-                    document.body.appendChild(form);
-                    form.submit();
-                } catch (error) {
-                    window.dispatchEvent(new CustomEvent('hide-loading'));
-                    console.error('Erro:', error);
-                    window.dispatchEvent(new CustomEvent('show-toast', {
-                        detail: { message: 'Erro ao excluir restaurante', type: 'error' }
-                    }));
-                }
+                                document.body.appendChild(form);
+                                form.submit();
+                            } catch (error) {
+                                window.dispatchEvent(new CustomEvent('hide-loading'));
+                                console.error('Erro:', error);
+                                window.dispatchEvent(new CustomEvent('show-toast', {
+                                    detail: { message: 'Erro ao excluir restaurante', type: 'error' }
+                                }));
+                            }
+                        },
+                        onCancel: () => {}
+                    }
+                }));
             },
 
             async quickView(id) {
@@ -909,6 +963,148 @@
                                     </div>
                                 </div>
 
+                                ${data.health_data ? `
+                                <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                    <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 block">
+                                        📊 Health Score
+                                    </label>
+
+                                    <!-- Score Principal com Tendência -->
+                                    <div class="mb-4 p-4 rounded-lg bg-gradient-to-r from-${data.health_data.color}-50 to-${data.health_data.color}-100 dark:from-${data.health_data.color}-900/20 dark:to-${data.health_data.color}-800/20 border border-${data.health_data.color}-200 dark:border-${data.health_data.color}-800">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-3xl font-bold text-${data.health_data.color}-800 dark:text-${data.health_data.color}-300">${data.health_data.score}</span>
+                                                    ${data.health_trend ? `
+                                                        <span class="text-2xl">${data.health_trend.icon}</span>
+                                                        ${data.health_trend.difference > 0 ? `
+                                                            <span class="text-sm font-semibold text-${data.health_trend.color}-600 dark:text-${data.health_trend.color}-400">
+                                                                ${data.health_trend.difference > 0 ? '+' : ''}${data.health_trend.difference}
+                                                            </span>
+                                                        ` : ''}
+                                                    ` : ''}
+                                                </div>
+                                                <div class="text-sm font-medium text-${data.health_data.color}-700 dark:text-${data.health_data.color}-400">${data.health_data.status}</div>
+                                                ${data.health_trend && data.health_trend.difference > 0 ? `
+                                                    <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">vs. mês anterior</div>
+                                                ` : ''}
+                                            </div>
+                                            <div class="flex flex-col items-end">
+                                                <div class="text-xs text-${data.health_data.color}-600 dark:text-${data.health_data.color}-400 mb-1">Risco</div>
+                                                <span class="px-3 py-1 rounded text-xs font-bold uppercase ${data.health_data.risk === 'crítico' ? 'bg-red-600 text-white' : data.health_data.risk === 'alto' ? 'bg-orange-600 text-white' : data.health_data.risk === 'médio' ? 'bg-yellow-600 text-white' : 'bg-green-600 text-white'}">
+                                                    ${data.health_data.risk}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Ciclo de Vida -->
+                                        ${data.lifecycle_stage ? `
+                                            <div class="pt-3 border-t border-${data.health_data.color}-200 dark:border-${data.health_data.color}-700">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-lg">${data.lifecycle_stage.icon}</span>
+                                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">${data.lifecycle_stage.stage}</span>
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+
+                                    <!-- Resumo Simples -->
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <span class="text-lg">🔐</span>
+                                                <span class="text-xs font-medium text-gray-900 dark:text-gray-100">Último Login</span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400 ml-6">
+                                                ${data.health_data.last_login_days !== null ? data.health_data.last_login_days + ' dia(s) atrás' : 'Nunca'}
+                                            </p>
+                                        </div>
+
+                                        <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <span class="text-lg">📦</span>
+                                                <span class="text-xs font-medium text-gray-900 dark:text-gray-100">Pedidos (30d)</span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400 ml-6">${data.health_data.pedidos_mes} pedidos</p>
+                                        </div>
+
+                                        <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <span class="text-lg">📊</span>
+                                                <span class="text-xs font-medium text-gray-900 dark:text-gray-100">Insumos</span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400 ml-6">${data.health_data.tem_insumos ? 'Cadastrado' : 'Não cadastrado'}</p>
+                                        </div>
+
+                                        <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <span class="text-lg">🍽️</span>
+                                                <span class="text-xs font-medium text-gray-900 dark:text-gray-100">Cardápio</span>
+                                            </div>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400 ml-6">${data.health_data.tem_cardapio ? 'Ativo' : 'Inativo'}</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Ações Recomendadas -->
+                                    ${data.recommended_actions && data.recommended_actions.length > 0 ? `
+                                        <div class="mt-4">
+                                            <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 block">
+                                                💡 Ações Recomendadas
+                                            </label>
+                                            <div class="space-y-2">
+                                                ${data.recommended_actions.map(action => `
+                                                    <div class="p-3 rounded-lg border ${action.priority === 'critical' ? 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-800' : action.priority === 'high' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-300 dark:border-orange-800' : 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-800'}">
+                                                        <div class="flex items-start gap-2">
+                                                            <span class="text-lg">${action.icon}</span>
+                                                            <div class="flex-1">
+                                                                <div class="flex items-center gap-2 mb-1">
+                                                                    <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">${action.title}</span>
+                                                                    <span class="px-2 py-0.5 rounded text-xs font-medium ${action.priority === 'critical' ? 'bg-red-600 text-white' : action.priority === 'high' ? 'bg-orange-600 text-white' : 'bg-blue-600 text-white'}">
+                                                                        ${action.priority === 'critical' ? 'URGENTE' : action.priority === 'high' ? 'ALTA' : 'MÉDIA'}
+                                                                    </span>
+                                                                </div>
+                                                                <p class="text-xs text-gray-600 dark:text-gray-400">${action.description}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    ` : ''}
+
+                                    <!-- Histórico Simplificado (Últimos 30 dias) -->
+                                    ${data.health_history && data.health_history.length > 0 ? `
+                                        <div class="mt-4">
+                                            <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 block">
+                                                📈 Evolução (Últimos 30 dias)
+                                            </label>
+                                            <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+                                                <div class="flex items-end justify-between gap-1 h-24">
+                                                    ${data.health_history.map(point => `
+                                                        <div class="flex flex-col items-center flex-1" title="${point.date}: ${point.score} pts">
+                                                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-t" style="height: ${point.score}%"></div>
+                                                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 rotate-45 origin-top-left whitespace-nowrap">${point.date}</div>
+                                                        </div>
+                                                    `).join('')}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ` : ''}
+
+                                    <!-- Alertas -->
+                                    ${data.health_data.alerts && data.health_data.alerts.length > 0 ? `
+                                        <div class="mt-3 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+                                            <div class="text-xs font-semibold text-yellow-800 dark:text-yellow-300 mb-2">⚠️ Alertas</div>
+                                            <ul class="space-y-1">
+                                                ${data.health_data.alerts.map(alert => `
+                                                    <li class="text-xs text-yellow-700 dark:text-yellow-400">${alert}</li>
+                                                `).join('')}
+                                            </ul>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                ` : ''}
+
                                 <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
                                     <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                                         <span>Criado em: ${restaurante.created_at}</span>
@@ -964,7 +1160,22 @@
                     }));
                 }
             }
-        }));
+        };
+
+        console.log('window.restauranteActions definido:', window.restauranteActions);
+
+        // Expor funções globalmente para uso em @click
+        window.quickView = window.restauranteActions.quickView.bind(window.restauranteActions);
+        window.toggleStatus = window.restauranteActions.toggleStatus.bind(window.restauranteActions);
+        window.deleteRestaurante = window.restauranteActions.deleteRestaurante.bind(window.restauranteActions);
+        window.bulkAction = window.restauranteActions.bulkAction.bind(window.restauranteActions);
+
+        console.log('Funções globais criadas:', {
+            quickView: typeof window.quickView,
+            toggleStatus: typeof window.toggleStatus,
+            deleteRestaurante: typeof window.deleteRestaurante,
+            bulkAction: typeof window.bulkAction
+        });
     });
 </script>
 @endsection

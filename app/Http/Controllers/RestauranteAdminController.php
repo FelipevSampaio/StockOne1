@@ -34,9 +34,33 @@ class RestauranteAdminController extends Controller
             $query->where('status', $request->get('status'));
         }
 
-        // Paginação com quantidade personalizável
+        // Obter resultados
         $perPage = $request->get('per_page', 15);
-        $restaurantes = $query->paginate($perPage)->withQueryString();
+        $restaurantes = $query->get();
+
+        // Calcular Health Score para cada restaurante
+        $restaurantes = $restaurantes->map(function ($restaurante) {
+            $restaurante->health_data = $restaurante->calculateHealthScore();
+            return $restaurante;
+        });
+
+        // Filtro por Health Score Risk
+        if ($request->filled('health_risk')) {
+            $risk = $request->get('health_risk');
+            $restaurantes = $restaurantes->filter(function ($restaurante) use ($risk) {
+                return $restaurante->health_data['risk'] === $risk;
+            });
+        }
+
+        // Aplicar paginação manual após filtros
+        $currentPage = \Illuminate\Pagination\Paginator::resolveCurrentPage();
+        $restaurantes = new \Illuminate\Pagination\LengthAwarePaginator(
+            $restaurantes->forPage($currentPage, $perPage)->values(),
+            $restaurantes->count(),
+            $perPage,
+            $currentPage,
+            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath(), 'query' => $request->query()]
+        );
 
         // Estatísticas
         $stats = [
@@ -157,7 +181,12 @@ class RestauranteAdminController extends Controller
                 'users' => $restaurante->users,
                 'created_at' => $restaurante->created_at->format('d/m/Y H:i'),
                 'updated_at' => $restaurante->updated_at->format('d/m/Y H:i')
-            ]
+            ],
+            'health_data' => $restaurante->calculateHealthScore(),
+            'health_trend' => $restaurante->getHealthTrend(),
+            'health_history' => $restaurante->getHealthHistory(30),
+            'recommended_actions' => $restaurante->getRecommendedActions(),
+            'lifecycle_stage' => $restaurante->getLifecycleStage()
         ]);
     }
 
