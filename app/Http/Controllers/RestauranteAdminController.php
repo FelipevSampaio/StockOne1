@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Restaurante;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class RestauranteAdminController extends Controller
 {
@@ -146,9 +147,32 @@ class RestauranteAdminController extends Controller
             // Contar usuários vinculados
             $usuariosCount = $restaurante->users()->count();
 
+            // Se desativar, forçar logout de todos os usuários do restaurante
+            if ($newStatus === 'inativo' && $usuariosCount > 0) {
+                // Deletar todas as sessões dos usuários deste restaurante
+                $userIds = $restaurante->users()->pluck('id')->toArray();
+
+                if (!empty($userIds)) {
+                    // Log para debug
+                    \Log::info('Forçando logout dos usuários', [
+                        'restaurante_id' => $restaurante->id,
+                        'restaurante_nome' => $restaurante->nome,
+                        'user_ids' => $userIds
+                    ]);
+
+                    // Remove sessões da tabela sessions
+                    $deletedCount = DB::table('sessions')
+                        ->whereNotNull('user_id')
+                        ->whereIn('user_id', $userIds)
+                        ->delete();
+
+                    \Log::info('Sessões deletadas', ['count' => $deletedCount]);
+                }
+            }
+
             $message = $newStatus === 'ativo'
                 ? "Restaurante ativado com sucesso!"
-                : "Restaurante desativado com sucesso!" . ($usuariosCount > 0 ? " Os {$usuariosCount} usuário(s) vinculado(s) não poderão mais acessar o sistema." : "");
+                : "Restaurante desativado com sucesso!" . ($usuariosCount > 0 ? " Os {$usuariosCount} usuário(s) vinculado(s) foram desconectados automaticamente." : "");
 
             return response()->json([
                 'success' => true,

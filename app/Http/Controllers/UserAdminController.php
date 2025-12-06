@@ -30,7 +30,7 @@ class UserAdminController extends Controller
         $this->checkAdmin();
 
         // Eager loading otimizado para evitar N+1
-        $query = User::withTrashed()->with('restaurante:id,nome');
+        $query = User::withTrashed()->with('restaurante:id,nome,status');
 
         // Filtro de busca
         if ($request->filled('search')) {

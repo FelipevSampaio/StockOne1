@@ -408,11 +408,15 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @if($user->restaurante)
-                                    <div class="flex items-center">
-                                        <svg class="w-4 h-4 text-gray-400 dark:text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                                         </svg>
-                                        <span class="text-sm text-gray-900 dark:text-gray-100">{{ $user->restaurante->nome }}</span>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-sm text-gray-900 dark:text-gray-100">{{ $user->restaurante->nome }}</span>
+                                            <span class="flex-shrink-0 h-2 w-2 rounded-full {{ $user->restaurante->status === 'ativo' ? 'bg-green-500' : 'bg-red-500' }}"
+                                                  title="Restaurante {{ $user->restaurante->status === 'ativo' ? 'ativo' : 'desativado' }}"></span>
+                                        </div>
                                     </div>
                                 @else
                                     <span class="text-sm text-gray-400">—</span>

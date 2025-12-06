@@ -43,12 +43,14 @@ class EnsureRestauranteSession
 
         if ($restaurante->status !== 'ativo') {
             // Restaurante desativado - limpa sessão e faz logout
-            $request->session()->forget(['restaurante_id', 'restaurante_nome']);
+            $restauranteName = $restaurante->nome;
+            $request->session()->forget(['restaurante_id', 'restaurante_nome', 'restaurante_cnpj']);
             auth()->logout();
 
             return redirect()
                 ->route('auth.login')
-                ->with('error', 'Este restaurante está desativado. Entre em contato com o administrador.');
+                ->with('error', "O restaurante '{$restauranteName}' está temporariamente desativado. Entre em contato com o administrador do sistema para mais informações.")
+                ->with('error_type', 'restaurante_desativado');
         }
 
         return $next($request);

@@ -41,17 +41,25 @@ class AuthController extends Controller
             // Verificar se o usuário tem restaurante vinculado
             if (!$user->restaurante_id || !$user->restaurante) {
                 Auth::logout();
-                return back()->withErrors([
-                    'email' => 'Sua conta não está vinculada a nenhum restaurante. Entre em contato com o administrador.',
-                ])->onlyInput('email');
+                return back()
+                    ->withErrors([
+                        'email' => 'Sua conta não está vinculada a nenhum restaurante.'
+                    ])
+                    ->with('error_details', 'Entre em contato com o administrador do sistema para vincular sua conta a um restaurante.')
+                    ->onlyInput('email');
             }
 
             // Verificar se o restaurante está ativo
             if ($user->restaurante->status !== 'ativo') {
+                $restauranteName = $user->restaurante->nome;
                 Auth::logout();
-                return back()->withErrors([
-                    'email' => 'O restaurante vinculado à sua conta está desativado. Entre em contato com o administrador.',
-                ])->onlyInput('email');
+                return back()
+                    ->withErrors([
+                        'email' => "O restaurante '{$restauranteName}' está temporariamente desativado."
+                    ])
+                    ->with('error_details', 'Acesso bloqueado. Entre em contato com o administrador do sistema para reativar o acesso.')
+                    ->with('error_type', 'restaurante_desativado')
+                    ->onlyInput('email');
             }
 
             $request->session()->put('restaurante_id', $user->restaurante_id);
