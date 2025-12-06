@@ -470,6 +470,7 @@ $schedule->call(function () {
 ---
 #### Gestão de Usuários 
 ![Gestão de Restaurante](./screenshots/gestaoRestaurant1.png)
+<br>
 ![Gestão de Restaurante](./screenshots/gestaoRestaurant2.png)
 *Gestão de usuários, podendo criar, remover, e limitar as permissões*
 
