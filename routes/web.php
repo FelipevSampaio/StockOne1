@@ -51,8 +51,17 @@ Route::middleware('auth')->group(function () {
 
         // Logs de auditoria
         Route::get('admin/audit-logs', [AuditLogController::class, 'index'])->name('admin.audit-logs.index');
+        Route::get('admin/audit-logs/{id}', [AuditLogController::class, 'show'])->name('admin.audit-logs.show');
         Route::delete('admin/audit-logs/{id}', [AuditLogController::class, 'destroy'])->name('admin.audit-logs.destroy');
-        Route::post('admin/audit-logs/bulk-delete', [AuditLogController::class, 'bulkDestroy'])->name('admin.audit-logs.bulkDestroy');
+        Route::post('admin/audit-logs/bulk-destroy', [AuditLogController::class, 'bulkDestroy'])->name('admin.audit-logs.bulkDestroy');
+        Route::post('admin/audit-logs/{id}/revert', [AuditLogController::class, 'revert'])->name('admin.audit-logs.revert');
+        Route::post('admin/audit-logs/{id}/note', [AuditLogController::class, 'addNote'])->name('admin.audit-logs.add-note');
+        Route::get('admin/audit-logs/analytics/data', [AuditLogController::class, 'analytics'])->name('admin.audit-logs.analytics');
+        Route::get('admin/audit-logs/search/advanced', [AuditLogController::class, 'advancedSearch'])->name('admin.audit-logs.advanced-search');
+        Route::get('admin/audit-logs/trail', [AuditLogController::class, 'trail'])->name('admin.audit-logs.trail');
+        Route::post('admin/audit-logs/cache/clear', [AuditLogController::class, 'clearCache'])->name('admin.audit-logs.clear-cache');
+        Route::get('admin/audit-logs/export/pdf', [AuditLogController::class, 'exportPdf'])->name('admin.audit-logs.export-pdf');
+        Route::get('admin/audit-logs/export/excel', [AuditLogController::class, 'exportExcel'])->name('admin.audit-logs.export-excel');
 
         // Configurações
         Route::get('admin/settings', [SettingsController::class, 'index'])->name('admin.settings');
