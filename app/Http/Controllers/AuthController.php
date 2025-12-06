@@ -38,12 +38,25 @@ class AuthController extends Controller
                 return redirect()->intended(route('admin.users.index'));
             }
 
-            $request->session()->put('restaurante_id', $user->restaurante_id);
-
-            if ($user->restaurante) {
-                $request->session()->put('restaurante_nome', $user->restaurante->nome);
-                $request->session()->put('restaurante_cnpj', $user->restaurante->cnpj);
+            // Verificar se o usuário tem restaurante vinculado
+            if (!$user->restaurante_id || !$user->restaurante) {
+                Auth::logout();
+                return back()->withErrors([
+                    'email' => 'Sua conta não está vinculada a nenhum restaurante. Entre em contato com o administrador.',
+                ])->onlyInput('email');
             }
+
+            // Verificar se o restaurante está ativo
+            if ($user->restaurante->status !== 'ativo') {
+                Auth::logout();
+                return back()->withErrors([
+                    'email' => 'O restaurante vinculado à sua conta está desativado. Entre em contato com o administrador.',
+                ])->onlyInput('email');
+            }
+
+            $request->session()->put('restaurante_id', $user->restaurante_id);
+            $request->session()->put('restaurante_nome', $user->restaurante->nome);
+            $request->session()->put('restaurante_cnpj', $user->restaurante->cnpj);
 
             return redirect()->intended(route('dashboard'));
         }

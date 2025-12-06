@@ -784,65 +784,81 @@
                 }));
             },
 
-            toggleStatus(id, currentStatus) {
-                console.log('toggleStatus chamado:', id, currentStatus);
+            async toggleStatus(id, currentStatus) {
+                console.log('=== toggleStatus CHAMADO ===');
+                console.log('ID:', id);
+                console.log('Status atual:', currentStatus);
+
                 const newStatus = currentStatus === 'ativo' ? 'inativo' : 'ativo';
                 const action = newStatus === 'ativo' ? 'ativar' : 'desativar';
 
-                window.dispatchEvent(new CustomEvent('show-confirm', {
-                    detail: {
-                        title: `${action.charAt(0).toUpperCase() + action.slice(1)} Restaurante`,
-                        message: `Deseja ${action} este restaurante?`,
-                        type: 'info',
-                        onConfirm: async () => {
-                            console.log('onConfirm chamado - iniciando requisição');
-                            window.dispatchEvent(new CustomEvent('show-loading'));
+                console.log('Novo status será:', newStatus);
+                console.log('Ação:', action);
 
-                            try {
-                                console.log('Fazendo requisição para:', `/admin/restaurantes/${id}/toggle-status`);
-                                const response = await fetch(`/admin/restaurantes/${id}/toggle-status`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                    }
-                                });
+                // Confirmação via confirm nativo primeiro para debug
+                if (!confirm(`Deseja realmente ${action} este restaurante?`)) {
+                    console.log('Usuário cancelou a ação');
+                    return;
+                }
 
-                                console.log('Status HTTP:', response.status);
-                                const data = await response.json();
-                                console.log('Resposta recebida:', data);
+                console.log('Usuário confirmou - iniciando requisição...');
+                window.dispatchEvent(new CustomEvent('show-loading'));
 
-                                window.dispatchEvent(new CustomEvent('hide-loading'));
+                try {
+                    const url = `/admin/restaurantes/${id}/toggle-status`;
+                    console.log('URL da requisição:', url);
+                    console.log('CSRF Token:', '{{ csrf_token() }}');
 
-                                if (data.success) {
-                                    console.log('Status alterado com sucesso! Novo status:', data.status);
-                                    window.dispatchEvent(new CustomEvent('show-toast', {
-                                        detail: { message: data.message, type: 'success' }
-                                    }));
-                                    console.log('Aguardando 1 segundo para recarregar...');
-                                    setTimeout(() => {
-                                        console.log('Recarregando página...');
-                                        window.location.reload();
-                                    }, 1000);
-                                } else {
-                                    console.error('Falha na alteração:', data.message);
-                                    window.dispatchEvent(new CustomEvent('show-toast', {
-                                        detail: { message: data.message, type: 'error' }
-                                    }));
-                                }
-                            } catch (error) {
-                                window.dispatchEvent(new CustomEvent('hide-loading'));
-                                console.error('Erro na requisição:', error);
-                                window.dispatchEvent(new CustomEvent('show-toast', {
-                                    detail: { message: 'Erro ao alterar status: ' + error.message, type: 'error' }
-                                }));
-                            }
-                        },
-                        onCancel: () => {
-                            console.log('Ação cancelada');
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
                         }
+                    });
+
+                    console.log('Status HTTP:', response.status);
+                    console.log('Response OK:', response.ok);
+
+                    const responseText = await response.text();
+                    console.log('Resposta (texto):', responseText);
+
+                    let data;
+                    try {
+                        data = JSON.parse(responseText);
+                        console.log('Resposta (JSON):', data);
+                    } catch (e) {
+                        console.error('Erro ao fazer parse do JSON:', e);
+                        throw new Error('Resposta inválida do servidor');
                     }
-                }));
+
+                    window.dispatchEvent(new CustomEvent('hide-loading'));
+
+                    if (data.success) {
+                        console.log('✅ SUCCESS! Novo status:', data.status);
+                        window.dispatchEvent(new CustomEvent('show-toast', {
+                            detail: { message: data.message || 'Status alterado com sucesso!', type: 'success' }
+                        }));
+                        console.log('Aguardando 800ms para recarregar...');
+                        setTimeout(() => {
+                            console.log('Recarregando página agora...');
+                            window.location.reload();
+                        }, 800);
+                    } else {
+                        console.error('❌ ERRO:', data.message);
+                        window.dispatchEvent(new CustomEvent('show-toast', {
+                            detail: { message: data.message || 'Erro ao alterar status', type: 'error' }
+                        }));
+                    }
+                } catch (error) {
+                    window.dispatchEvent(new CustomEvent('hide-loading'));
+                    console.error('❌ EXCEPTION:', error);
+                    console.error('Stack trace:', error.stack);
+                    window.dispatchEvent(new CustomEvent('show-toast', {
+                        detail: { message: 'Erro ao alterar status: ' + error.message, type: 'error' }
+                    }));
+                }
             },
 
             deleteRestaurante(id, nome) {

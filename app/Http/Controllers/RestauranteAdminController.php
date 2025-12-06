@@ -143,10 +143,18 @@ class RestauranteAdminController extends Controller
             $newStatus = $restaurante->status === 'ativo' ? 'inativo' : 'ativo';
             $restaurante->update(['status' => $newStatus]);
 
+            // Contar usuários vinculados
+            $usuariosCount = $restaurante->users()->count();
+
+            $message = $newStatus === 'ativo'
+                ? "Restaurante ativado com sucesso!"
+                : "Restaurante desativado com sucesso!" . ($usuariosCount > 0 ? " Os {$usuariosCount} usuário(s) vinculado(s) não poderão mais acessar o sistema." : "");
+
             return response()->json([
                 'success' => true,
-                'message' => 'Status alterado com sucesso!',
-                'status' => $newStatus
+                'message' => $message,
+                'status' => $newStatus,
+                'usuarios_afetados' => $usuariosCount
             ]);
         } catch (\Exception $e) {
             return response()->json([
