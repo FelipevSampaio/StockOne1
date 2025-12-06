@@ -460,9 +460,9 @@ $schedule->call(function () {
 <div align="center">
 
 #### Visão Geral do Dashboard
-![Dashboard Admin](./screenshots/dashboards1.png)
-![Dashboard Admin](./screenshots/dashboards2.png)
-![Dashboard Admin](./screenshots/dashboards3.png)
+![Dashboard Admin](./screenshots/dashboard1.png)
+![Dashboard Admin](./screenshots/dashboard2.png)
+![Dashboard Admin](./screenshots/dashboard3.png)
 *Dashboard com métricas em tempo real, gráficos de atividade e estatísticas gerais*
 
 ---
