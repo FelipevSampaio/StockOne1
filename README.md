@@ -468,16 +468,18 @@ $schedule->call(function () {
 *Dashboard com métricas em tempo real, gráficos de atividade e estatísticas gerais*
 
 ---
+#### Gestão de Usuários 
+![Gestão de Restaurante](./screenshots/gestaoRestaurant1.png)
+![Gestão de Restaurante](./screenshots/gestaoRestaurant2.png)
+*Gestão de usuários, podendo criar, remover, e limitar as permissões*
 
+---
 #### Gestão de Restaurantes com Health Score
 ![Gestão de Restaurantes](./docs/screenshots/restaurantes-list.png)
 *Lista de restaurantes com filtros avançados e badges de Health Score*
 
 ---
 
-#### Quick View - Análise Detalhada
-![Quick View Modal](./docs/screenshots/quick-view-modal.png)
-*Modal com análise completa do Health Score, tendências e ações recomendadas*
 
 </div>
 
