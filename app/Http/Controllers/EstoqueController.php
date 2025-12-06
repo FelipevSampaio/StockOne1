@@ -28,9 +28,9 @@ class EstoqueController extends Controller
         if ($request->filled('nivel')) {
             $query->whereHas('insumo', function ($q) use ($request) {
                 if ($request->nivel === 'baixo') {
-                    $q->whereRaw('estoque.quantidade_atual <= insumos.estoque_minimo');
+                    $q->whereRaw('estoque.quantidade_atual <= insumos.ponto_reposicao_minimo');
                 } elseif ($request->nivel === 'ok') {
-                    $q->whereRaw('estoque.quantidade_atual > insumos.estoque_minimo');
+                    $q->whereRaw('estoque.quantidade_atual > insumos.ponto_reposicao_minimo');
                 }
             });
         }
@@ -55,7 +55,7 @@ class EstoqueController extends Controller
 
         $estoqueBaixo = Estoque::whereHas('insumo', function ($q) use ($restauranteId) {
             $q->where('restaurante_id', $restauranteId)
-              ->whereRaw('estoque.quantidade_atual <= insumos.estoque_minimo');
+              ->whereRaw('estoque.quantidade_atual <= insumos.ponto_reposicao_minimo');
         })->count();
 
         $valorTotal = Estoque::whereHas('insumo', fn ($q) => $q->where('restaurante_id', $restauranteId))

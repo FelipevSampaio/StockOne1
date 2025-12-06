@@ -93,6 +93,94 @@ class DashboardController extends Controller
                 \Log::warning('Erro ao calcular itens de estoque crítico: ' . $e->getMessage());
             }
 
+            // Taxa de Conversão (pedidos concluídos vs total - excluindo cancelados)
+            $pedidosConcluidos = Pedido::where('restaurante_id', $restauranteId)
+                ->whereDate('data_hora_pedido', today())
+                ->where('status', 'concluido')
+                ->count();
+
+            $pedidosCancelados = Pedido::where('restaurante_id', $restauranteId)
+                ->whereDate('data_hora_pedido', today())
+                ->where('status', 'cancelado')
+                ->count();
+
+            $taxaConversao = $pedidosHoje > 0
+                ? (($pedidosConcluidos / $pedidosHoje) * 100)
+                : 0;
+
+            // Tempo Médio de Preparo (em minutos)
+            // Como não temos data_hora_conclusao, usamos o tempo_preparo_estimado médio
+            $tempoMedioPreparo = Pedido::where('restaurante_id', $restauranteId)
+                ->whereDate('data_hora_pedido', today())
+                ->where('status', 'concluido')
+                ->whereNotNull('tempo_preparo_estimado')
+                ->avg('tempo_preparo_estimado') ?? 0;
+
+            // Taxa de Recompra (últimos 30 dias - clientes que fizeram 2+ pedidos)
+            // NOTA: Desabilitado temporariamente - campo cliente_nome não existe na tabela pedidos
+            // TODO: Adicionar campo para identificação de clientes (CPF, telefone, email, etc)
+            $clientesUnicos = 0;
+            $clientesRecorrentes = 0;
+            $taxaRecompra = 0;
+
+            /* Código original - reativar quando campo cliente for adicionado:
+            $clientesUnicos = Pedido::where('restaurante_id', $restauranteId)
+                ->where('data_hora_pedido', '>=', now()->subDays(30))
+                ->whereNotNull('cliente_nome')
+                ->distinct('cliente_nome')
+                ->count('cliente_nome');
+
+            $clientesRecorrentes = Pedido::where('restaurante_id', $restauranteId)
+                ->where('data_hora_pedido', '>=', now()->subDays(30))
+                ->whereNotNull('cliente_nome')
+                ->selectRaw('cliente_nome, COUNT(*) as total')
+                ->groupBy('cliente_nome')
+                ->having('total', '>=', 2)
+                ->count();
+
+            $taxaRecompra = $clientesUnicos > 0
+                ? (($clientesRecorrentes / $clientesUnicos) * 100)
+                : 0;
+            */
+
+            // Margem de Lucro Estimada (receita - custo estimado de insumos)
+            // Calculando custo total dos insumos usados nos pedidos de hoje
+            $custoInsumosHoje = DB::table('pedido_itens')
+                ->join('pedidos', 'pedido_itens.pedido_id', '=', 'pedidos.id')
+                ->join('receitas', 'pedido_itens.cardapio_item_id', '=', 'receitas.cardapio_item_id')
+                ->join('insumos', 'receitas.insumo_id', '=', 'insumos.id')
+                ->where('pedidos.restaurante_id', $restauranteId)
+                ->whereDate('pedidos.data_hora_pedido', today())
+                ->where('pedidos.status', 'concluido')
+                ->selectRaw('SUM(pedido_itens.quantidade * receitas.quantidade_necessaria * COALESCE(insumos.custo_unitario, 0)) as custo_total')
+                ->value('custo_total') ?? 0;
+
+            $margemLucro = $receitaHoje > 0
+                ? ((($receitaHoje - $custoInsumosHoje) / $receitaHoje) * 100)
+                : 0;
+
+            // Itens com Estoque Crítico que podem faltar HOJE (baseado na velocidade de venda)
+            $itensRiscoCriticoHoje = 0;
+            try {
+                // Pegar itens vendidos hoje e suas quantidades
+                $itensCriticosHoje = DB::table('estoque')
+                    ->join('insumos', 'estoque.insumo_id', '=', 'insumos.id')
+                    ->join('receitas', 'insumos.id', '=', 'receitas.insumo_id')
+                    ->join('pedido_itens', 'receitas.cardapio_item_id', '=', 'pedido_itens.cardapio_item_id')
+                    ->join('pedidos', 'pedido_itens.pedido_id', '=', 'pedidos.id')
+                    ->where('insumos.restaurante_id', $restauranteId)
+                    ->whereDate('pedidos.data_hora_pedido', today())
+                    ->whereNotNull('insumos.ponto_reposicao_minimo')
+                    ->selectRaw('insumos.id, estoque.quantidade_atual, insumos.ponto_reposicao_minimo, SUM(pedido_itens.quantidade * receitas.quantidade_necessaria) as consumo_hoje')
+                    ->groupBy('insumos.id', 'estoque.quantidade_atual', 'insumos.ponto_reposicao_minimo')
+                    ->havingRaw('quantidade_atual - consumo_hoje <= ponto_reposicao_minimo')
+                    ->count();
+
+                $itensRiscoCriticoHoje = $itensCriticosHoje;
+            } catch (\Exception $e) {
+                \Log::warning('Erro ao calcular itens em risco crítico hoje: ' . $e->getMessage());
+            }
+
             return [
                 'cardapio_count' => CardapioItem::where('restaurante_id', $restauranteId)->count(),
                 'insumos_count' => Insumo::where('restaurante_id', $restauranteId)->count(),
@@ -115,6 +203,17 @@ class DashboardController extends Controller
                 'meta_mes' => $metaMes ?? 0,
                 'progresso_meta' => round(min($progressoMeta ?? 0, 100), 1),
                 'itens_estoque_critico' => $itensEstoqueCritico,
+                // Novas métricas KPI
+                'taxa_conversao' => round($taxaConversao ?? 0, 1),
+                'pedidos_concluidos' => $pedidosConcluidos ?? 0,
+                'pedidos_cancelados' => $pedidosCancelados ?? 0,
+                'tempo_medio_preparo' => round($tempoMedioPreparo ?? 0, 0),
+                'taxa_recompra' => round($taxaRecompra ?? 0, 1),
+                'clientes_recorrentes' => $clientesRecorrentes ?? 0,
+                'clientes_unicos' => $clientesUnicos ?? 0,
+                'margem_lucro' => round($margemLucro ?? 0, 1),
+                'custo_insumos_hoje' => $custoInsumosHoje ?? 0,
+                'itens_risco_critico_hoje' => $itensRiscoCriticoHoje ?? 0,
             ];
         });
 
@@ -389,6 +488,68 @@ class DashboardController extends Controller
                 ];
             }
         }
+
+        // Insight 6: Taxa de conversão baixa
+        if (isset($stats['taxa_conversao']) && $stats['taxa_conversao'] < 70 && $stats['pedidos_hoje'] > 5) {
+            $insights[] = [
+                'type' => 'warning',
+                'icon' => 'alert-triangle',
+                'message' => "Taxa de conversão em {$stats['taxa_conversao']}%. Verifique pedidos cancelados e qualidade do atendimento"
+            ];
+        }
+
+        // Insight 7: Tempo de preparo elevado (estimado)
+        if (isset($stats['tempo_medio_preparo']) && $stats['tempo_medio_preparo'] > 45) {
+            $insights[] = [
+                'type' => 'warning',
+                'icon' => 'clock',
+                'message' => "Tempo estimado de preparo em " . round($stats['tempo_medio_preparo']) . " minutos. Considere otimizar processos"
+            ];
+        } elseif (isset($stats['tempo_medio_preparo']) && $stats['tempo_medio_preparo'] > 0 && $stats['tempo_medio_preparo'] <= 25) {
+            $insights[] = [
+                'type' => 'success',
+                'icon' => 'trending-up',
+                'message' => "Excelente! Tempo estimado de preparo em apenas " . round($stats['tempo_medio_preparo']) . " minutos"
+            ];
+        }
+
+        // Insight 8: Itens em risco de acabar hoje
+        if (isset($stats['itens_risco_critico_hoje']) && $stats['itens_risco_critico_hoje'] > 0) {
+            $insights[] = [
+                'type' => 'warning',
+                'icon' => 'alert-triangle',
+                'message' => "⚠️ {$stats['itens_risco_critico_hoje']} " . ($stats['itens_risco_critico_hoje'] === 1 ? 'item pode' : 'itens podem') . " acabar ainda hoje baseado no ritmo de vendas"
+            ];
+        }
+
+        // Insight 9: Margem de lucro
+        if (isset($stats['margem_lucro'])) {
+            if ($stats['margem_lucro'] < 30 && $stats['receita_hoje'] > 100) {
+                $insights[] = [
+                    'type' => 'warning',
+                    'icon' => 'dollar-sign',
+                    'message' => "Margem de lucro em {$stats['margem_lucro']}%. Revise preços ou custos de insumos"
+                ];
+            } elseif ($stats['margem_lucro'] >= 60) {
+                $insights[] = [
+                    'type' => 'success',
+                    'icon' => 'trophy',
+                    'message' => "Ótima margem de lucro! {$stats['margem_lucro']}% de rentabilidade hoje"
+                ];
+            }
+        }
+
+        // Insight 10: Taxa de recompra (Desabilitado - aguardando implementação de cadastro de clientes)
+        // TODO: Reativar quando campo cliente for adicionado
+        /*
+        if (isset($stats['taxa_recompra']) && $stats['taxa_recompra'] >= 40 && $stats['clientes_unicos'] >= 10) {
+            $insights[] = [
+                'type' => 'success',
+                'icon' => 'target',
+                'message' => "Parabéns! {$stats['taxa_recompra']}% dos clientes voltaram nos últimos 30 dias"
+            ];
+        }
+        */
 
         return $insights;
     }

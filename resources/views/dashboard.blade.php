@@ -116,14 +116,14 @@
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">vs. ontem</p>
                 </div>
-                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                     </svg>
                 </div>
             </div>
             <div class="mt-4">
-                <a href="{{ route('pedidos.index') }}" class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+                <a href="{{ route('pedidos.index') }}" class="text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
                     Ver pedidos →
                 </a>
             </div>
@@ -147,8 +147,8 @@
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">vs. ontem</p>
                 </div>
-                <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
@@ -161,11 +161,11 @@
                 <div>
                     <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Alertas Ativos</p>
                     <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ $stats['alertas_count'] ?? 0 }}</p>
-                    <p class="text-xs text-red-600 dark:text-red-400 mt-1">
+                    <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
                         {{ $stats['itens_estoque_critico'] ?? 0 }} itens críticos
                     </p>
                 </div>
-                <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center {{ $stats['alertas_count'] > 0 ? 'animate-pulse' : '' }}">
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
                     <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                     </svg>
@@ -188,14 +188,14 @@
                         {{ $stats['insumos_count'] ?? 0 }} insumos
                     </p>
                 </div>
-                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                     </svg>
                 </div>
             </div>
             <div class="mt-4">
-                <a href="{{ route('cardapio-itens.index') }}" class="text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300">
+                <a href="{{ route('cardapio-itens.index') }}" class="text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
                     Ver cardápio →
                 </a>
             </div>
@@ -203,17 +203,17 @@
     </div>
 
     <!-- Extra Metrics Row -->
-    <div class="grid gap-6 md:grid-cols-3 mb-6">
+    <div class="grid gap-4 md:grid-cols-3 mb-6">
         <!-- Ticket Médio -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Ticket Médio</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white mt-2" data-stat="ticket_medio">R$ {{ number_format($stats['ticket_medio'] ?? 0, 2, ',', '.') }}</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2" data-stat="ticket_medio">R$ {{ number_format($stats['ticket_medio'] ?? 0, 2, ',', '.') }}</p>
                     <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">por pedido hoje</p>
                 </div>
-                <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
                     </svg>
                 </div>
@@ -221,15 +221,15 @@
         </div>
 
         <!-- Horário de Pico -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Horário de Pico</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white mt-2">{{ $stats['horario_pico'] ?? 'N/A' }}</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ $stats['horario_pico'] ?? 'N/A' }}</p>
                     <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">{{ $stats['horario_pico_pedidos'] ?? 0 }} pedidos</p>
                 </div>
-                <div class="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
@@ -237,23 +237,180 @@
         </div>
 
         <!-- Meta do Mês -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between mb-3">
                 <div>
                     <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Meta do Mês</p>
-                    <p class="text-2xl font-bold text-gray-900 dark:text-white mt-2">{{ number_format($stats['progresso_meta'] ?? 0, 1) }}%</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ number_format($stats['progresso_meta'] ?? 0, 1) }}%</p>
                     <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">R$ {{ number_format($stats['receita_mes'] ?? 0, 2, ',', '.') }} / R$ {{ number_format($stats['meta_mes'] ?? 0, 2, ',', '.') }}</p>
                 </div>
-                <div class="w-10 h-10 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
                     </svg>
                 </div>
             </div>
             <!-- Progress Bar -->
-            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div class="h-2 rounded-full transition-all duration-500 {{ ($stats['progresso_meta'] ?? 0) >= 100 ? 'bg-green-500' : (($stats['progresso_meta'] ?? 0) >= 75 ? 'bg-teal-500' : 'bg-yellow-500') }}"
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                <div class="h-3 rounded-full transition-all duration-500 {{ ($stats['progresso_meta'] ?? 0) >= 100 ? 'bg-green-500' : (($stats['progresso_meta'] ?? 0) >= 75 ? 'bg-red-500' : 'bg-yellow-500') }}"
                      style="width: {{ min($stats['progresso_meta'] ?? 0, 100) }}%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPIs Detalhados -->
+    <div class="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-900/50 dark:to-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+                </svg>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Indicadores de Performance (KPIs)</h3>
+            </div>
+            <span class="text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-1 rounded-full">Atualizado hoje</span>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <!-- Taxa de Conversão -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all hover:scale-105 group">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs px-2 py-0.5 rounded-full {{ ($stats['taxa_conversao'] ?? 0) >= 80 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : (($stats['taxa_conversao'] ?? 0) >= 60 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400') }}">
+                        {{ ($stats['taxa_conversao'] ?? 0) >= 80 ? 'Ótimo' : (($stats['taxa_conversao'] ?? 0) >= 60 ? 'Bom' : 'Atenção') }}
+                    </span>
+                </div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Taxa de Conversão</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ number_format($stats['taxa_conversao'] ?? 0, 1) }}%</p>
+                <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                    {{ $stats['pedidos_concluidos'] ?? 0 }} de {{ $stats['pedidos_hoje'] ?? 0 }} concluídos
+                </p>
+                @if(($stats['pedidos_cancelados'] ?? 0) > 0)
+                    <p class="text-xs text-red-600 dark:text-red-400 mt-1">
+                        {{ $stats['pedidos_cancelados'] ?? 0 }} cancelado{{ ($stats['pedidos_cancelados'] ?? 0) > 1 ? 's' : '' }}
+                    </p>
+                @endif
+            </div>
+
+            <!-- Tempo Médio de Preparo -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all hover:scale-105 group">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs px-2 py-0.5 rounded-full {{ ($stats['tempo_medio_preparo'] ?? 0) <= 25 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : (($stats['tempo_medio_preparo'] ?? 0) <= 40 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400') }}">
+                        {{ ($stats['tempo_medio_preparo'] ?? 0) <= 25 ? 'Rápido' : (($stats['tempo_medio_preparo'] ?? 0) <= 40 ? 'Normal' : 'Lento') }}
+                    </span>
+                </div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Tempo de Preparo</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                    @if(($stats['tempo_medio_preparo'] ?? 0) > 0)
+                        {{ round($stats['tempo_medio_preparo']) }} min
+                    @else
+                        <span class="text-gray-400 dark:text-gray-600">--</span>
+                    @endif
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                    Estimativa média
+                </p>
+                <div class="mt-2 flex items-center text-xs">
+                    @if(($stats['tempo_medio_preparo'] ?? 0) > 0)
+                        @if(($stats['tempo_medio_preparo'] ?? 0) <= 25)
+                            <span class="text-green-600 dark:text-green-400">⚡ Eficiência alta</span>
+                        @elseif(($stats['tempo_medio_preparo'] ?? 0) > 45)
+                            <span class="text-red-600 dark:text-red-400">⚠️ Revisar processos</span>
+                        @endif
+                    @else
+                        <span class="text-gray-400 dark:text-gray-600">Sem dados hoje</span>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Taxa de Recompra -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all hover:scale-105 group opacity-60">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-400">
+                        Em breve
+                    </span>
+                </div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Taxa de Recompra</p>
+                <p class="text-2xl font-bold text-gray-400 dark:text-gray-600 mt-1">
+                    <span class="text-gray-400 dark:text-gray-600">--</span>
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                    Funcionalidade em desenvolvimento
+                </p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    Requer cadastro de clientes
+                </p>
+            </div>
+
+            <!-- Margem de Lucro -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all hover:scale-105 group">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs px-2 py-0.5 rounded-full {{ ($stats['margem_lucro'] ?? 0) >= 60 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : (($stats['margem_lucro'] ?? 0) >= 40 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400') }}">
+                        {{ ($stats['margem_lucro'] ?? 0) >= 60 ? 'Alta' : (($stats['margem_lucro'] ?? 0) >= 40 ? 'Média' : 'Baixa') }}
+                    </span>
+                </div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Margem de Lucro</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ number_format($stats['margem_lucro'] ?? 0, 1) }}%</p>
+                <p class="text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-medium">
+                    +R$ {{ number_format(($stats['receita_hoje'] ?? 0) - ($stats['custo_insumos_hoje'] ?? 0), 2, ',', '.') }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-500">
+                    Custo: R$ {{ number_format($stats['custo_insumos_hoje'] ?? 0, 2, ',', '.') }}
+                </p>
+            </div>
+
+            <!-- Itens em Risco Crítico Hoje -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all hover:scale-105 group {{ ($stats['itens_risco_critico_hoje'] ?? 0) > 0 ? 'ring-2 ring-orange-200 dark:ring-orange-900/50' : '' }}">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform {{ ($stats['itens_risco_critico_hoje'] ?? 0) > 0 ? 'animate-pulse' : '' }}">
+                        <svg class="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                    </div>
+                    @if(($stats['itens_risco_critico_hoje'] ?? 0) > 0)
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 font-medium">
+                            Urgente
+                        </span>
+                    @else
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                            OK
+                        </span>
+                    @endif
+                </div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Risco de Falta Hoje</p>
+                <p class="text-2xl font-bold {{ ($stats['itens_risco_critico_hoje'] ?? 0) > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-gray-900 dark:text-white' }} mt-1">
+                    {{ $stats['itens_risco_critico_hoje'] ?? 0 }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                    {{ ($stats['itens_risco_critico_hoje'] ?? 0) === 1 ? 'item pode' : 'itens podem' }} acabar
+                </p>
+                @if(($stats['itens_risco_critico_hoje'] ?? 0) > 0)
+                    <a href="{{ route('estoque.index') }}" class="text-xs text-orange-600 dark:text-orange-400 hover:underline mt-1 inline-block">
+                        Ver estoque →
+                    </a>
+                @else
+                    <p class="text-xs text-green-600 dark:text-green-400 mt-1">
+                        ✓ Estoque seguro
+                    </p>
+                @endif
             </div>
         </div>
     </div>

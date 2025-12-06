@@ -15,26 +15,26 @@
 @section('content')
     <div class="space-y-6">
         <!-- Estatísticas -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total de Itens</p>
                         <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ $stats['total'] }}</p>
                     </div>
-                    <div class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
                         </svg>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow {{ $stats['estoque_baixo'] > 0 ? 'ring-2 ring-red-200 dark:ring-red-900/50' : '' }}">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Estoque Baixo</p>
-                        <p class="text-3xl font-bold text-red-600 dark:text-red-400 mt-2">{{ $stats['estoque_baixo'] }}</p>
+                        <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ $stats['estoque_baixo'] }}</p>
                     </div>
                     <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
                         <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,28 +44,28 @@
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Valor Total</p>
                         <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">R$ {{ number_format($stats['valor_total'], 2, ',', '.') }}</p>
                     </div>
-                    <div class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Localizações</p>
                         <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ $stats['localizacoes'] }}</p>
                     </div>
-                    <div class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
@@ -179,7 +179,7 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4">
-                                    @if($registro->insumo && $registro->quantidade_atual <= $registro->insumo->estoque_minimo)
+                                    @if($registro->insumo && $registro->insumo->ponto_reposicao_minimo && $registro->quantidade_atual <= $registro->insumo->ponto_reposicao_minimo)
                                         <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
                                             Estoque baixo
                                         </span>

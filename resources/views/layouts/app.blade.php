@@ -27,10 +27,11 @@
         </script>
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     </head>
-    <body class="bg-gray-50 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 transition-colors">
-        <div class="min-h-screen flex" x-data="appLayout()">
-            <!-- Sidebar -->
-            <aside class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-colors shadow-sm">
+    <body class="bg-gray-50 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 transition-colors" x-data="appLayout()">
+        <div class="flex h-screen overflow-hidden" x-data="{ sidebarOpen: false }" x-init="window.addEventListener('resize', () => { if(window.innerWidth >= 1024) sidebarOpen = false; });" x-cloak>
+                 <!-- Sidebar -->
+                 <aside class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out lg:static lg:translate-x-0 lg:block"
+                       :class="window.innerWidth >= 1024 ? 'translate-x-0' : (sidebarOpen ? 'translate-x-0' : '-translate-x-full')" x-transition>
                 <!-- Logo -->
                 <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                     <div class="flex items-center gap-3">
@@ -97,8 +98,16 @@
                 </div>
             </aside>
 
+            <!-- Overlay escuro em mobile -->
+            <div x-show="sidebarOpen && window.innerWidth < 1024" class="fixed inset-0 z-30 bg-black/40 transition-opacity lg:hidden" @click="sidebarOpen = false" x-cloak></div>
+            <!-- Botão para abrir menu lateral em telas pequenas -->
+            <button @click="sidebarOpen = true" class="lg:hidden fixed top-4 left-4 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 shadow focus:outline-none">
+                <svg class="w-6 h-6 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
             <!-- Main Content -->
-            <main class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900">
+            <main class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900 lg:ml-64 overflow-hidden">
                 <!-- Header -->
                 <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 shadow-sm sticky top-0 z-10">
                     <div class="flex items-center justify-between gap-4">
