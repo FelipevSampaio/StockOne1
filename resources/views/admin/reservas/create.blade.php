@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+D@extends('layouts.admin')
 
 @section('content')
     <h1>Nova Reserva</h1>

@@ -7,6 +7,7 @@ Route::get('admin/audit-logs/{id}/edit', [\App\Http\Controllers\Admin\AuditLogCo
 use App\Http\Controllers\AlertaController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CardapioItemController;
+Route::get('/admin/cardapio', [CardapioItemController::class, 'index'])->name('admin.cardapio.index');
 use App\Http\Controllers\CompraSugestaoController;
 use App\Http\Controllers\EstoqueController;
 use App\Http\Controllers\FilaProducaoController;

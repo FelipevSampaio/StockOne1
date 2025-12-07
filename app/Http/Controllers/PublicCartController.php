@@ -14,19 +14,12 @@ class PublicCartController extends Controller
 {
     public function store(Request $request)
     {
-        $restauranteId = $this->publicRestauranteId();
-
-        if (! $restauranteId) {
-            return redirect()->route('public.menu')->with('error', 'Restaurante indisponível no momento.');
-        }
-
         $data = $request->validate([
             'cardapio_item_id' => ['required', 'exists:cardapio_itens,id'],
             'quantity' => ['nullable', 'integer', 'min:1', 'max:99'],
         ]);
 
         $item = CardapioItem::where('ativo_online', true)
-            ->where('restaurante_id', $restauranteId)
             ->findOrFail($data['cardapio_item_id']);
 
         PublicCart::add($item, $data['quantity'] ?? 1);
@@ -42,9 +35,10 @@ class PublicCartController extends Controller
 
         $quantity = $data['quantity'];
 
+        $restauranteSlug = $request->route('restaurante');
         if ($quantity === 0) {
             PublicCart::remove($cardapioItemId);
-            return redirect()->route('public.menu')->with('success', 'Item removido do pedido.');
+            return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('success', 'Item removido do pedido.');
         }
 
         $item = CardapioItem::where('ativo_online', true)
@@ -53,32 +47,34 @@ class PublicCartController extends Controller
 
         if (!$item) {
             PublicCart::remove($cardapioItemId);
-            return redirect()->route('public.menu')->with('error', 'Este item não está mais disponível.');
+            return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('error', 'Este item não está mais disponível.');
         }
 
         PublicCart::refreshFromModel($item);
         PublicCart::updateQuantity($cardapioItemId, $quantity);
 
-        return redirect()->route('public.menu')->with('success', 'Quantidade atualizada.');
+        return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('success', 'Quantidade atualizada.');
     }
 
     public function destroy(int $cardapioItemId)
     {
+        $restauranteSlug = request()->route('restaurante');
         PublicCart::remove($cardapioItemId);
 
-        return redirect()->route('public.menu')->with('success', 'Item removido do pedido.');
+        return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('success', 'Item removido do pedido.');
     }
 
     public function checkout()
     {
+        $restauranteSlug = request()->route('restaurante');
         $restauranteId = $this->publicRestauranteId();
 
         if (! $restauranteId) {
-            return redirect()->route('public.menu')->with('error', 'Restaurante indisponível no momento.');
+            return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('error', 'Restaurante indisponível no momento.');
         }
 
         if (PublicCart::isEmpty()) {
-            return redirect()->route('public.menu')->with('error', 'Seu carrinho está vazio.');
+            return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('error', 'Seu carrinho está vazio.');
         }
 
         $cartItems = PublicCart::all();
@@ -94,7 +90,7 @@ class PublicCartController extends Controller
 
         if ($missing->isNotEmpty()) {
             PublicCart::removeMany($missing->all());
-            return redirect()->route('public.menu')->with('error', 'Atualizamos seu pedido: alguns itens ficaram indisponíveis.');
+            return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('error', 'Atualizamos seu pedido: alguns itens ficaram indisponíveis.');
         }
 
         $valorTotal = 0;
@@ -135,12 +131,12 @@ class PublicCartController extends Controller
             DB::rollBack();
             report($exception);
 
-            return redirect()->route('public.menu')->with('error', 'Não conseguimos registrar seu pedido. Tente novamente.');
+            return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('error', 'Não conseguimos registrar seu pedido. Tente novamente.');
         }
 
         PublicCart::clear();
 
-        return redirect()->route('public.menu')->with('success', "Recebemos seu pedido! Código #{$pedido->id}.");
+        return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('success', "Recebemos seu pedido! Código #{$pedido->id}.");
     }
 
     protected function publicRestauranteId(): ?int

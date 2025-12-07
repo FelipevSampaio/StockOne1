@@ -84,7 +84,7 @@
                                 }
                             }
                         @endphp
-                        <a href="{{ route($item['route']) }}"
+                        <a href="{{ $item['route'] === 'public.menu' ? route('public.menu', ['restaurante' => session('restaurante_slug')]) : route($item['route']) }}"
                            class="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative"
                            :class="window.innerWidth < 1024 ? 'justify-center' : ''"
                            {{ $active

@@ -117,7 +117,7 @@ class CardapioItemController extends Controller
             'tempo_preparo_minutos' => ['nullable', 'integer', 'min:0'],
             'complexidade_preparo' => ['required', 'integer', 'min:1', 'max:10'],
             'categoria' => ['nullable', 'string', 'max:100'],
-            'ativo_online' => ['nullable', 'boolean'],
+            'ativo_online' => ['nullable', 'boolean'], // Keep this line for validation
             'imagem' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:8192'],
             'disponibilidade' => ['nullable', 'boolean'],
             'ingredientes' => ['nullable', 'string'],
@@ -125,7 +125,7 @@ class CardapioItemController extends Controller
         ]);
 
         $data['restaurante_id'] = $this->restauranteId();
-        $data['ativo_online'] = $request->boolean('ativo_online');
+        $data['ativo_online'] = true; // Set default to true
         $data['disponibilidade'] = $request->boolean('disponibilidade');
 
         // Ingredientes: transforma string em array

@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', $restaurante->nome)
+@section('title', (isset($restaurante) && $restaurante) ? $restaurante->nome : 'Cardápio Público')
 
 @section('content')
     <div class="space-y-10">
@@ -8,7 +8,7 @@
             <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                 <div>
                     <p class="text-sm uppercase tracking-[0.4em] text-red-100">Bem-vindo</p>
-                    <h2 class="mt-2 text-4xl font-semibold">{{ $restaurante->nome }}</h2>
+                    <h2 class="mt-2 text-4xl font-semibold">{{ (isset($restaurante) && $restaurante) ? $restaurante->nome : 'Cardápio Público' }}</h2>
                     <p class="mt-3 max-w-2xl text-base text-red-50">
                         Explore nosso cardápio digital, personalize o pedido e finalize em poucos cliques.
                     </p>

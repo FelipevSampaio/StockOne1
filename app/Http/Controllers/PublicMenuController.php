@@ -12,22 +12,17 @@ class PublicMenuController extends Controller
 {
     public function index(Request $request)
     {
-        $restaurante = Restaurante::first();
-
-        abort_unless($restaurante, 404, 'Restaurante não configurado.');
-
-        $itens = CardapioItem::where('restaurante_id', $restaurante->id)
-            ->where('ativo_online', true)
+        $itens = CardapioItem::where('ativo_online', true)
             ->orderBy('categoria')
             ->orderBy('nome')
             ->get()
             ->groupBy(fn ($item) => $item->categoria ?: 'Sugestões da casa');
 
         $cartItems = PublicCart::all();
-        $suggestions = $this->buildSuggestions($restaurante->id, $cartItems);
+        $suggestions = collect(); // Sugestões desabilitadas para todos os restaurantes
 
         return view('public.menu', [
-            'restaurante' => $restaurante,
+            'restaurante' => null,
             'categorias' => $itens,
             'cartItems' => $cartItems,
             'cartTotal' => PublicCart::subtotal(),
