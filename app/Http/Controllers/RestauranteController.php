@@ -62,4 +62,38 @@ class RestauranteController extends Controller
 
         return redirect()->route('restaurantes.index')->with('success', 'Restaurante removido com sucesso.');
     }
+        public function dashboard()
+        {
+            // Mesas ocupadas/livres
+            $mesasOcupadas = \App\Models\Mesa::where('status', 'ocupada')->count();
+            $mesasLivres = \App\Models\Mesa::where('status', 'livre')->count();
+
+            // Ocupação por horário (exemplo: últimas 12 horas)
+            $horarios = [];
+            $ocupacaoPorHorario = [];
+            $now = now();
+            for ($i = 11; $i >= 0; $i--) {
+                $hora = $now->copy()->subHours($i);
+                $horarios[] = $hora->format('H:00');
+                $ocupacaoPorHorario[] = \App\Models\Mesa::where('updated_at', '>=', $hora->copy()->startOfHour())
+                    ->where('updated_at', '<', $hora->copy()->endOfHour())
+                    ->where('status', 'ocupada')
+                    ->count();
+            }
+
+            // Alertas de reservas e fila de espera
+            $alertas = [];
+            $reservasPendentes = \App\Models\Reserva::where('status', 'pendente')->count();
+            if ($reservasPendentes > 0) {
+                $alertas[] = "$reservasPendentes reservas pendentes";
+            }
+            $filaEspera = \App\Models\Reserva::where('status', 'fila_espera')->count();
+            if ($filaEspera > 0) {
+                $alertas[] = "$filaEspera na fila de espera";
+            }
+
+            return view('admin.restaurantes.dashboard', compact(
+                'mesasOcupadas', 'mesasLivres', 'horarios', 'ocupacaoPorHorario', 'alertas'
+            ));
+        }
 }

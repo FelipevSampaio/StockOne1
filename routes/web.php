@@ -1,8 +1,8 @@
+<?php
+
 // Auditoria admin
 Route::get('/admin/audit-log', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('admin.audit-log.index');
 Route::get('admin/audit-logs/{id}/edit', [\App\Http\Controllers\Admin\AuditLogController::class, 'edit'])->name('admin.audit-logs.edit');
-
-<?php
 
 use App\Http\Controllers\AlertaController;
 use App\Http\Controllers\AuthController;
@@ -137,6 +137,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('cardapio-itens', CardapioItemController::class)
             ->parameters(['cardapio-itens' => 'cardapio_item'])
             ->except(['show']);
+            // Dashboard do Restaurante
+            Route::get('admin/restaurantes/dashboard', [\App\Http\Controllers\RestauranteController::class, 'dashboard'])->name('admin.restaurantes.dashboard');
         Route::resource('pedidos', PedidoController::class)->except(['show']);
         Route::post('pedidos/lote', [PedidoController::class, 'lote'])->name('pedidos.lote');
         Route::resource('estoque', EstoqueController::class)->except(['show']);
