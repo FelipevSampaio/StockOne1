@@ -42,9 +42,27 @@ class PedidoItemController extends Controller
         $this->ensurePedidoPertenceRestaurante($data['pedido_id'], $restauranteId);
         $this->ensureCardapioPertenceRestaurante($data['cardapio_item_id'], $restauranteId);
 
-        PedidoItem::create($data);
+        $pedidoItem = PedidoItem::create($data);
 
-        return redirect()->route('pedido-itens.index')->with('success', 'Item adicionado ao pedido com sucesso.');
+        // Baixa automática de insumos conforme receitas do item do cardápio
+        $cardapioItem = CardapioItem::find($data['cardapio_item_id']);
+        $quantidadePedido = $data['quantidade'];
+        if ($cardapioItem) {
+            foreach ($cardapioItem->receitas as $receita) {
+                $insumo = $receita->insumo;
+                if ($insumo && $insumo->estoque) {
+                    // Calcula quantidade total a baixar
+                    $quantidadeBaixar = $receita->quantidade_necessaria * $quantidadePedido;
+                    $estoque = $insumo->estoque;
+                    $estoque->quantidade_atual = max(0, $estoque->quantidade_atual - $quantidadeBaixar);
+                    $estoque->save();
+                    // Verifica e gera alerta se necessário
+                    $insumo->verificarBaixoEstoqueEAlertar();
+                }
+            }
+        }
+
+        return redirect()->route('pedido-itens.index')->with('success', 'Item adicionado ao pedido com sucesso e insumos baixados do estoque.');
     }
 
     public function edit(PedidoItem $pedidoItem)

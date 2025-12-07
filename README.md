@@ -63,11 +63,18 @@
 - ✅ Controle de validade
 
 ### 🍽️ Cardápio Digital
-- ✅ Gerenciamento de itens do cardápio
-- ✅ Categorização e organização
-- ✅ Controle de disponibilidade online
-- ✅ Gestão de receitas e composição
-- ✅ Cálculo automático de custos
+
+---
+
+## 🍽️ Cardápio Dinâmico
+
+O sistema oferece um cardápio dinâmico, permitindo:
+
+- **Gerenciamento de Itens**: Controle de disponibilidade, preço e ingredientes dos itens do cardápio em tempo real.
+- **Sugestão de Pratos do Dia e Promoções**: Algoritmos inteligentes sugerem pratos do dia e promoções baseadas em estoque, sazonalidade e preferências dos clientes.
+- **Integração com Estoque**: Atualização automática da disponibilidade dos itens conforme o consumo e movimentação de insumos, evitando vendas de produtos indisponíveis.
+
+Essas funcionalidades garantem flexibilidade, agilidade e maior engajamento dos clientes, além de otimizar o uso dos insumos e reduzir desperdícios.
 
 ### 📋 Sistema de Pedidos
 - ✅ Pedidos online integrados

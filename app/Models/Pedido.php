@@ -12,6 +12,7 @@ class Pedido extends Model
     protected $fillable = [
         'restaurante_id',
         'usuario_id',
+        'comanda_id',
         'numero_pedido_externo',
         'plataforma_origem',
         'data_hora_pedido',
@@ -19,6 +20,10 @@ class Pedido extends Model
         'valor_total',
         'tempo_preparo_estimado',
     ];
+    public function comanda()
+    {
+        return $this->belongsTo(Comanda::class);
+    }
 
     protected $casts = [
         'data_hora_pedido' => 'datetime',

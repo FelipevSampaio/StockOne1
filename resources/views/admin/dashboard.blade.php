@@ -78,11 +78,9 @@
                         @if($crescimentoUsuarios > 0)
                             <svg class="w-3 h-3 mr-0.5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
-                            </svg>
                         @else
                             <svg class="w-3 h-3 mr-0.5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                            </svg>
                         @endif
                         {{ abs($crescimentoUsuarios) }}%
                     </span>
@@ -328,7 +326,6 @@
                 </div>
             </div>
         </div>
-    </div>
     @endif
 
     <!-- Novos Widgets: Health Score e Top Restaurantes -->
@@ -506,6 +503,48 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+    <!-- Relatórios de Vendas: Itens Mais/Menos Vendidos e Tendências -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Itens Mais Vendidos</h3>
+            <ul class="space-y-2">
+                @foreach($itensMaisVendidos as $item)
+                    <li class="flex justify-between items-center">
+                        <span class="font-medium text-gray-700 dark:text-gray-200">{{ $item->nome }}</span>
+                        <span class="text-green-700 dark:text-green-300 font-bold">{{ $item->total_vendido }} vendidos</span>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Itens Menos Vendidos</h3>
+            <ul class="space-y-2">
+                @foreach($itensMenosVendidos as $item)
+                    <li class="flex justify-between items-center">
+                        <span class="font-medium text-gray-700 dark:text-gray-200">{{ $item->nome }}</span>
+                        <span class="text-red-700 dark:text-red-300 font-bold">{{ $item->total_vendido }} vendidos</span>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Tendências de Vendas</h3>
+            <ul class="space-y-2">
+                @foreach($tendencias as $item)
+                    <li class="flex justify-between items-center">
+                        <span class="font-medium text-gray-700 dark:text-gray-200">{{ $item->nome }}</span>
+                        @if(!is_null($item->tendencia))
+                            <span class="font-bold {{ $item->tendencia > 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300' }}">
+                                {{ $item->tendencia > 0 ? '+' : '' }}{{ $item->tendencia }}%
+                            </span>
+                        @else
+                            <span class="text-gray-500">Sem dados</span>
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
         </div>
     </div>
 
@@ -772,6 +811,39 @@
             </div>
         </div>
     </div>
+
+    <!-- Sugestão de Pratos do Dia -->
+    @if($pratosDoDia && count($pratosDoDia) > 0)
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-red-700 mb-4 flex items-center gap-2">
+            <svg class="w-6 h-6 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Pratos do Dia (Sugestão)
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            @foreach($pratosDoDia as $item)
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700 flex flex-col items-center">
+                @if($item->imagem)
+                    <img src="{{ asset('storage/' . $item->imagem) }}" alt="{{ $item->nome }}" class="mb-3 rounded-lg shadow-md" style="max-width:120px; max-height:120px;">
+                @endif
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">{{ $item->nome }}</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">R$ {{ number_format($item->preco_venda, 2, ',', '.') }}</p>
+                @if($item->promocao)
+                    <span class="inline-block bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-semibold mb-2">{{ $item->promocao['descricao'] ?? 'Promoção' }}</span>
+                @endif
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Estoque Essenciais: <span class="font-bold">{{ $item->soma_estoque_essenciais }}</span></p>
+                <ul class="text-xs text-gray-700 dark:text-gray-300 mb-2">
+                    @foreach($item->ingredientes as $ing)
+                        <li>{{ $ing }}</li>
+                    @endforeach
+                </ul>
+                <a href="{{ route('admin.cardapio.edit', $item->id) }}" class="mt-2 btn btn-sm btn-primary">Editar</a>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
 @endsection
 
 @section('scripts')
@@ -891,8 +963,8 @@
                         }
                     }
                 }
-            }
-        });
+            });
+        }
 
         // Carregar dados iniciais
         await loadChartData('7d');

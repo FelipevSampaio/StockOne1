@@ -13,21 +13,23 @@ return new class extends Migration
     {
         // Tabela 'pedidos' (anteriormente 'pedido')
         Schema::create('pedidos', function (Blueprint $table) {
-            $table->id(); 
-            
+            $table->id();
+
             // FKs no padrão Eloquent
-            $table->foreignId('restaurante_id')->constrained('restaurantes'); 
+            $table->foreignId('restaurante_id')->constrained('restaurantes');
             // Assumindo que 'usuario' será unificado com 'users' ou será o modelo de funcionário
-            $table->foreignId('usuario_id')->nullable()->constrained('users'); 
+            $table->foreignId('usuario_id')->nullable()->constrained('users');
+
+            // Adicionado em migration de comandas: $table->foreignId('comanda_id')->nullable()->constrained('comandas')->after('usuario_id');
 
             $table->string('numero_pedido_externo', 255)->nullable();
             $table->string('plataforma_origem', 100);
             $table->dateTime('data_hora_pedido'); // Mantendo este campo de negócio
-            $table->string('status', 50)->default('recebido');
+            $table->enum('status', ['recebido', 'em_preparo', 'pronto', 'entregue', 'cancelado'])->default('recebido');
             $table->decimal('valor_total', 10, 2)->nullable();
             $table->integer('tempo_preparo_estimado')->nullable();
 
-            $table->timestamps(); 
+            $table->timestamps();
         });
     }
 

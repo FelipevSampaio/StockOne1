@@ -141,6 +141,10 @@
         <!-- Grid de Itens -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             @forelse ($itens as $item)
+                @php
+                    $ctrl = app(\App\Http\Controllers\CardapioItemController::class);
+                    $disp = $ctrl->verificarDisponibilidadeEsubstituicoes($item);
+                @endphp
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow">
                     <!-- Imagem -->
                     <div class="relative h-48 bg-gray-100 dark:bg-gray-700">
@@ -182,6 +186,22 @@
 
                         @if($item->descricao)
                             <p class="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">{{ $item->descricao }}</p>
+                        @endif
+
+                        <!-- Disponibilidade -->
+                        @if(!$disp['disponivel'])
+                            <div class="mb-2">
+                                <span class="inline-block px-2 py-1 rounded bg-red-100 text-red-700 text-xs font-semibold">Indisponível: falta insumo essencial</span>
+                                @if(count($disp['substituicoes']))
+                                    <ul class="mt-1 text-xs text-gray-700">
+                                        @foreach($disp['substituicoes'] as $sub)
+                                            <li>Substitua <b>{{ $sub['insumo_faltante'] }}</b> por <b>{{ $sub['substituto'] }}</b> ({{ $sub['categoria'] }})</li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <span class="block text-xs text-gray-500">Nenhuma substituição automática disponível.</span>
+                                @endif
+                            </div>
                         @endif
 
                         <div class="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">

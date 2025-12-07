@@ -10,6 +10,10 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
+    public function comandas()
+    {
+        return $this->hasMany(\App\Models\Comanda::class, 'cliente_id');
+    }
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
 
@@ -28,6 +32,21 @@ class User extends Authenticatable
         'last_login_ip',
         'notes',
     ];
+
+        public function shifts()
+        {
+            return $this->belongsToMany(Shift::class, 'shift_user');
+        }
+
+        public function roles()
+        {
+            return $this->belongsToMany(Role::class, 'role_user');
+        }
+
+        public function performances()
+        {
+            return $this->hasMany(Performance::class);
+        }
 
     /**
      * The attributes that should be hidden for serialization.

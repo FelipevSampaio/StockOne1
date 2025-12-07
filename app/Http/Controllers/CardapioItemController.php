@@ -8,6 +8,40 @@ use Illuminate\Support\Facades\Storage;
 
 class CardapioItemController extends Controller
 {
+    /**
+     * Verifica se o item do cardápio está disponível (todos insumos essenciais em estoque)
+     * e sugere substituições automáticas para itens em falta.
+     */
+    public function verificarDisponibilidadeEsubstituicoes(CardapioItem $item)
+    {
+        $disponivel = true;
+        $substituicoes = [];
+        foreach ($item->receitas()->where('essencial', true)->get() as $receita) {
+            $insumo = $receita->insumo;
+            $estoque = $insumo->estoque;
+            if (!$estoque || $estoque->quantidade_atual < $receita->quantidade_necessaria) {
+                $disponivel = false;
+                // Buscar insumos da mesma categoria com estoque suficiente
+                $alternativas = \App\Models\Insumo::where('categoria', $insumo->categoria)
+                    ->where('id', '!=', $insumo->id)
+                    ->whereHas('estoque', function($q) use ($receita) {
+                        $q->where('quantidade_atual', '>=', $receita->quantidade_necessaria);
+                    })
+                    ->get();
+                foreach ($alternativas as $alt) {
+                    $substituicoes[] = [
+                        'insumo_faltante' => $insumo->nome,
+                        'substituto' => $alt->nome,
+                        'categoria' => $alt->categoria,
+                    ];
+                }
+            }
+        }
+        return [
+            'disponivel' => $disponivel,
+            'substituicoes' => $substituicoes,
+        ];
+    }
     public function index(Request $request)
     {
         $restauranteId = $this->restauranteId();
@@ -85,10 +119,28 @@ class CardapioItemController extends Controller
             'categoria' => ['nullable', 'string', 'max:100'],
             'ativo_online' => ['nullable', 'boolean'],
             'imagem' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:8192'],
+            'disponibilidade' => ['nullable', 'boolean'],
+            'ingredientes' => ['nullable', 'string'],
+            'promocao' => ['nullable', 'string'],
         ]);
 
         $data['restaurante_id'] = $this->restauranteId();
         $data['ativo_online'] = $request->boolean('ativo_online');
+        $data['disponibilidade'] = $request->boolean('disponibilidade');
+
+        // Ingredientes: transforma string em array
+        if (!empty($data['ingredientes'])) {
+            $data['ingredientes'] = array_map('trim', explode(',', $data['ingredientes']));
+        } else {
+            $data['ingredientes'] = [];
+        }
+
+        // Promoção: salva como array json
+        if (!empty($data['promocao'])) {
+            $data['promocao'] = ['descricao' => $data['promocao']];
+        } else {
+            $data['promocao'] = null;
+        }
 
         if ($request->hasFile('imagem')) {
             $data['imagem'] = $request->file('imagem')->store('cardapio-itens', 'public');
@@ -96,7 +148,7 @@ class CardapioItemController extends Controller
 
         CardapioItem::create($data);
 
-        return redirect()->route('cardapio-itens.index')->with('success', 'Item de cardápio cadastrado com sucesso.');
+        return redirect()->route('admin.cardapio.index')->with('success', 'Item de cardápio cadastrado com sucesso.');
     }
 
     public function edit(CardapioItem $cardapioItem)
@@ -119,9 +171,27 @@ class CardapioItemController extends Controller
             'categoria' => ['nullable', 'string', 'max:100'],
             'ativo_online' => ['nullable', 'boolean'],
             'imagem' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:8192'],
+            'disponibilidade' => ['nullable', 'boolean'],
+            'ingredientes' => ['nullable', 'string'],
+            'promocao' => ['nullable', 'string'],
         ]);
 
         $data['ativo_online'] = $request->boolean('ativo_online');
+        $data['disponibilidade'] = $request->boolean('disponibilidade');
+
+        // Ingredientes: transforma string em array
+        if (!empty($data['ingredientes'])) {
+            $data['ingredientes'] = array_map('trim', explode(',', $data['ingredientes']));
+        } else {
+            $data['ingredientes'] = [];
+        }
+
+        // Promoção: salva como array json
+        if (!empty($data['promocao'])) {
+            $data['promocao'] = ['descricao' => $data['promocao']];
+        } else {
+            $data['promocao'] = null;
+        }
 
         if ($request->hasFile('imagem')) {
             // Remove a imagem antiga se existir
@@ -133,7 +203,7 @@ class CardapioItemController extends Controller
 
         $cardapioItem->update($data);
 
-        return redirect()->route('cardapio-itens.index')->with('success', 'Item de cardápio atualizado com sucesso.');
+        return redirect()->route('admin.cardapio.index')->with('success', 'Item de cardápio atualizado com sucesso.');
     }
 
     public function destroy(CardapioItem $cardapioItem)

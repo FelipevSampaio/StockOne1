@@ -7,8 +7,34 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class RestauranteAdminController extends Controller
-{
+class RestauranteAdminController extends Controller {
+    /**
+     * Exibe alertas de baixo estoque e sugestões de compra para insumos do restaurante
+     */
+    public function estoqueInteligente(Restaurante $restaurante)
+    {
+        $this->checkAdmin();
+
+        $insumos = $restaurante->insumos()->with(['estoque', 'alertas'])->get();
+        $alertas = [];
+        $sugestoes = [];
+
+        // Gera alertas de validade próxima para todos insumos do restaurante
+        \App\Models\Insumo::gerarAlertasVencimento(7);
+        foreach ($insumos as $insumo) {
+            // Verifica e dispara alerta automático se necessário
+            $insumo->verificarBaixoEstoqueEAlertar();
+            // Coleta alertas não resolvidos
+            $alertasInsumo = $insumo->alertas()->where('resolvido', false)->get();
+            if ($alertasInsumo->count() > 0) {
+                $alertas = array_merge($alertas, $alertasInsumo->toArray());
+            }
+            // Gera sugestão de compra
+            $sugestoes[] = $insumo->gerarSugestaoCompra(30);
+        }
+
+        return view('admin.restaurantes.estoque_inteligente', compact('restaurante', 'alertas', 'sugestoes'));
+    }
     private function checkAdmin()
     {
         if (!Auth::check() || !Auth::user()->isAdmin()) {

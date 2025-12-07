@@ -13,6 +13,11 @@ class DashboardAdminController extends Controller
      */
     public function index()
     {
+        // Sugestão de pratos do dia baseada em estoque
+        $pratosDoDia = [];
+        try {
+            $pratosDoDia = \App\Models\CardapioItem::sugestaoPratosDoDia(3);
+        } catch (\Exception $e) {}
         // Estatísticas gerais
         $totalUsers = User::count();
         $totalUsersActive = User::whereNull('deleted_at')->count();
@@ -118,6 +123,36 @@ class DashboardAdminController extends Controller
             ? round((($usersEsteMes - $usersMesAnterior) / $usersMesAnterior) * 100, 1)
             : 0;
 
+            // Relatório de itens mais/menos vendidos
+            $itensMaisVendidos = \App\Models\CardapioItem::select('cardapio_itens.id', 'cardapio_itens.nome')
+                ->join('pedido_itens', 'cardapio_itens.id', '=', 'pedido_itens.cardapio_item_id')
+                ->selectRaw('SUM(pedido_itens.quantidade) as total_vendido')
+                ->groupBy('cardapio_itens.id', 'cardapio_itens.nome')
+                ->orderByDesc('total_vendido')
+                ->limit(5)
+                ->get();
+
+            $itensMenosVendidos = \App\Models\CardapioItem::select('cardapio_itens.id', 'cardapio_itens.nome')
+                ->join('pedido_itens', 'cardapio_itens.id', '=', 'pedido_itens.cardapio_item_id')
+                ->selectRaw('SUM(pedido_itens.quantidade) as total_vendido')
+                ->groupBy('cardapio_itens.id', 'cardapio_itens.nome')
+                ->orderBy('total_vendido', 'asc')
+                ->limit(5)
+                ->get();
+
+            // Tendências de vendas (crescimento ou queda nos últimos 30 dias)
+            $tendencias = \App\Models\CardapioItem::select('cardapio_itens.id', 'cardapio_itens.nome')
+                ->join('pedido_itens', 'cardapio_itens.id', '=', 'pedido_itens.cardapio_item_id')
+                ->selectRaw('SUM(CASE WHEN pedido_itens.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN pedido_itens.quantidade ELSE 0 END) as vendas_30d')
+                ->selectRaw('SUM(CASE WHEN pedido_itens.created_at < DATE_SUB(NOW(), INTERVAL 30 DAY) THEN pedido_itens.quantidade ELSE 0 END) as vendas_anteriores')
+                ->groupBy('cardapio_itens.id', 'cardapio_itens.nome')
+                ->get()
+                ->map(function($item) {
+                    $item->tendencia = $item->vendas_anteriores > 0
+                        ? round((($item->vendas_30d - $item->vendas_anteriores) / $item->vendas_anteriores) * 100, 1)
+                        : null;
+                    return $item;
+                });
         return view('admin.dashboard', compact(
             'totalUsers',
             'totalUsersActive',
@@ -128,6 +163,7 @@ class DashboardAdminController extends Controller
             'restaurantesAtivos',
             'restaurantesInativos',
             'restaurantesNovosEsteMes',
+            'pratosDoDia',
             'restaurantesNovosEstaSemana',
             'restaurantesSemUsuarios',
             'mediaUsuariosPorRestaurante',
@@ -146,6 +182,7 @@ class DashboardAdminController extends Controller
             'topRestaurantesPedidos',
             'restaurantesHealth',
             'atividadesRecentes'
+                , 'itensMaisVendidos', 'itensMenosVendidos', 'tendencias'
         ));
     }
 

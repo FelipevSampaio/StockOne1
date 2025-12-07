@@ -8,6 +8,34 @@ use Illuminate\Http\Request;
 
 class PedidoController extends Controller
 {
+    /**
+     * Atualiza apenas o status do pedido
+     */
+    public function atualizarStatus(Request $request, Pedido $pedido)
+    {
+        $this->authorizePedido($pedido);
+        $data = $request->validate([
+            'status' => ['required', 'in:recebido,em_preparo,pronto,entregue,cancelado'],
+        ]);
+        $pedido->update(['status' => $data['status']]);
+        return redirect()->route('pedidos.index')->with('success', 'Status do pedido atualizado com sucesso.');
+    }
+    public function lote(Request $request)
+    {
+        $ids = $request->input('pedidos', []);
+        $action = $request->input('action');
+        if (empty($ids) || !$action) {
+            return redirect()->route('pedidos.index')->with('error', 'Selecione pedidos e uma ação.');
+        }
+
+        if ($action === 'entregar') {
+            Pedido::whereIn('id', $ids)->update(['status' => 'concluido']);
+            return redirect()->route('pedidos.index')->with('success', 'Pedidos marcados como entregues.');
+        }
+
+        // Outras ações podem ser adicionadas aqui
+        return redirect()->route('pedidos.index')->with('error', 'Ação não reconhecida.');
+    }
     public function index(Request $request)
     {
         $restauranteId = $this->restauranteId();
@@ -92,7 +120,20 @@ class PedidoController extends Controller
 
         $data['restaurante_id'] = $this->restauranteId();
 
-        Pedido::create($data);
+        $pedido = Pedido::create($data);
+
+        // Integração com delivery: criar DeliveryOrder se for delivery
+        if ($request->has('delivery')) {
+            $deliveryOrder = new \App\Models\DeliveryOrder([
+                'pedido_id' => $pedido->id,
+                'rota' => $request->input('rota'),
+                'horario_entrega' => $request->input('horario_entrega'),
+                'status' => 'pendente',
+            ]);
+            $deliveryOrder->save();
+            // Otimizar tempo de preparo e despacho
+            $deliveryOrder->calcularTempoIdeal();
+        }
 
         return redirect()->route('pedidos.index')->with('success', 'Pedido registrado com sucesso.');
     }

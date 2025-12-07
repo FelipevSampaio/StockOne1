@@ -125,7 +125,7 @@ class AuditLogController extends Controller
                                         ->orderByDesc('total')
                                         ->limit(5)
                                         ->get(),
-                'by_hour' => AuditLog::selectRaw('HOUR(created_at) as hour, COUNT(*) as count')
+                'by_hour' => AuditLog::selectRaw("HOUR(created_at) as hour, COUNT(*) as count")
                                      ->whereDate('created_at', '>=', now()->subDays(7))
                                      ->groupBy('hour')
                                      ->pluck('count', 'hour'),

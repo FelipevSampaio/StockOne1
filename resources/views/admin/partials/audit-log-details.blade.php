@@ -97,3 +97,6 @@
         </div>
     @endif
 </div>
+
+DB_CONNECTION=sqlite
+DB_DATABASE=/absolute/path/to/database/database.sqlite

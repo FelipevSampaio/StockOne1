@@ -29,9 +29,17 @@
     </head>
     <body class="bg-gray-50 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 transition-colors" x-data="appLayout()">
         <div class="flex h-screen overflow-hidden" x-data="{ sidebarOpen: false }" x-init="window.addEventListener('resize', () => { if(window.innerWidth >= 1024) sidebarOpen = false; });" x-cloak>
-                 <!-- Sidebar -->
-                 <aside class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out lg:static lg:translate-x-0 lg:block"
-                       :class="window.innerWidth >= 1024 ? 'translate-x-0' : (sidebarOpen ? 'translate-x-0' : '-translate-x-full')" x-transition>
+            <!-- Overlay escuro em mobile -->
+            <div x-show="sidebarOpen && window.innerWidth < 1024" class="fixed inset-0 z-30 bg-black/40 transition-opacity duration-300 lg:hidden" @click="sidebarOpen = false" x-transition.opacity></div>
+            <!-- Botão para abrir menu lateral em telas pequenas -->
+            <button @click="sidebarOpen = true" class="lg:hidden fixed top-4 left-4 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 shadow focus:outline-none">
+                <svg class="w-6 h-6 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+            <!-- Sidebar -->
+            <aside class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out lg:static lg:translate-x-0 lg:block"
+                :class="window.innerWidth >= 1024 ? 'translate-x-0' : (sidebarOpen ? 'translate-x-0' : '-translate-x-full')" x-transition>
                 <!-- Logo -->
                 <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                     <div class="flex items-center gap-3">
@@ -53,7 +61,7 @@
                         $menu = [
                             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
                             ['label' => 'Cardápio', 'route' => 'cardapio-itens.index', 'icon' => 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'],
-                            ['label' => 'Pedidos', 'route' => 'pedidos.index', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01'],
+                            ['label' => 'Pedidos', 'route' => 'pedidos.index', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01', 'badge' => true],
                             ['label' => 'Insumos', 'route' => 'insumos.index', 'icon' => 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'],
                             ['label' => 'Estoque', 'route' => 'estoque.index', 'icon' => 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'],
                             ['label' => 'Receitas', 'route' => 'receitas.index', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
@@ -67,13 +75,21 @@
                     @foreach ($menu as $item)
                         @php
                             $active = request()->routeIs(str_replace('.index', '', $item['route']) . '*');
-                            $alertCount = isset($item['badge']) && $item['badge'] ? App\Models\Alerta::where('resolvido', false)->whereHas('insumo', fn($q) => $q->where('restaurante_id', session('restaurante_id')))->count() : 0;
+                            $alertCount = 0;
+                            if(isset($item['badge']) && $item['badge']) {
+                                if($item['route'] === 'alertas.index') {
+                                    $alertCount = App\Models\Alerta::where('resolvido', false)->whereHas('insumo', fn($q) => $q->where('restaurante_id', session('restaurante_id')))->count();
+                                } elseif($item['route'] === 'pedidos.index') {
+                                    $alertCount = App\Models\Pedido::where('status', 'pendente')->where('restaurante_id', session('restaurante_id'))->count();
+                                }
+                            }
                         @endphp
                         <a href="{{ route($item['route']) }}"
-                           class="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative
-                                {{ $active
-                                    ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 shadow-sm'
-                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50' }}">
+                           class="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative"
+                           :class="window.innerWidth < 1024 ? 'justify-center' : ''"
+                           {{ $active
+                                ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 shadow-sm'
+                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50' }}>
                             <svg class="w-5 h-5 flex-shrink-0 transition-transform duration-200 {{ $active ? '' : 'group-hover:scale-110' }}"
                                  fill="none"
                                  stroke="currentColor"
@@ -92,7 +108,29 @@
 
                 <!-- Footer -->
                 <div class="p-4 border-t border-gray-200 dark:border-gray-700">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 text-center">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white font-bold text-lg">
+                            {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 2)) }}
+                        </div>
+                        <div class="flex-1">
+                            <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ Auth::user()->name ?? 'Usuário' }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ Auth::user()->email ?? '' }}</div>
+                        </div>
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none" title="Abrir menu do usuário">
+                                <svg class="w-5 h-5 text-gray-500 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                                <form action="{{ route('auth.logout') }}" method="POST" class="px-4 py-2">
+                                    @csrf
+                                    <button type="submit" class="w-full text-left text-sm text-red-600 dark:text-red-400 hover:underline">Sair</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-xs text-gray-500 dark:text-gray-400 text-center">
                         StockOne © {{ date('Y') }}
                     </div>
                 </div>
