@@ -141,6 +141,7 @@ Route::middleware('auth')->group(function () {
             // Dashboard do Restaurante
             Route::get('admin/restaurantes/dashboard', [\App\Http\Controllers\RestauranteController::class, 'dashboard'])->name('admin.restaurantes.dashboard');
         Route::resource('pedidos', PedidoController::class)->except(['show']);
+        Route::get('pedidos/{pedido}/detalhes', [PedidoController::class, 'detalhes'])->name('pedidos.detalhes');
         Route::post('pedidos/lote', [PedidoController::class, 'lote'])->name('pedidos.lote');
         Route::resource('estoque', EstoqueController::class)->except(['show']);
         Route::resource('alertas', AlertaController::class)->except(['show']);

@@ -67,7 +67,9 @@ class PublicCartController extends Controller
     public function checkout()
     {
         $restauranteSlug = request()->route('restaurante');
-        $restauranteId = $this->publicRestauranteId();
+        
+        // Priorizar restaurante da sessão se o usuário estiver logado
+        $restauranteId = session('restaurante_id') ?? $this->publicRestauranteId();
 
         if (! $restauranteId) {
             return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('error', 'Restaurante indisponível no momento.');
@@ -105,11 +107,11 @@ class PublicCartController extends Controller
         try {
             $pedido = Pedido::create([
                 'restaurante_id' => $restauranteId,
-                'usuario_id' => null,
+                'usuario_id' => auth()->id(), // Usar usuário logado se houver
                 'numero_pedido_externo' => now()->format('YmdHis'),
                 'plataforma_origem' => 'web',
                 'data_hora_pedido' => now(),
-                'status' => 'concluido',
+                'status' => 'pendente', // Mudar para pendente ao invés de concluido
                 'valor_total' => $valorTotal,
                 'tempo_preparo_estimado' => null,
             ]);

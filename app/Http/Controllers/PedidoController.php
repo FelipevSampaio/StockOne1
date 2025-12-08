@@ -15,10 +15,21 @@ class PedidoController extends Controller
     {
         $this->authorizePedido($pedido);
         $data = $request->validate([
-            'status' => ['required', 'in:recebido,em_preparo,pronto,entregue,cancelado'],
+            'status' => ['required', 'in:pendente,recebido,em_preparo,pronto,entregue,concluido,cancelado'],
         ]);
         $pedido->update(['status' => $data['status']]);
         return redirect()->route('pedidos.index')->with('success', 'Status do pedido atualizado com sucesso.');
+    }
+
+    /**
+     * Retorna os detalhes do pedido para o modal
+     */
+    public function detalhes(Pedido $pedido)
+    {
+        $this->authorizePedido($pedido);
+        $pedido->load(['itens.cardapioItem', 'usuario', 'restaurante']);
+        
+        return view('pedidos.detalhes', compact('pedido'));
     }
     public function lote(Request $request)
     {
@@ -40,7 +51,7 @@ class PedidoController extends Controller
     {
         $restauranteId = $this->restauranteId();
 
-        $query = Pedido::with(['restaurante', 'usuario'])
+        $query = Pedido::with(['restaurante', 'usuario', 'itens.cardapioItem'])
             ->where('restaurante_id', $restauranteId);
 
         // Filtro de busca
