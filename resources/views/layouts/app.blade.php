@@ -28,20 +28,43 @@
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     </head>
     <body class="bg-gray-50 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 transition-colors" x-data="appLayout()">
-        <div class="flex h-screen overflow-hidden" x-data="{ sidebarOpen: false }" x-init="window.addEventListener('resize', () => { if(window.innerWidth >= 1024) sidebarOpen = false; });" x-cloak>
-            <!-- Overlay escuro em mobile -->
-            <div x-show="sidebarOpen && window.innerWidth < 1024" class="fixed inset-0 z-30 bg-black/40 transition-opacity duration-300 lg:hidden" @click="sidebarOpen = false" x-transition.opacity></div>
+        <div class="flex h-screen overflow-hidden"
+             x-data="sidebarManager()"
+             x-init="initSidebar(); window.addEventListener('resize', () => { if(window.innerWidth >= 1024) sidebarOpen = false; });"
+             x-cloak>
+            <!-- Overlay escuro em mobile com animação -->
+            <div x-show="sidebarOpen && window.innerWidth < 1024"
+                 @click="closeSidebar()"
+                 x-transition:enter="transition-opacity ease-linear duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition-opacity ease-linear duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden"></div>
+
             <!-- Botão para abrir menu lateral em telas pequenas -->
-            <button @click="sidebarOpen = true" class="lg:hidden fixed top-4 left-4 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 shadow focus:outline-none">
+            <button @click="openSidebar()"
+                    class="lg:hidden fixed top-4 left-4 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 focus:outline-none">
                 <svg class="w-6 h-6 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
             </button>
-            <!-- Sidebar -->
-            <aside class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out lg:translate-x-0"
-                :class="window.innerWidth >= 1024 ? 'translate-x-0' : (sidebarOpen ? 'translate-x-0' : '-translate-x-full')" x-transition>
+
+            <!-- Sidebar com animações melhoradas -->
+            <aside class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-out lg:translate-x-0"
+                :class="window.innerWidth >= 1024 ? 'translate-x-0' : (sidebarOpen ? 'translate-x-0' : '-translate-x-full')"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="-translate-x-full"
+                x-transition:enter-end="translate-x-0"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="translate-x-0"
+                x-transition:leave-end="-translate-x-full"
+                @touchstart="touchStart($event)"
+                @touchmove="touchMove($event)"
+                @touchend="touchEnd()">
                 <!-- Logo -->
-                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg">
                             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,22 +76,29 @@
                             <p class="text-xs text-gray-500 dark:text-gray-400">Gestão de Restaurantes</p>
                         </div>
                     </div>
+                    <!-- Botão fechar em mobile -->
+                    <button @click="closeSidebar()"
+                            class="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
                 </div>
 
                 <!-- Navigation -->
                 <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
                     @php
                         $menu = [
-                            ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
-                            ['label' => 'Cardápio', 'route' => 'cardapio-itens.index', 'icon' => 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'],
-                            ['label' => 'Pedidos', 'route' => 'pedidos.index', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01', 'badge' => true],
-                            ['label' => 'Insumos', 'route' => 'insumos.index', 'icon' => 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'],
-                            ['label' => 'Estoque', 'route' => 'estoque.index', 'icon' => 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'],
-                            ['label' => 'Receitas', 'route' => 'receitas.index', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
-                            ['label' => 'Alertas', 'route' => 'alertas.index', 'icon' => 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9', 'badge' => true],
-                            ['label' => 'Fila de Produção', 'route' => 'fila-producao.index', 'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
-                            ['label' => 'Sugestões de Compras', 'route' => 'compras-sugestoes.index', 'icon' => 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z'],
-                            ['label' => 'Menu Público', 'route' => 'public.menu', 'icon' => 'M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9'],
+                            ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', 'description' => 'Visão geral do restaurante e métricas principais'],
+                            ['label' => 'Cardápio', 'route' => 'cardapio-itens.index', 'icon' => 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253', 'description' => 'Gerenciar itens do cardápio e preços'],
+                            ['label' => 'Pedidos', 'route' => 'pedidos.index', 'icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01', 'badge' => true, 'description' => 'Visualizar e gerenciar pedidos do restaurante'],
+                            ['label' => 'Insumos', 'route' => 'insumos.index', 'icon' => 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', 'description' => 'Cadastrar e gerenciar insumos utilizados'],
+                            ['label' => 'Estoque', 'route' => 'estoque.index', 'icon' => 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4', 'description' => 'Controle de estoque e movimentações'],
+                            ['label' => 'Receitas', 'route' => 'receitas.index', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', 'description' => 'Criar e gerenciar receitas dos pratos'],
+                            ['label' => 'Alertas', 'route' => 'alertas.index', 'icon' => 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9', 'badge' => true, 'description' => 'Alertas do sistema e notificações'],
+                            ['label' => 'Fila de Produção', 'route' => 'fila-producao.index', 'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', 'description' => 'Acompanhar pedidos em produção'],
+                            ['label' => 'Sugestões de Compras', 'route' => 'compras-sugestoes.index', 'icon' => 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z', 'description' => 'Sugestões automáticas de compras'],
+                            ['label' => 'Menu Público', 'route' => 'public.menu', 'icon' => 'M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9', 'description' => 'Visualizar menu público do restaurante'],
                         ];
                     @endphp
 
@@ -85,23 +115,48 @@
                             }
                         @endphp
                         <a href="{{ $item['route'] === 'public.menu' ? route('public.menu', ['restaurante' => session('restaurante_slug')]) : route($item['route']) }}"
-                           class="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative"
+                           x-data="{ tooltip: false }"
+                           @mouseenter="tooltip = true; setTimeout(() => tooltip = false, 3000)"
+                           @mouseleave="tooltip = false"
+                           class="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 relative
+                                  {{ $active
+                                      ? 'bg-gradient-to-r from-red-50 to-red-100/50 dark:from-red-900/30 dark:to-red-800/20 text-red-700 dark:text-red-300 shadow-md shadow-red-500/10 border-l-4 border-red-600 dark:border-red-400 transform translate-x-1'
+                                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:translate-x-1 hover:shadow-sm' }}"
                            :class="window.innerWidth < 1024 ? 'justify-center' : ''"
-                           {{ $active
-                                ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 shadow-sm'
-                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50' }}>
-                            <svg class="w-5 h-5 flex-shrink-0 transition-transform duration-200 {{ $active ? '' : 'group-hover:scale-110' }}"
+                           title="{{ $item['description'] ?? $item['label'] }}">
+                            <!-- Indicador lateral para página ativa -->
+                            @if($active)
+                                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-red-500 to-red-600 rounded-r-full shadow-lg"></div>
+                            @endif
+
+                            <svg class="w-5 h-5 flex-shrink-0 transition-all duration-300 {{ $active ? 'text-red-600 dark:text-red-400 scale-110' : 'group-hover:scale-110 group-hover:text-red-600 dark:group-hover:text-red-400' }}"
                                  fill="none"
                                  stroke="currentColor"
                                  viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $item['icon'] }}"/>
                             </svg>
-                            <span class="flex-1">{{ $item['label'] }}</span>
+                            <span class="flex-1 transition-all duration-300 {{ $active ? 'font-semibold' : '' }}">{{ $item['label'] }}</span>
                             @if(isset($item['badge']) && $item['badge'] && $alertCount > 0)
-                                <span class="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-600 rounded-full">
+                                <span class="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-600 rounded-full animate-pulse shadow-lg">
                                     {{ $alertCount > 9 ? '9+' : $alertCount }}
                                 </span>
                             @endif
+
+                            <!-- Tooltip -->
+                            <div x-show="tooltip && window.innerWidth >= 1024"
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 scale-95"
+                                 x-transition:enter-end="opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100 scale-100"
+                                 x-transition:leave-end="opacity-0 scale-95"
+                                 class="absolute left-full ml-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg shadow-xl z-50 whitespace-nowrap pointer-events-none"
+                                 style="display: none;">
+                                <div class="font-semibold mb-0.5">{{ $item['label'] }}</div>
+                                <div class="text-gray-300 dark:text-gray-400 text-[10px]">{{ $item['description'] ?? '' }}</div>
+                                <!-- Seta do tooltip -->
+                                <div class="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900 dark:border-r-gray-700"></div>
+                            </div>
                         </a>
                     @endforeach
                 </nav>
@@ -136,14 +191,6 @@
                 </div>
             </aside>
 
-            <!-- Overlay escuro em mobile -->
-            <div x-show="sidebarOpen && window.innerWidth < 1024" class="fixed inset-0 z-30 bg-black/40 transition-opacity lg:hidden" @click="sidebarOpen = false" x-cloak></div>
-            <!-- Botão para abrir menu lateral em telas pequenas -->
-            <button @click="sidebarOpen = true" class="lg:hidden fixed top-4 left-4 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 shadow focus:outline-none">
-                <svg class="w-6 h-6 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </button>
             <!-- Main Content -->
             <main class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900 lg:ml-64 w-full overflow-hidden">
                 <!-- Header -->
@@ -384,6 +431,84 @@
                         } else {
                             document.documentElement.classList.add('dark');
                             localStorage.theme = 'dark';
+                        }
+                    }
+                }
+            }
+
+            function sidebarManager() {
+                return {
+                    sidebarOpen: false,
+                    touchStartX: 0,
+                    touchStartY: 0,
+                    touchEndX: 0,
+                    touchEndY: 0,
+                    minSwipeDistance: 50,
+
+                    initSidebar() {
+                        // Fechar sidebar ao clicar fora em mobile
+                        document.addEventListener('click', (e) => {
+                            if (window.innerWidth < 1024 && this.sidebarOpen) {
+                                const sidebar = document.querySelector('aside');
+                                const button = document.querySelector('button[\\@click*="openSidebar"]');
+                                if (sidebar && !sidebar.contains(e.target) && !button?.contains(e.target)) {
+                                    this.closeSidebar();
+                                }
+                            }
+                        });
+
+                        // Fechar sidebar com ESC
+                        document.addEventListener('keydown', (e) => {
+                            if (e.key === 'Escape' && this.sidebarOpen) {
+                                this.closeSidebar();
+                            }
+                        });
+                    },
+
+                    openSidebar() {
+                        this.sidebarOpen = true;
+                        document.body.style.overflow = 'hidden';
+                    },
+
+                    closeSidebar() {
+                        this.sidebarOpen = false;
+                        document.body.style.overflow = '';
+                    },
+
+                    touchStart(e) {
+                        if (window.innerWidth >= 1024) return;
+                        this.touchStartX = e.changedTouches[0].screenX;
+                        this.touchStartY = e.changedTouches[0].screenY;
+                    },
+
+                    touchMove(e) {
+                        if (window.innerWidth >= 1024) return;
+                        // Prevenir scroll durante swipe
+                        if (Math.abs(e.changedTouches[0].screenX - this.touchStartX) > Math.abs(e.changedTouches[0].screenY - this.touchStartY)) {
+                            e.preventDefault();
+                        }
+                    },
+
+                    touchEnd(e) {
+                        if (window.innerWidth >= 1024) return;
+                        this.touchEndX = e.changedTouches[0].screenX;
+                        this.touchEndY = e.changedTouches[0].screenY;
+                        this.handleSwipe();
+                    },
+
+                    handleSwipe() {
+                        const swipeDistanceX = this.touchEndX - this.touchStartX;
+                        const swipeDistanceY = this.touchEndY - this.touchStartY;
+
+                        // Verificar se é um swipe horizontal
+                        if (Math.abs(swipeDistanceX) > Math.abs(swipeDistanceY) && Math.abs(swipeDistanceX) > this.minSwipeDistance) {
+                            if (swipeDistanceX > 0 && !this.sidebarOpen) {
+                                // Swipe da esquerda para direita - abrir
+                                this.openSidebar();
+                            } else if (swipeDistanceX < 0 && this.sidebarOpen) {
+                                // Swipe da direita para esquerda - fechar
+                                this.closeSidebar();
+                            }
                         }
                     }
                 }

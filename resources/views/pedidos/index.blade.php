@@ -64,8 +64,68 @@
             </div>
         </div>
 
-        <!-- Filtros -->
+        <!-- Filtros Rápidos (Abas) -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-1">
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('pedidos.index', ['filtro_rapido' => 'em_producao']) }}"
+                   class="px-4 py-2.5 text-sm font-semibold rounded-lg transition-colors {{ request('filtro_rapido') === 'em_producao' || (!request()->hasAny(['filtro_rapido', 'status', 'search', 'plataforma', 'data_inicio', 'data_fim']) && !request()->has('status') && !request()->has('sort')) ? 'bg-red-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Em Produção
+                        @if($stats['em_producao'] > 0)
+                            <span class="px-2 py-0.5 bg-red-700 dark:bg-red-800 text-white text-xs font-bold rounded-full">{{ $stats['em_producao'] }}</span>
+                        @endif
+                    </div>
+                </a>
+                <a href="{{ route('pedidos.index', ['filtro_rapido' => 'prontos']) }}"
+                   class="px-4 py-2.5 text-sm font-semibold rounded-lg transition-colors {{ request('filtro_rapido') === 'prontos' ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Prontos
+                        @if($stats['prontos'] > 0)
+                            <span class="px-2 py-0.5 bg-blue-700 dark:bg-blue-800 text-white text-xs font-bold rounded-full">{{ $stats['prontos'] }}</span>
+                        @endif
+                    </div>
+                </a>
+                <a href="{{ route('pedidos.index', ['filtro_rapido' => 'entregues']) }}"
+                   class="px-4 py-2.5 text-sm font-semibold rounded-lg transition-colors {{ request('filtro_rapido') === 'entregues' ? 'bg-green-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Entregues
+                    </div>
+                </a>
+                <a href="{{ route('pedidos.index', ['filtro_rapido' => 'cancelados']) }}"
+                   class="px-4 py-2.5 text-sm font-semibold rounded-lg transition-colors {{ request('filtro_rapido') === 'cancelados' ? 'bg-gray-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        Cancelados
+                    </div>
+                </a>
+                <a href="{{ route('pedidos.index') }}"
+                   class="px-4 py-2.5 text-sm font-semibold rounded-lg transition-colors {{ !request()->hasAny(['filtro_rapido', 'status', 'search', 'plataforma', 'data_inicio', 'data_fim']) && request()->has('status') ? 'bg-gray-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                        Todos
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Filtros Detalhados -->
         <form method="GET" action="{{ route('pedidos.index') }}" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+            @if(request('filtro_rapido'))
+                <input type="hidden" name="filtro_rapido" value="{{ request('filtro_rapido') }}">
+            @endif
             <div class="flex flex-wrap items-center gap-3">
                 <!-- Busca -->
                 <div class="relative flex-1 min-w-[250px]">
@@ -128,7 +188,7 @@
                     Filtrar
                 </button>
 
-                @if(request()->hasAny(['search', 'status', 'plataforma', 'data_inicio', 'data_fim']))
+                @if(request()->hasAny(['search', 'status', 'plataforma', 'data_inicio', 'data_fim', 'filtro_rapido']))
                     <a href="{{ route('pedidos.index') }}"
                        class="px-5 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
                         Limpar

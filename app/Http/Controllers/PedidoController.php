@@ -63,9 +63,28 @@ class PedidoController extends Controller
             });
         }
 
-        // Filtro por status
-        if ($request->filled('status')) {
+        // Filtro por status ou filtro rápido
+        if ($request->filled('filtro_rapido')) {
+            $filtroRapido = $request->get('filtro_rapido');
+            switch($filtroRapido) {
+                case 'em_producao':
+                    $query->whereIn('status', ['pendente', 'recebido', 'em_preparo']);
+                    break;
+                case 'prontos':
+                    $query->where('status', 'pronto');
+                    break;
+                case 'entregues':
+                    $query->whereIn('status', ['entregue', 'concluido']);
+                    break;
+                case 'cancelados':
+                    $query->where('status', 'cancelado');
+                    break;
+            }
+        } elseif ($request->filled('status')) {
             $query->where('status', $request->get('status'));
+        } elseif (!$request->hasAny(['search', 'plataforma', 'data_inicio', 'data_fim', 'sort', 'order', 'per_page'])) {
+            // Por padrão, mostrar apenas pedidos em produção e prontos se não houver nenhum filtro
+            $query->whereIn('status', ['pendente', 'recebido', 'em_preparo', 'pronto']);
         }
 
         // Filtro por plataforma
@@ -99,6 +118,10 @@ class PedidoController extends Controller
             'receita_hoje' => Pedido::where('restaurante_id', $restauranteId)
                 ->whereDate('data_hora_pedido', today())
                 ->sum('valor_total'),
+            'em_producao' => Pedido::where('restaurante_id', $restauranteId)
+                ->whereIn('status', ['pendente', 'recebido', 'em_preparo'])->count(),
+            'prontos' => Pedido::where('restaurante_id', $restauranteId)
+                ->where('status', 'pronto')->count(),
         ];
 
         // Plataformas disponíveis
