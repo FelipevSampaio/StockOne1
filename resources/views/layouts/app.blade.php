@@ -38,7 +38,7 @@
                 </svg>
             </button>
             <!-- Sidebar -->
-            <aside class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out lg:static lg:translate-x-0 lg:block"
+            <aside class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out lg:translate-x-0"
                 :class="window.innerWidth >= 1024 ? 'translate-x-0' : (sidebarOpen ? 'translate-x-0' : '-translate-x-full')" x-transition>
                 <!-- Logo -->
                 <div class="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -145,21 +145,21 @@
                 </svg>
             </button>
             <!-- Main Content -->
-            <main class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900 lg:ml-64 overflow-hidden">
+            <main class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900 lg:ml-64 w-full overflow-hidden">
                 <!-- Header -->
-                <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 shadow-sm sticky top-0 z-10">
-                    <div class="flex items-center justify-between gap-4">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-3">
-                                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">@yield('title', 'Painel')</h1>
+                <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-3 sm:py-4 shadow-sm sticky top-0 z-10 w-full">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                                <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">@yield('title', 'Painel')</h1>
                                 @hasSection('subtitle')
                                     <span class="hidden sm:inline text-gray-400 dark:text-gray-600">•</span>
-                                    <p class="hidden sm:inline text-sm text-gray-600 dark:text-gray-400">@yield('subtitle')</p>
+                                    <p class="hidden sm:inline text-sm text-gray-600 dark:text-gray-400 truncate">@yield('subtitle')</p>
                                 @endif
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-end gap-2 sm:gap-3 w-full sm:w-auto ml-auto">
                             @yield('actions')
 
                             <!-- Notificações -->
@@ -169,8 +169,13 @@
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                                     </svg>
-                                    @if(App\Models\Alerta::where('resolvido', false)->whereHas('insumo', fn($q) => $q->where('restaurante_id', session('restaurante_id')))->count() > 0)
-                                        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-gray-800"></span>
+                                    @php
+                                        $alertCount = App\Models\Alerta::where('resolvido', false)->whereHas('insumo', fn($q) => $q->where('restaurante_id', session('restaurante_id')))->count();
+                                    @endphp
+                                    @if($alertCount > 0)
+                                        <span class="absolute -top-1 -right-1 min-w-[18px] h-4.5 px-1.5 flex items-center justify-center text-xs font-bold text-white bg-red-500 rounded-full ring-2 ring-white dark:ring-gray-800">
+                                            {{ $alertCount > 9 ? '9+' : $alertCount }}
+                                        </span>
                                     @endif
                                 </button>
 
@@ -287,7 +292,7 @@
                 </header>
 
                 <!-- Content -->
-                <section class="flex-1 p-6 overflow-y-auto">
+                <section class="flex-1 p-4 sm:p-6 overflow-y-auto w-full max-w-full">
                     <!-- Flash Messages -->
                     @if (session('success'))
                         <div x-data="{ show: true }"

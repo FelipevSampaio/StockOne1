@@ -4,7 +4,7 @@
 @section('subtitle', 'Visão geral do seu restaurante')
 
 @section('content')
-<div class="max-w-7xl mx-auto" x-data="dashboardData()" x-init="init()" x-cloak>
+<div class="w-full" x-data="dashboardData()" x-init="init()" x-cloak>
     <!-- Toast Notification -->
     <div x-show="showToast"
          x-transition:enter="transition ease-out duration-300"
