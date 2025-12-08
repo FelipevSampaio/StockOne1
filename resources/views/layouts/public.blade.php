@@ -3,18 +3,20 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>@yield('title', 'Cardápio') • StockOne</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     </head>
     <body class="bg-gray-50 text-gray-900">
         <div class="min-h-screen flex">
-            <aside class="w-64 bg-red-700 text-white flex flex-col">
-                <div class="p-6">
+            <aside class="fixed inset-y-0 left-0 z-30 w-64 bg-red-700 text-white flex flex-col overflow-y-auto">
+                <div class="p-6 flex-shrink-0">
                     <div class="text-2xl font-bold tracking-wide">StockOne</div>
                     <p class="text-sm text-red-100">Gestão inteligente para restaurantes</p>
                 </div>
 
-                <nav class="flex-1 px-4 space-y-1">
+                <nav class="flex-1 px-4 space-y-1 overflow-y-auto">
                     @php
                         $menu = [
                             ['label' => 'Dashboard', 'route' => 'dashboard'],
@@ -45,12 +47,12 @@
                     @endforeach
                 </nav>
 
-                <div class="p-4 text-xs text-red-100">
+                <div class="p-4 text-xs text-red-100 flex-shrink-0">
                     StockOne © {{ date('Y') }} · SaaS de restaurantes
                 </div>
             </aside>
 
-            <div class="flex-1 flex flex-col bg-gray-50">
+            <div class="flex-1 flex flex-col bg-gray-50 ml-64">
                 <header class="bg-white/90 shadow-sm backdrop-blur">
                     <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-8 py-6">
                         <div>
