@@ -13,7 +13,7 @@
 @endsection
 
 @section('content')
-    <div class="space-y-6">
+    <div class="space-y-6" x-data="receitasData()" x-init="init()">
         <!-- Estatísticas -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -74,15 +74,19 @@
         </div>
 
         <!-- Filtros -->
-        <form method="GET" action="{{ route('receitas.index') }}" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+        <form method="GET" action="{{ route('receitas.index') }}" 
+              class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4"
+              @submit.prevent="applyFilters()">
             <div class="flex flex-wrap items-center gap-3">
-                <!-- Busca -->
+                <!-- Busca em Tempo Real -->
                 <div class="relative flex-1 min-w-[250px]">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                     <input type="text"
                            name="search"
+                           x-model="searchQuery"
+                           @input.debounce.300ms="applyFilters()"
                            placeholder="Buscar por item ou insumo..."
                            value="{{ request('search') }}"
                            class="pl-10 w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
@@ -115,7 +119,8 @@
                 </select>
 
                 <!-- Botões -->
-                <button type="submit"
+                <button type="button"
+                        @click="applyFilters()"
                         class="px-5 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-500 transition-colors shadow-sm">
                     Filtrar
                 </button>
@@ -129,22 +134,191 @@
             </div>
         </form>
 
+        <!-- Modo de Visualização -->
+        <div class="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Visualização:</span>
+                <button @click="viewMode = 'table'" 
+                        :class="viewMode === 'table' ? 'bg-red-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    Tabela
+                </button>
+                <button @click="viewMode = 'grouped'" 
+                        :class="viewMode === 'grouped' ? 'bg-red-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    Agrupado
+                </button>
+            </div>
+            <div class="flex items-center gap-3">
+                <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                    <input type="checkbox" x-model="selectAll" @change="toggleSelectAll()" class="rounded border-gray-300 text-red-600 focus:ring-red-500">
+                    Selecionar todos
+                </label>
+                <div x-show="selectedItems.length > 0" 
+                     x-transition
+                     class="flex items-center gap-2">
+                    <span class="text-sm text-gray-700 dark:text-gray-300" x-text="`${selectedItems.length} selecionado(s)`"></span>
+                    <button @click="bulkMarkEssential()" 
+                            class="px-3 py-1.5 bg-yellow-600 text-white text-xs font-semibold rounded-lg hover:bg-yellow-500 transition-colors">
+                        Marcar Essenciais
+                    </button>
+                    <button @click="bulkDelete()" 
+                            class="px-3 py-1.5 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-500 transition-colors">
+                        Excluir
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualização Agrupada -->
+        <div x-show="viewMode === 'grouped'" 
+             x-transition
+             class="space-y-4">
+            @foreach($receitasAgrupadas as $itemId => $receitasItem)
+                @php
+                    $item = $receitasItem->first()->cardapioItem;
+                    $custoInfo = $custosPorItem[$itemId] ?? null;
+                @endphp
+                @if($item)
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
+                     x-data="{ expanded: false }">
+                    <div class="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                         @click="expanded = !expanded">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-4 flex-1">
+                                <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-transform"
+                                        :class="{ 'rotate-90': expanded }">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                </button>
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $item->nome }}</h3>
+                                    <div class="flex items-center gap-4 mt-1">
+                                        <span class="text-sm text-gray-600 dark:text-gray-400">{{ $receitasItem->count() }} insumo(s)</span>
+                                        @if($custoInfo)
+                                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Custo: R$ {{ number_format($custoInfo['custo_total'], 2, ',', '.') }}
+                                            </span>
+                                            <span class="text-sm font-medium {{ $custoInfo['margem_lucro'] >= 50 ? 'text-green-600' : ($custoInfo['margem_lucro'] >= 30 ? 'text-yellow-600' : 'text-red-600') }}">
+                                                Margem: {{ number_format($custoInfo['margem_lucro'], 1) }}%
+                                            </span>
+                                            @if($custoInfo['custo_total'] > $custoInfo['preco_venda'])
+                                                <span class="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-semibold rounded-full">
+                                                    ⚠️ Custo > Preço
+                                                </span>
+                                            @endif
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Preço de Venda</p>
+                                <p class="text-lg font-bold text-gray-900 dark:text-white">R$ {{ number_format($item->preco_venda ?? 0, 2, ',', '.') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div x-show="expanded" 
+                         x-transition
+                         class="border-t border-gray-200 dark:border-gray-700">
+                        <div class="p-4 space-y-2">
+                            @foreach($receitasItem as $receita)
+                                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                                    <div class="flex items-center gap-3 flex-1">
+                                        <input type="checkbox" 
+                                               value="{{ $receita->id }}"
+                                               x-model="selectedItems"
+                                               class="rounded border-gray-300 text-red-600 focus:ring-red-500">
+                                        <div class="flex-1">
+                                            <p class="font-medium text-gray-900 dark:text-white">{{ $receita->insumo?->nome ?? 'Insumo removido' }}</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                                {{ number_format($receita->quantidade_necessaria, 2, ',', '.') }} {{ $receita->insumo?->unidade_medida ?? '' }}
+                                                @if($receita->insumo && $receita->insumo->custo_unitario)
+                                                    · R$ {{ number_format($receita->insumo->custo_unitario, 2, ',', '.') }}/{{ $receita->insumo->unidade_medida }}
+                                                    · Subtotal: R$ {{ number_format($receita->quantidade_necessaria * $receita->insumo->custo_unitario, 2, ',', '.') }}
+                                                @endif
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        @if($receita->essencial)
+                                            <span class="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-semibold rounded-full">Essencial</span>
+                                        @endif
+                                        <a href="{{ route('receitas.edit', $receita) }}" 
+                                           class="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                           title="Editar">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
+                                        </a>
+                                        <button @click="showDetails({{ $receita->id }})"
+                                                class="p-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                                title="Ver detalhes">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+                @endif
+            @endforeach
+        </div>
+
         <!-- Tabela -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div x-show="viewMode === 'table'" 
+             x-transition
+             class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-900">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Item do Cardápio</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Insumo</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Quantidade</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                                <input type="checkbox" 
+                                       x-model="selectAll" 
+                                       @change="toggleSelectAll()"
+                                       class="rounded border-gray-300 text-red-600 focus:ring-red-500">
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                                @click="sortBy('cardapio_item_id')">
+                                Item do Cardápio
+                                <svg class="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                </svg>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                                @click="sortBy('insumo_id')">
+                                Insumo
+                                <svg class="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                </svg>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                                @click="sortBy('quantidade_necessaria')">
+                                Quantidade
+                                <svg class="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                </svg>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Custo</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</th>
                             <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Ações</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         @forelse ($receitas as $receita)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+                                x-data="{ itemId: {{ $receita->id }} }">
+                                <td class="px-6 py-4">
+                                    <input type="checkbox" 
+                                           :value="itemId"
+                                           x-model="selectedItems"
+                                           class="rounded border-gray-300 text-red-600 focus:ring-red-500">
+                                </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-3">
                                         <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -175,6 +349,20 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4">
+                                    @if($receita->insumo && $receita->insumo->custo_unitario)
+                                        <div>
+                                            <p class="font-medium text-gray-900 dark:text-white">
+                                                R$ {{ number_format($receita->quantidade_necessaria * $receita->insumo->custo_unitario, 2, ',', '.') }}
+                                            </p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                                R$ {{ number_format($receita->insumo->custo_unitario, 2, ',', '.') }}/{{ $receita->insumo->unidade_medida }}
+                                            </p>
+                                        </div>
+                                    @else
+                                        <span class="text-sm text-gray-400 dark:text-gray-500">-</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4">
                                     @if($receita->essencial)
                                         <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
                                             <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -190,6 +378,14 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center justify-end gap-2">
+                                        <button @click="showDetails({{ $receita->id }})"
+                                                class="p-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                                title="Ver detalhes">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                            </svg>
+                                        </button>
                                         <a href="{{ route('receitas.edit', $receita) }}"
                                            class="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                            title="Editar">
@@ -213,7 +409,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-6 py-16 text-center">
+                                <td colspan="7" class="px-6 py-16 text-center">
                                     <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
@@ -232,6 +428,219 @@
                 {{ $receitas->links() }}
             </div>
         @endif
+
+        <!-- Modal de Detalhes -->
+        <div x-show="showModal" 
+             @click.away="showModal = false"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+             style="display: none;"
+             x-data="{ receita: null }">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+                 @click.stop>
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Detalhes da Receita</h3>
+                        <button @click="showModal = false" 
+                                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div x-html="receitaDetails" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <script>
+        function receitasData() {
+            return {
+                viewMode: 'table',
+                searchQuery: '{{ request('search') }}',
+                selectedItems: [],
+                selectAll: false,
+                showModal: false,
+                receitaDetails: '',
+                sortField: '{{ request('sort', 'cardapio_item_id') }}',
+                sortDirection: 'asc',
+
+                init() {
+                    // Carregar modo de visualização salvo
+                    const savedMode = localStorage.getItem('receitas_view_mode');
+                    if (savedMode) this.viewMode = savedMode;
+                },
+
+                applyFilters() {
+                    const form = document.querySelector('form[method="GET"]');
+                    if (form) {
+                        const formData = new FormData(form);
+                        formData.set('search', this.searchQuery);
+                        const params = new URLSearchParams(formData);
+                        window.location.href = '{{ route('receitas.index') }}?' + params.toString();
+                    }
+                },
+
+                toggleSelectAll() {
+                    if (this.selectAll) {
+                        this.selectedItems = Array.from(document.querySelectorAll('input[type="checkbox"][value]'))
+                            .map(cb => parseInt(cb.value));
+                    } else {
+                        this.selectedItems = [];
+                    }
+                },
+
+                sortBy(field) {
+                    this.sortField = field;
+                    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+                    window.location.href = '{{ route('receitas.index') }}?sort=' + field + '&direction=' + this.sortDirection;
+                },
+
+                showDetails(receitaId) {
+                    // Buscar detalhes da receita via AJAX
+                    fetch(`{{ url('/receitas') }}/${receitaId}/detalhes`, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    })
+                        .then(response => {
+                            if (!response.ok) throw new Error('Erro ao buscar detalhes');
+                            return response.json();
+                        })
+                        .then(data => {
+                            this.receitaDetails = this.formatReceitaDetails(data);
+                            this.showModal = true;
+                        })
+                        .catch(error => {
+                            console.error('Erro ao buscar detalhes:', error);
+                            alert('Erro ao carregar detalhes da receita');
+                        });
+                },
+
+                formatReceitaDetails(data) {
+                    return `
+                        <div class="space-y-4">
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Item do Cardápio</p>
+                                <p class="text-lg font-semibold text-gray-900 dark:text-white">${data.cardapio_item || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Insumo</p>
+                                <p class="text-lg font-semibold text-gray-900 dark:text-white">${data.insumo || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Quantidade Necessária</p>
+                                <p class="text-lg font-semibold text-gray-900 dark:text-white">${data.quantidade} ${data.unidade || ''}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Status</p>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${data.essencial ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}">
+                                    ${data.essencial ? 'Essencial' : 'Opcional'}
+                                </span>
+                            </div>
+                            ${data.custo ? `
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Custo Unitário</p>
+                                <p class="text-lg font-semibold text-gray-900 dark:text-white">R$ ${data.custo_unitario}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Custo Total</p>
+                                <p class="text-lg font-semibold text-gray-900 dark:text-white">R$ ${data.custo}</p>
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                },
+
+                bulkMarkEssential() {
+                    if (this.selectedItems.length === 0) return;
+                    if (!confirm(`Marcar ${this.selectedItems.length} receita(s) como essenciais?`)) return;
+                    
+                    // Criar formulário para ação em lote
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ route('receitas.index') }}/bulk-essential';
+                    
+                    const csrf = document.createElement('input');
+                    csrf.type = 'hidden';
+                    csrf.name = '_token';
+                    csrf.value = '{{ csrf_token() }}';
+                    form.appendChild(csrf);
+                    
+                    this.selectedItems.forEach(id => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'ids[]';
+                        input.value = id;
+                        form.appendChild(input);
+                    });
+                    
+                    document.body.appendChild(form);
+                    // form.submit(); // Descomentar quando implementar a rota
+                    alert('Funcionalidade em desenvolvimento');
+                    document.body.removeChild(form);
+                },
+
+                bulkDelete() {
+                    if (this.selectedItems.length === 0) return;
+                    if (!confirm(`Excluir ${this.selectedItems.length} receita(s)? Esta ação não pode ser desfeita.`)) return;
+                    
+                    // Criar formulário para exclusão em lote
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ route('receitas.index') }}/bulk-delete';
+                    
+                    const csrf = document.createElement('input');
+                    csrf.type = 'hidden';
+                    csrf.name = '_token';
+                    csrf.value = '{{ csrf_token() }}';
+                    form.appendChild(csrf);
+                    
+                    const method = document.createElement('input');
+                    method.type = 'hidden';
+                    method.name = '_method';
+                    method.value = 'DELETE';
+                    form.appendChild(method);
+                    
+                    this.selectedItems.forEach(id => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'ids[]';
+                        input.value = id;
+                        form.appendChild(input);
+                    });
+                    
+                    document.body.appendChild(form);
+                    // form.submit(); // Descomentar quando implementar a rota
+                    alert('Funcionalidade em desenvolvimento');
+                    document.body.removeChild(form);
+                }
+            }
+        }
+
+        // Salvar modo de visualização quando mudar
+        document.addEventListener('DOMContentLoaded', () => {
+            // Observar mudanças no viewMode usando MutationObserver ou eventos
+            const observer = new MutationObserver(() => {
+                const viewModeEl = document.querySelector('[x-data*="receitasData"]');
+                if (viewModeEl && window.Alpine) {
+                    const data = Alpine.$data(viewModeEl);
+                    if (data && data.viewMode) {
+                        localStorage.setItem('receitas_view_mode', data.viewMode);
+                    }
+                }
+            });
+            
+            // Observar mudanças no DOM
+            observer.observe(document.body, { childList: true, subtree: true });
+        });
+    </script>
 @endsection
 

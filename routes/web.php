@@ -148,6 +148,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('alertas', AlertaController::class)->except(['show']);
         Route::resource('compras-sugestoes', CompraSugestaoController::class)->except(['show']);
         Route::resource('receitas', ReceitaController::class)->except(['show']);
+        Route::get('receitas/{receita}/detalhes', [ReceitaController::class, 'detalhes'])->name('receitas.detalhes');
         Route::resource('pedido-itens', PedidoItemController::class)->except(['show']);
         Route::resource('fila-producao', FilaProducaoController::class)->except(['show']);
     });
