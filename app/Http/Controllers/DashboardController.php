@@ -319,11 +319,43 @@ class DashboardController extends Controller
             ->groupBy('status')
             ->get();
 
-        return response()->json([
+        $response = [
             'success' => true,
             'sales' => $chartData,
             'status' => $statusData,
-        ]);
+        ];
+
+        // Se solicitado, incluir dados do período anterior para comparação
+        if ($request->get('previous')) {
+            $previousDates = [];
+            for ($i = ($period * 2) - 1; $i >= $period; $i--) {
+                $previousDates[] = now()->subDays($i)->format('Y-m-d');
+            }
+
+            $previousSalesData = Pedido::where('restaurante_id', $restauranteId)
+                ->where('data_hora_pedido', '>=', now()->subDays($period * 2))
+                ->where('data_hora_pedido', '<', now()->subDays($period))
+                ->where('status', 'concluido')
+                ->selectRaw('DATE(data_hora_pedido) as date, COUNT(*) as count, COALESCE(SUM(valor_total), 0) as total')
+                ->groupBy('date')
+                ->orderBy('date')
+                ->get()
+                ->keyBy('date');
+
+            $previousChartData = collect($previousDates)->map(function($date) use ($previousSalesData) {
+                $data = $previousSalesData->get($date);
+                return [
+                    'date' => $date,
+                    'date_formatted' => \Carbon\Carbon::parse($date)->format('d/m'),
+                    'count' => $data->count ?? 0,
+                    'total' => $data->total ?? 0,
+                ];
+            });
+
+            $response['previous'] = $previousChartData;
+        }
+
+        return response()->json($response);
     }
 
     /**
@@ -401,6 +433,130 @@ class DashboardController extends Controller
             'statusPedidos' => $statusPedidos,
             'timestamp' => now()->format('H:i:s'),
         ]);
+    }
+
+    /**
+     * Retorna dados do dashboard para período específico
+     */
+    public function data(Request $request)
+    {
+        $restauranteId = session('restaurante_id');
+        $period = $request->get('period', 'hoje');
+        $startDate = $request->get('start');
+        $endDate = $request->get('end');
+
+        // Determinar datas baseado no período
+        $dates = $this->getPeriodDates($period, $startDate, $endDate);
+        
+        // Buscar dados do período atual
+        $currentStats = $this->getStatsForPeriod($restauranteId, $dates['start'], $dates['end']);
+        
+        // Buscar dados do período anterior para comparação
+        $previousDates = $this->getPreviousPeriodDates($dates);
+        $previousStats = $this->getStatsForPeriod($restauranteId, $previousDates['start'], $previousDates['end']);
+
+        // Calcular comparações
+        $comparisons = [
+            'pedidos' => $this->calculateComparison($currentStats['pedidos'], $previousStats['pedidos']),
+            'receita' => $this->calculateComparison($currentStats['receita'], $previousStats['receita']),
+        ];
+
+        // Status dos pedidos
+        $statusPedidos = [
+            'pendentes' => Pedido::where('restaurante_id', $restauranteId)
+                ->whereBetween('data_hora_pedido', [$dates['start'], $dates['end']])
+                ->where('status', 'pendente')
+                ->count(),
+            'em_preparo' => Pedido::where('restaurante_id', $restauranteId)
+                ->whereBetween('data_hora_pedido', [$dates['start'], $dates['end']])
+                ->where('status', 'em_preparo')
+                ->count(),
+            'pronto' => Pedido::where('restaurante_id', $restauranteId)
+                ->whereBetween('data_hora_pedido', [$dates['start'], $dates['end']])
+                ->where('status', 'pronto')
+                ->count(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'stats' => array_merge($currentStats, [
+                'comparisons' => $comparisons,
+                'previous_stats' => $previousStats,
+            ]),
+            'statusPedidos' => $statusPedidos,
+            'period' => $period,
+            'dates' => $dates,
+        ]);
+    }
+
+    private function getPeriodDates($period, $startDate = null, $endDate = null)
+    {
+        switch ($period) {
+            case 'hoje':
+                return [
+                    'start' => today()->startOfDay(),
+                    'end' => today()->endOfDay(),
+                ];
+            case 'semana':
+                return [
+                    'start' => now()->startOfWeek(),
+                    'end' => now()->endOfWeek(),
+                ];
+            case 'mes':
+                return [
+                    'start' => now()->startOfMonth(),
+                    'end' => now()->endOfMonth(),
+                ];
+            case 'custom':
+                return [
+                    'start' => $startDate ? \Carbon\Carbon::parse($startDate)->startOfDay() : today()->startOfDay(),
+                    'end' => $endDate ? \Carbon\Carbon::parse($endDate)->endOfDay() : today()->endOfDay(),
+                ];
+            default:
+                return [
+                    'start' => today()->startOfDay(),
+                    'end' => today()->endOfDay(),
+                ];
+        }
+    }
+
+    private function getPreviousPeriodDates($currentDates)
+    {
+        $diff = $currentDates['start']->diffInDays($currentDates['end']);
+        return [
+            'start' => $currentDates['start']->copy()->subDays($diff + 1),
+            'end' => $currentDates['start']->copy()->subDay(),
+        ];
+    }
+
+    private function getStatsForPeriod($restauranteId, $start, $end)
+    {
+        $pedidos = Pedido::where('restaurante_id', $restauranteId)
+            ->whereBetween('data_hora_pedido', [$start, $end])
+            ->count();
+
+        $receita = Pedido::where('restaurante_id', $restauranteId)
+            ->whereBetween('data_hora_pedido', [$start, $end])
+            ->where('status', 'concluido')
+            ->sum('valor_total') ?? 0;
+
+        return [
+            'pedidos' => $pedidos,
+            'receita' => $receita,
+        ];
+    }
+
+    private function calculateComparison($current, $previous)
+    {
+        if ($previous == 0) {
+            return $current > 0 ? ['percent' => 100, 'trend' => 'up'] : ['percent' => 0, 'trend' => 'neutral'];
+        }
+        
+        $percent = (($current - $previous) / $previous) * 100;
+        return [
+            'percent' => round($percent, 1),
+            'trend' => $percent > 0 ? 'up' : ($percent < 0 ? 'down' : 'neutral'),
+        ];
     }
 
     /**

@@ -5,36 +5,171 @@
 
 @section('content')
 <div class="w-full" x-data="dashboardData()" x-init="init()" x-cloak>
-    <!-- Toast Notification -->
-    <div x-show="showToast"
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 translate-y-2"
-         x-transition:enter-end="opacity-100 translate-y-0"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100 translate-y-0"
-         x-transition:leave-end="opacity-0 translate-y-2"
-         class="fixed top-20 right-4 z-50 max-w-sm">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-3">
-            <div class="flex-shrink-0">
-                <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                </svg>
+    <!-- Filtros de Período -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6"
+         x-data="{ showHelp: false }">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Período:</span>
+                <button @click="setPeriod('hoje')" 
+                        :class="period === 'hoje' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-105">
+                    Hoje
+                </button>
+                <button @click="setPeriod('semana')" 
+                        :class="period === 'semana' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-105">
+                    Esta Semana
+                </button>
+                <button @click="setPeriod('mes')" 
+                        :class="period === 'mes' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-105">
+                    Este Mês
+                </button>
+                <button @click="setPeriod('custom')" 
+                        :class="period === 'custom' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-105">
+                    Personalizado
+                </button>
             </div>
-            <div class="flex-1">
-                <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="toastMessage"></p>
+            <div class="flex items-center gap-3">
+                <button @click="showHelp = !showHelp" 
+                        class="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        title="Atalhos de teclado">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </button>
+                <button @click="exportDashboard()" 
+                        class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+                        title="Exportar (Ctrl+E)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Exportar
+                </button>
+                <button @click="toggleCustomizeMode()" 
+                        :class="customizeMode ? 'bg-red-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
+                        class="px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+                        title="Personalizar (Ctrl+P)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z"/>
+                    </svg>
+                    Personalizar
+                </button>
+            </div>
+        </div>
+        <!-- Ajuda de Atalhos -->
+        <div x-show="showHelp" 
+             x-transition
+             class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div>
+                    <kbd class="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded font-mono">Ctrl+K</kbd>
+                    <span class="ml-2 text-gray-600 dark:text-gray-400">Ações rápidas</span>
+                </div>
+                <div>
+                    <kbd class="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded font-mono">Ctrl+E</kbd>
+                    <span class="ml-2 text-gray-600 dark:text-gray-400">Exportar</span>
+                </div>
+                <div>
+                    <kbd class="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded font-mono">Ctrl+P</kbd>
+                    <span class="ml-2 text-gray-600 dark:text-gray-400">Personalizar</span>
+                </div>
+                <div>
+                    <kbd class="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded font-mono">1-4</kbd>
+                    <span class="ml-2 text-gray-600 dark:text-gray-400">Navegar cards</span>
+                </div>
+            </div>
+        </div>
+        <!-- Período Customizado -->
+        <div x-show="period === 'custom'" 
+             x-transition
+             class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center gap-3">
+            <div>
+                <label class="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Data Início</label>
+                <input type="date" 
+                       x-model="customStartDate"
+                       @change="applyCustomPeriod()"
+                       class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+            </div>
+            <div>
+                <label class="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Data Fim</label>
+                <input type="date" 
+                       x-model="customEndDate"
+                       @change="applyCustomPeriod()"
+                       class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
             </div>
         </div>
     </div>
 
-    <!-- Insights Card -->
-    @if(count($insights) > 0)
-    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl shadow-sm border border-blue-200 dark:border-blue-800 p-6 mb-6">
-        <div class="flex items-center gap-2 mb-4">
-            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-            </svg>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Insights Automáticos</h3>
+    <!-- Toast Notifications -->
+    <div class="fixed top-20 right-4 z-50 space-y-2 max-w-sm" 
+         x-data="{ toasts: [] }"
+         x-init="$watch('showToast', value => {
+             if (value) {
+                 toasts.push({ id: Date.now(), message: toastMessage, type: 'success' });
+                 setTimeout(() => {
+                     toasts.shift();
+                 }, 3000);
+             }
+         })">
+        <template x-for="toast in toasts" :key="toast.id">
+            <div x-show="true"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-x-full"
+                 x-transition:enter-end="opacity-100 translate-x-0"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-x-0"
+                 x-transition:leave-end="opacity-0 translate-x-full"
+                 class="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-3 backdrop-blur-sm">
+                <div class="flex-shrink-0">
+                    <svg class="w-5 h-5 text-green-500 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="toast.message"></p>
+                </div>
+                <button @click="toasts = toasts.filter(t => t.id !== toast.id)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </template>
+    </div>
+
+    <!-- Indicador de Status do Sistema -->
+    <div class="fixed bottom-4 left-4 z-40" x-data="{ status: 'online' }" x-init="status = navigator.onLine ? 'online' : 'offline'">
+        <div class="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+            <div class="w-2 h-2 rounded-full" 
+                 :class="status === 'online' ? 'bg-green-500 animate-pulse' : 'bg-red-500'"></div>
+            <span class="text-xs font-medium text-gray-700 dark:text-gray-300" x-text="status === 'online' ? 'Sistema Online' : 'Sistema Offline'"></span>
         </div>
+    </div>
+
+    <!-- Insights e Recomendações -->
+    @if(count($insights) > 0)
+    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl shadow-sm border border-blue-200 dark:border-blue-800 p-6 mb-6"
+         x-data="{ expanded: true }">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Insights e Recomendações</h3>
+                <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold rounded-full">
+                    {{ count($insights) }}
+                </span>
+            </div>
+            <button @click="expanded = !expanded" class="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
+                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 transition-transform" :class="{ 'rotate-180': !expanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+        </div>
+        <div x-show="expanded" x-transition>
         <div class="space-y-3">
             @foreach($insights as $insight)
                 <div class="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-{{ $insight['type'] === 'success' ? 'green' : ($insight['type'] === 'warning' ? 'yellow' : 'blue') }}-200 dark:border-{{ $insight['type'] === 'success' ? 'green' : ($insight['type'] === 'warning' ? 'yellow' : 'blue') }}-800">
@@ -74,6 +209,7 @@
                 </div>
             @endforeach
         </div>
+        </div>
     </div>
     @endif
 
@@ -94,60 +230,116 @@
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-4 mb-6" x-show="!isLoading"
+    <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-4 mb-6" 
+         x-show="!isLoading"
+         id="stats-cards"
+         :class="customizeMode ? 'cursor-move' : ''"
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="opacity-0 translate-y-4"
          x-transition:enter-end="opacity-100 translate-y-0">
+        <div x-show="customizeMode" class="col-span-full mb-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+            <p class="text-sm text-yellow-800 dark:text-yellow-300 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Modo personalização ativo: Arraste os cards para reorganizar. O layout será salvo automaticamente.
+            </p>
+        </div>
         <!-- Pedidos Hoje -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+        <div class="dashboard-card bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300 group"
+             :class="customizeMode ? 'cursor-move' : 'cursor-pointer'"
+             data-card-id="pedidos"
+             @click="!customizeMode && (window.location.href='{{ route('pedidos.index') }}')"
+             x-data="{ index: 0 }"
+             x-init="setTimeout(() => { index = 1 }, 100)"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             :style="`transition-delay: ${index * 50}ms`">
             <div class="flex items-center justify-between">
                 <div class="flex-1">
                     <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Pedidos Hoje</p>
                     <div class="flex items-baseline gap-2 mt-2">
                         <p class="text-3xl font-bold text-gray-900 dark:text-white" data-stat="pedidos_hoje">{{ $stats['pedidos_hoje'] ?? 0 }}</p>
                         @if(($stats['percentual_pedidos'] ?? 0) != 0)
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $stats['percentual_pedidos'] > 0 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' }}">
-                                <svg class="w-3 h-3 {{ $stats['percentual_pedidos'] > 0 ? '' : 'rotate-180' }}" fill="currentColor" viewBox="0 0 20 20">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold {{ $stats['percentual_pedidos'] > 0 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 animate-pulse' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' }}">
+                                <svg class="w-3.5 h-3.5 mr-1 {{ $stats['percentual_pedidos'] > 0 ? '' : 'rotate-180' }}" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
                                 </svg>
                                 {{ abs($stats['percentual_pedidos'] ?? 0) }}%
                             </span>
                         @endif
                     </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">vs. ontem</p>
+                    <div class="flex items-center gap-2 mt-1">
+                        <p class="text-xs text-gray-500 dark:text-gray-500">vs. ontem</p>
+                        @php
+                            $pedidosOntem = \App\Models\Pedido::where('restaurante_id', session('restaurante_id'))
+                                ->whereDate('data_hora_pedido', today()->subDay())
+                                ->count();
+                        @endphp
+                        <span class="text-xs font-medium {{ $stats['pedidos_hoje'] > $pedidosOntem ? 'text-green-600 dark:text-green-400' : ($stats['pedidos_hoje'] < $pedidosOntem ? 'text-red-600 dark:text-red-400' : 'text-gray-500') }}">
+                            ({{ $pedidosOntem }} ontem)
+                        </span>
+                    </div>
+                    <!-- Mini gráfico sparkline -->
+                    <div class="mt-2 h-8 w-full" id="sparkline-pedidos"></div>
                 </div>
-                <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                     <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                     </svg>
                 </div>
             </div>
-            <div class="mt-4">
-                <a href="{{ route('pedidos.index') }}" class="text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
+            <div class="mt-4 flex items-center justify-between">
+                <a href="{{ route('pedidos.index') }}" class="text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 group-hover:underline">
                     Ver pedidos →
                 </a>
+                <div class="text-xs text-gray-400 dark:text-gray-600">
+                    Clique para ver detalhes
+                </div>
             </div>
         </div>
 
         <!-- Receita Hoje -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+        <div class="dashboard-card bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300 group"
+             :class="customizeMode ? 'cursor-move' : 'cursor-pointer'"
+             data-card-id="receita"
+             x-data="{ index: 1 }"
+             x-init="setTimeout(() => { index = 1 }, 150)"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             :style="`transition-delay: ${index * 50}ms`">
             <div class="flex items-center justify-between">
                 <div class="flex-1">
                     <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Receita Hoje</p>
                     <div class="flex items-baseline gap-2 mt-2">
                         <p class="text-3xl font-bold text-gray-900 dark:text-white" data-stat="receita_hoje">R$ {{ number_format($stats['receita_hoje'] ?? 0, 2, ',', '.') }}</p>
                         @if(($stats['percentual_receita_hoje'] ?? 0) != 0)
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $stats['percentual_receita_hoje'] > 0 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' }}">
-                                <svg class="w-3 h-3 {{ $stats['percentual_receita_hoje'] > 0 ? '' : 'rotate-180' }}" fill="currentColor" viewBox="0 0 20 20">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold {{ $stats['percentual_receita_hoje'] > 0 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 animate-pulse' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' }}">
+                                <svg class="w-3.5 h-3.5 mr-1 {{ $stats['percentual_receita_hoje'] > 0 ? '' : 'rotate-180' }}" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
                                 </svg>
                                 {{ abs($stats['percentual_receita_hoje'] ?? 0) }}%
                             </span>
                         @endif
                     </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">vs. ontem</p>
+                    <div class="flex items-center gap-2 mt-1">
+                        <p class="text-xs text-gray-500 dark:text-gray-500">vs. ontem</p>
+                        @php
+                            $receitaOntem = \App\Models\Pedido::where('restaurante_id', session('restaurante_id'))
+                                ->whereDate('data_hora_pedido', today()->subDay())
+                                ->where('status', 'concluido')
+                                ->sum('valor_total') ?? 0;
+                        @endphp
+                        <span class="text-xs font-medium {{ $stats['receita_hoje'] > $receitaOntem ? 'text-green-600 dark:text-green-400' : ($stats['receita_hoje'] < $receitaOntem ? 'text-red-600 dark:text-red-400' : 'text-gray-500') }}">
+                            (R$ {{ number_format($receitaOntem, 2, ',', '.') }} ontem)
+                        </span>
+                    </div>
+                    <!-- Mini gráfico sparkline -->
+                    <div class="mt-2 h-8 w-full" id="sparkline-receita"></div>
                 </div>
-                <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                     <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
@@ -156,30 +348,58 @@
         </div>
 
         <!-- Alertas Críticos -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow {{ $stats['alertas_count'] > 0 ? 'ring-2 ring-red-200 dark:ring-red-900/50' : '' }}">
+        <div class="dashboard-card bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300 group {{ $stats['alertas_count'] > 0 ? 'ring-2 ring-red-200 dark:ring-red-900/50' : '' }}"
+             :class="customizeMode ? 'cursor-move' : 'cursor-pointer'"
+             data-card-id="alertas"
+             @click="!customizeMode && (window.location.href='{{ route('alertas.index') }}')"
+             x-data="{ index: 2 }"
+             x-init="setTimeout(() => { index = 1 }, 200)"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             :style="`transition-delay: ${index * 50}ms`">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Alertas Ativos</p>
+                    <div class="flex items-center gap-2">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Alertas Ativos</p>
+                        @if($stats['alertas_count'] > 0)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold text-white bg-red-600 animate-pulse">
+                                {{ $stats['alertas_count'] > 9 ? '9+' : $stats['alertas_count'] }}
+                            </span>
+                        @endif
+                    </div>
                     <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ $stats['alertas_count'] ?? 0 }}</p>
                     <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">
                         {{ $stats['itens_estoque_critico'] ?? 0 }} itens críticos
                     </p>
                 </div>
-                <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform {{ $stats['alertas_count'] > 0 ? 'animate-pulse' : '' }}">
                     <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                     </svg>
                 </div>
             </div>
-            <div class="mt-4">
-                <a href="{{ route('alertas.index') }}" class="text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
+            <div class="mt-4 flex items-center justify-between">
+                <a href="{{ route('alertas.index') }}" class="text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 group-hover:underline">
                     Ver alertas →
                 </a>
+                <div class="text-xs text-gray-400 dark:text-gray-600">
+                    Clique para ver detalhes
+                </div>
             </div>
         </div>
 
         <!-- Total de Itens -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+        <div class="dashboard-card bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300 group"
+             :class="customizeMode ? 'cursor-move' : 'cursor-pointer'"
+             data-card-id="cardapio"
+             @click="!customizeMode && (window.location.href='{{ route('cardapio-itens.index') }}')"
+             x-data="{ index: 3 }"
+             x-init="setTimeout(() => { index = 1 }, 250)"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             :style="`transition-delay: ${index * 50}ms`">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Cardápio</p>
@@ -194,10 +414,13 @@
                     </svg>
                 </div>
             </div>
-            <div class="mt-4">
-                <a href="{{ route('cardapio-itens.index') }}" class="text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
+            <div class="mt-4 flex items-center justify-between">
+                <a href="{{ route('cardapio-itens.index') }}" class="text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 group-hover:underline">
                     Ver cardápio →
                 </a>
+                <div class="text-xs text-gray-400 dark:text-gray-600">
+                    Clique para ver detalhes
+                </div>
             </div>
         </div>
     </div>
@@ -516,7 +739,7 @@
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Pedidos dos Últimos Dias</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Evolução diária</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Evolução diária com comparação</p>
                 </div>
                 <select x-model="chartPeriod" @change="loadChartData()" class="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     <option value="7">7 dias</option>
@@ -530,18 +753,39 @@
         <!-- Distribuição por Plataforma -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Pedidos por Plataforma</h3>
-            <div id="platformChart" class="h-64"></div>
+            <div id="platformChart" class="min-h-64 max-h-96 overflow-y-auto"></div>
         </div>
+    </div>
+
+    <!-- Gráfico Receita vs Custos -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Receita vs Custos</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Análise financeira do período</p>
+            </div>
+        </div>
+        <div id="revenueChart" class="h-80"></div>
     </div>
 
     <!-- Itens Mais Vendidos Row -->
     <div class="grid gap-6 lg:grid-cols-2 mb-6">
         <!-- Itens Mais Vendidos -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top 5 Itens Mais Vendidos</h3>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+             x-data="{ sortBy: 'quantidade', sortOrder: 'desc' }">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Top 5 Itens Mais Vendidos</h3>
+                <div class="flex items-center gap-2">
+                    <button @click="sortBy = 'quantidade'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'"
+                            class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        Ordenar
+                    </button>
+                </div>
+            </div>
             <div class="space-y-3">
                 @forelse($itensMaisVendidos as $index => $item)
-                    <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
+                    <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all hover:scale-[1.02] cursor-pointer group"
+                         @click="window.location.href='{{ route('cardapio-itens.index') }}'">
                         <div class="flex items-center gap-3 flex-1 min-w-0">
                             <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white font-bold text-sm">
                                 {{ $index + 1 }}
@@ -604,16 +848,24 @@
         </div>
 
         <!-- Últimos Pedidos -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+             x-data="{ sortBy: 'data', sortOrder: 'desc' }">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Últimos Pedidos</h3>
-                <a href="{{ route('pedidos.index') }}" class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
-                    Ver todos →
-                </a>
+                <div class="flex items-center gap-2">
+                    <button @click="sortBy = 'data'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'"
+                            class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        Ordenar
+                    </button>
+                    <a href="{{ route('pedidos.index') }}" class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+                        Ver todos →
+                    </a>
+                </div>
             </div>
             <div class="space-y-2">
                 @forelse($ultimosPedidos as $pedido)
-                    <div class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <div class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all hover:scale-[1.02] cursor-pointer group"
+                         @click="window.location.href='{{ route('pedidos.index') }}?search={{ $pedido->id }}'">
                         <div class="flex items-center gap-3 flex-1 min-w-0">
                             <div class="flex-shrink-0">
                                 <div class="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
@@ -663,7 +915,8 @@
     <!-- Quick Actions FAB -->
     <div class="fixed bottom-6 right-6 z-40" x-data="{ open: false }">
         <button @click="open = !open"
-                class="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center group">
+                class="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center group"
+                title="Ações Rápidas (Ctrl+K)">
             <svg class="w-6 h-6 transition-transform" :class="{ 'rotate-45': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
@@ -679,23 +932,35 @@
              x-transition:leave-end="opacity-0 transform scale-95"
              class="absolute bottom-16 right-0 mb-2 space-y-2"
              style="display: none;">
-            <a href="{{ route('pedidos.create') }}" class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 transition-colors whitespace-nowrap">
+            <a href="{{ route('pedidos.create') }}" class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 transition-all hover:scale-105 whitespace-nowrap">
                 <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
                 <span class="text-sm font-medium">Novo Pedido</span>
             </a>
-            <a href="{{ route('insumos.create') }}" class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 transition-colors whitespace-nowrap">
+            <a href="{{ route('insumos.create') }}" class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 transition-all hover:scale-105 whitespace-nowrap">
                 <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                 </svg>
                 <span class="text-sm font-medium">Novo Insumo</span>
             </a>
-            <a href="{{ route('cardapio-itens.create') }}" class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 transition-colors whitespace-nowrap">
+            <a href="{{ route('cardapio-itens.create') }}" class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 transition-all hover:scale-105 whitespace-nowrap">
                 <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                 </svg>
                 <span class="text-sm font-medium">Novo Item</span>
+            </a>
+            <a href="{{ route('receitas.create') }}" class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 transition-all hover:scale-105 whitespace-nowrap">
+                <svg class="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span class="text-sm font-medium">Nova Receita</span>
+            </a>
+            <a href="{{ route('estoque.index') }}" class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 transition-all hover:scale-105 whitespace-nowrap">
+                <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                </svg>
+                <span class="text-sm font-medium">Adicionar Estoque</span>
             </a>
         </div>
     </div>
@@ -708,8 +973,13 @@
 function dashboardData() {
     return {
         chartPeriod: '7',
+        period: 'hoje',
+        customStartDate: '',
+        customEndDate: '',
+        customizeMode: false,
         chart: null,
         platformChart: null,
+        revenueChart: null,
         isRefreshing: false,
         isLoading: false,
         lastUpdate: new Date().toLocaleTimeString('pt-BR'),
@@ -723,13 +993,274 @@ function dashboardData() {
         },
 
         async init() {
+            // Carregar layout salvo
+            this.loadSavedLayout();
+            
+            // Inicializar drag and drop
+            this.initDragAndDrop();
+            
             await this.loadChartData();
             this.renderPlatformChart();
+            this.renderRevenueChart();
+            this.renderSparklines();
 
             // Auto-refresh a cada 30 segundos
             setInterval(() => {
                 this.refreshData();
             }, 30000);
+
+            // Atalhos de teclado
+            this.initKeyboardShortcuts();
+        },
+
+        renderSparklines() {
+            // Mini gráficos sparkline para os cards principais
+            const sparklineData = [10, 15, 12, 18, 20, 16, 22, 19, 25, 23, 28, 26];
+            
+            // Sparkline para pedidos
+            const pedidosSparkline = {
+                series: [{
+                    name: 'Pedidos',
+                    data: sparklineData
+                }],
+                chart: {
+                    type: 'area',
+                    height: 32,
+                    sparkline: {
+                        enabled: true
+                    },
+                    toolbar: {
+                        show: false
+                    }
+                },
+                stroke: {
+                    curve: 'smooth',
+                    width: 2,
+                    colors: ['#ef4444']
+                },
+                fill: {
+                    type: 'gradient',
+                    gradient: {
+                        shadeIntensity: 1,
+                        opacityFrom: 0.4,
+                        opacityTo: 0.1,
+                        stops: [0, 100]
+                    },
+                    colors: ['#ef4444']
+                },
+                tooltip: {
+                    fixed: {
+                        enabled: false
+                    },
+                    x: {
+                        show: false
+                    },
+                    y: {
+                        title: {
+                            formatter: function (seriesName) {
+                                return ''
+                            }
+                        }
+                    },
+                    marker: {
+                        show: false
+                    }
+                }
+            };
+
+            // Sparkline para receita
+            const receitaSparkline = {
+                ...pedidosSparkline,
+                stroke: {
+                    ...pedidosSparkline.stroke,
+                    colors: ['#10b981']
+                },
+                fill: {
+                    ...pedidosSparkline.fill,
+                    colors: ['#10b981']
+                }
+            };
+
+            if (typeof ApexCharts !== 'undefined') {
+                const pedidosEl = document.getElementById('sparkline-pedidos');
+                const receitaEl = document.getElementById('sparkline-receita');
+                
+                if (pedidosEl) {
+                    new ApexCharts(pedidosEl, pedidosSparkline).render();
+                }
+                if (receitaEl) {
+                    new ApexCharts(receitaEl, receitaSparkline).render();
+                }
+            }
+        },
+
+        setPeriod(newPeriod) {
+            this.period = newPeriod;
+            this.loadDataForPeriod();
+        },
+
+        applyCustomPeriod() {
+            if (this.customStartDate && this.customEndDate) {
+                this.loadDataForPeriod();
+            }
+        },
+
+        async loadDataForPeriod() {
+            this.isLoading = true;
+            try {
+                const params = new URLSearchParams({
+                    period: this.period,
+                    start: this.customStartDate,
+                    end: this.customEndDate
+                });
+                const response = await fetch(`/dashboard/data?${params}`);
+                const data = await response.json();
+                
+                // Atualizar dados do dashboard
+                this.updateDashboardData(data);
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        updateDashboardData(data) {
+            // Atualizar stats com animação
+            this.updateStatsWithAnimation(data.stats);
+            this.statusPedidos = data.statusPedidos;
+        },
+
+        toggleCustomizeMode() {
+            this.customizeMode = !this.customizeMode;
+            if (this.customizeMode) {
+                this.initDragAndDrop();
+                this.showToastNotification('Modo personalização ativado. Arraste os cards para reorganizar.');
+            } else {
+                this.showToastNotification('Layout salvo com sucesso!');
+            }
+        },
+
+        initDragAndDrop() {
+            if (typeof Sortable === 'undefined') {
+                // Carregar SortableJS se não estiver disponível
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js';
+                script.onload = () => this.setupSortable();
+                document.head.appendChild(script);
+            } else {
+                this.setupSortable();
+            }
+        },
+
+        setupSortable() {
+            if (!this.customizeMode) return;
+            
+            const container = document.getElementById('stats-cards');
+            if (container && typeof Sortable !== 'undefined') {
+                new Sortable(container, {
+                    animation: 150,
+                    handle: '.dashboard-card',
+                    onEnd: (evt) => {
+                        this.saveLayout();
+                    }
+                });
+            }
+        },
+
+        saveLayout() {
+            const cards = Array.from(document.querySelectorAll('.dashboard-card'));
+            const layout = cards.map(card => card.dataset.cardId);
+            localStorage.setItem('dashboard_layout', JSON.stringify(layout));
+        },
+
+        loadSavedLayout() {
+            const saved = localStorage.getItem('dashboard_layout');
+            if (saved) {
+                try {
+                    const layout = JSON.parse(saved);
+                    // Reordenar cards conforme layout salvo
+                    const container = document.getElementById('stats-cards');
+                    if (container) {
+                        layout.forEach(cardId => {
+                            const card = container.querySelector(`[data-card-id="${cardId}"]`);
+                            if (card) container.appendChild(card);
+                        });
+                    }
+                } catch (e) {
+                    console.error('Erro ao carregar layout:', e);
+                }
+            }
+        },
+
+        async exportDashboard() {
+            try {
+                this.showToastNotification('Preparando exportação...');
+                
+                // Criar dados para exportação
+                const exportData = {
+                    periodo: this.period,
+                    stats: this.getCurrentStats(),
+                    timestamp: new Date().toLocaleString('pt-BR')
+                };
+
+                // Exportar como JSON (pode ser expandido para PDF/Excel)
+                const dataStr = JSON.stringify(exportData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `dashboard-${this.period}-${Date.now()}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+
+                this.showToastNotification('Exportação concluída!');
+            } catch (error) {
+                console.error('Erro ao exportar:', error);
+                this.showToastNotification('Erro ao exportar dados');
+            }
+        },
+
+        getCurrentStats() {
+            // Coletar todos os stats visíveis
+            const stats = {};
+            document.querySelectorAll('[data-stat]').forEach(el => {
+                stats[el.dataset.stat] = el.textContent.trim();
+            });
+            return stats;
+        },
+
+        initKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                // Ctrl/Cmd + K para ações rápidas
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    // Abrir FAB de ações rápidas
+                    const fab = document.querySelector('[x-data*="open"]');
+                    if (fab) {
+                        const fabData = Alpine.$data(fab);
+                        if (fabData) fabData.open = !fabData.open;
+                    }
+                }
+                // Ctrl/Cmd + E para exportar
+                if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                    e.preventDefault();
+                    this.exportDashboard();
+                }
+                // Ctrl/Cmd + P para personalizar
+                if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                    e.preventDefault();
+                    this.toggleCustomizeMode();
+                }
+                // Números para navegação rápida
+                if (e.key >= '1' && e.key <= '4' && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) {
+                    const cards = document.querySelectorAll('.dashboard-card');
+                    const index = parseInt(e.key) - 1;
+                    if (cards[index]) {
+                        cards[index].click();
+                    }
+                }
+            });
         },
 
         async refreshData() {
@@ -834,7 +1365,7 @@ function dashboardData() {
             }
         },
 
-        renderChart(data) {
+        async renderChart(data) {
             // Destroy previous chart if exists
             if (this.chart) {
                 this.chart.destroy();
@@ -842,11 +1373,30 @@ function dashboardData() {
 
             const isDark = document.documentElement.classList.contains('dark');
 
+            // Buscar dados do período anterior para comparação
+            const previousData = await this.getPreviousPeriodData(data);
+
             const options = {
-                series: [{
-                    name: 'Pedidos',
-                    data: data.map(d => d.total)
-                }],
+                series: [
+                    {
+                        name: 'Pedidos (Atual)',
+                        data: data.map(d => d.total),
+                        type: 'area'
+                    },
+                    {
+                        name: 'Pedidos (Período Anterior)',
+                        data: previousData.map(d => d.total),
+                        type: 'line',
+                        stroke: {
+                            width: 2,
+                            dashArray: 5
+                        },
+                        fill: {
+                            type: 'solid',
+                            opacity: 0
+                        }
+                    }
+                ],
                 chart: {
                     type: 'area',
                     height: 256,
@@ -939,11 +1489,15 @@ function dashboardData() {
             const platformData = @json($pedidosPorPlataforma);
             const isDark = document.documentElement.classList.contains('dark');
 
+            // Calcular altura dinâmica baseada no número de plataformas
+            const legendHeight = platformData.length > 3 ? 80 : 50;
+            const chartHeight = 240;
+
             const options = {
                 series: platformData.map(p => p.total),
                 chart: {
                     type: 'donut',
-                    height: 256,
+                    height: chartHeight + legendHeight,
                     background: 'transparent',
                     fontFamily: 'Inter, sans-serif'
                 },
@@ -951,8 +1505,18 @@ function dashboardData() {
                 colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'],
                 legend: {
                     position: 'bottom',
+                    offsetY: 10,
+                    height: legendHeight,
                     labels: {
-                        colors: isDark ? '#9ca3af' : '#6b7280'
+                        colors: isDark ? '#9ca3af' : '#6b7280',
+                        useSeriesColors: false
+                    },
+                    itemMargin: {
+                        horizontal: 8,
+                        vertical: 4
+                    },
+                    formatter: function(seriesName, opts) {
+                        return seriesName + ': ' + opts.w.globals.series[opts.seriesIndex]
                     }
                 },
                 dataLabels: {
@@ -1010,9 +1574,97 @@ function dashboardData() {
 
             this.platformChart = new ApexCharts(document.querySelector("#platformChart"), options);
             this.platformChart.render();
+        },
+
+        async getPreviousPeriodData(currentData) {
+            try {
+                // Buscar dados do período anterior
+                const period = this.chartPeriod;
+                const response = await fetch(`/dashboard/chart-data?period=${period}&previous=true`);
+                const data = await response.json();
+                return data.previous || currentData.map(() => 0);
+            } catch (error) {
+                console.error('Erro ao buscar dados anteriores:', error);
+                return currentData.map(() => 0);
+            }
+        },
+
+        renderRevenueChart() {
+            const isDark = document.documentElement.classList.contains('dark');
+            
+            // Gráfico de Receita vs Custos
+            const revenueData = {
+                receita: {{ $stats['receita_hoje'] ?? 0 }},
+                custos: {{ $stats['custo_insumos_hoje'] ?? 0 }},
+                lucro: {{ ($stats['receita_hoje'] ?? 0) - ($stats['custo_insumos_hoje'] ?? 0) }}
+            };
+
+            // Criar gráfico se o elemento existir
+            const revenueChartEl = document.getElementById('revenueChart');
+            if (revenueChartEl && typeof ApexCharts !== 'undefined') {
+                const options = {
+                    series: [revenueData.receita, revenueData.custos, revenueData.lucro],
+                    chart: {
+                        type: 'bar',
+                        height: 300,
+                        background: 'transparent',
+                        fontFamily: 'Inter, sans-serif'
+                    },
+                    labels: ['Receita', 'Custos', 'Lucro'],
+                    colors: ['#10b981', '#ef4444', '#3b82f6'],
+                    plotOptions: {
+                        bar: {
+                            horizontal: false,
+                            columnWidth: '55%',
+                            endingShape: 'rounded'
+                        }
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        formatter: function (val) {
+                            return 'R$ ' + val.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+                        }
+                    },
+                    xaxis: {
+                        labels: {
+                            style: {
+                                colors: isDark ? '#9ca3af' : '#6b7280'
+                            }
+                        }
+                    },
+                    yaxis: {
+                        labels: {
+                            style: {
+                                colors: isDark ? '#9ca3af' : '#6b7280'
+                            },
+                            formatter: function (val) {
+                                return 'R$ ' + val.toFixed(0);
+                            }
+                        }
+                    },
+                    tooltip: {
+                        theme: isDark ? 'dark' : 'light',
+                        y: {
+                            formatter: function (val) {
+                                return 'R$ ' + val.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+                            }
+                        }
+                    },
+                    legend: {
+                        labels: {
+                            colors: isDark ? '#9ca3af' : '#6b7280'
+                        }
+                    }
+                };
+
+                this.revenueChart = new ApexCharts(revenueChartEl, options);
+                this.revenueChart.render();
+            }
         }
     }
 }
 </script>
+<!-- SortableJS para drag and drop -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 @endsection
 

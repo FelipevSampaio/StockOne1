@@ -132,6 +132,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
         Route::get('/dashboard/chart-data', [\App\Http\Controllers\DashboardController::class, 'chartData'])->name('dashboard.chart-data');
         Route::get('/dashboard/refresh-stats', [\App\Http\Controllers\DashboardController::class, 'refreshStats'])->name('dashboard.refresh-stats');
+        Route::get('/dashboard/data', [\App\Http\Controllers\DashboardController::class, 'data'])->name('dashboard.data');
         Route::post('/dashboard/clear-cache', [\App\Http\Controllers\DashboardController::class, 'clearCache'])->name('dashboard.clear-cache');
 
         Route::resource('insumos', InsumoController::class)->except(['show']);
