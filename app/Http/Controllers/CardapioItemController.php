@@ -64,14 +64,20 @@ class CardapioItemController extends Controller
             $query->where('categoria', $request->get('categoria'));
         }
 
-        // Filtro por status
+        // Filtro por status (padrão: online se não especificado)
         if ($request->filled('status')) {
             $status = $request->get('status');
             if ($status === 'online') {
                 $query->where('ativo_online', true);
             } elseif ($status === 'offline') {
                 $query->where('ativo_online', false);
+            } elseif ($status === 'all') {
+                // Mostrar todos (online e offline)
+                // Não aplica filtro
             }
+        } else {
+            // Por padrão, mostrar apenas itens online
+            $query->where('ativo_online', true);
         }
 
         // Ordenação

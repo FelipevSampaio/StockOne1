@@ -92,17 +92,17 @@
             <!-- Filtros Rápidos -->
             <div class="flex flex-wrap items-center gap-2 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros rápidos:</span>
-                <a href="{{ route('cardapio-itens.index', array_merge(request()->all(), ['status' => 'online'])) }}"
-                   class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors {{ request('status') === 'online' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
-                    ✅ Online
-                </a>
                 <a href="{{ route('cardapio-itens.index', array_merge(request()->all(), ['status' => 'offline'])) }}"
                    class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors {{ request('status') === 'offline' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
                     ❌ Offline
                 </a>
-                <a href="{{ route('cardapio-itens.index', array_merge(request()->except(['status']))) }}"
-                   class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors {{ !request('status') ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                <a href="{{ route('cardapio-itens.index', array_merge(request()->except(['status']), ['status' => 'all'])) }}"
+                   class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors {{ request('status') === 'all' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
                     Todos
+                </a>
+                <a href="{{ route('cardapio-itens.index', array_merge(request()->except(['status']))) }}"
+                   class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors {{ !request()->has('status') || request('status') === 'online' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                    ✅ Online
                 </a>
                 <div class="ml-auto flex items-center gap-2">
                     <span class="text-sm text-gray-600 dark:text-gray-400">Visualização:</span>
@@ -150,8 +150,8 @@
                 <!-- Filtro por Status -->
                 <select name="status"
                         class="px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    <option value="">Todos os status</option>
-                    <option value="online" @selected(request('status') === 'online')>✅ Online</option>
+                    <option value="all" @selected(request('status') === 'all')>Todos os status</option>
+                    <option value="online" @selected(request('status') === 'online' || !request()->has('status'))>✅ Online</option>
                     <option value="offline" @selected(request('status') === 'offline')>❌ Offline</option>
                 </select>
 
