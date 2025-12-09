@@ -506,8 +506,10 @@
         @endif
     </div>
 
-    @push('scripts')
-    <script>
+@endsection
+
+@section('scripts')
+<script>
         // Função para alternar entre visualizações
         function setViewMode(mode) {
             const gridView = document.getElementById('grid-view');
@@ -566,6 +568,5 @@
             }
         });
     </script>
-    @endpush
 @endsection
 

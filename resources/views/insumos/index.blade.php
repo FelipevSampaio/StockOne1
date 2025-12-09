@@ -15,7 +15,7 @@
 @section('content')
     <div class="space-y-6">
         <!-- Estatísticas -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <div class="flex items-center justify-between">
                     <div>
@@ -57,22 +57,55 @@
                     </div>
                 </div>
             </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Valor Total</p>
+                        <p class="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">R$ {{ number_format($stats['valor_total'], 2, ',', '.') }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Filtros -->
-        <form method="GET" action="{{ route('insumos.index') }}" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <div class="flex flex-wrap items-center gap-3">
-                <!-- Busca -->
-                <div class="relative flex-1 min-w-[250px]">
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    <input type="text"
-                           name="search"
-                           placeholder="Buscar por nome, descrição ou categoria..."
-                           value="{{ request('search') }}"
-                           class="pl-10 w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
-                </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+            <!-- Filtros Rápidos -->
+            <div class="flex flex-wrap items-center gap-2 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros rápidos:</span>
+                <a href="{{ route('insumos.index', array_merge(request()->except(['estoque']))) }}" 
+                   class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors {{ !request('estoque') ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                    Todos
+                </a>
+                <a href="{{ route('insumos.index', array_merge(request()->except(['estoque']), ['estoque' => 'baixo'])) }}" 
+                   class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors {{ request('estoque') === 'baixo' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                    ⚠️ Estoque Baixo
+                </a>
+                <a href="{{ route('insumos.index', array_merge(request()->except(['estoque']), ['estoque' => 'ok'])) }}" 
+                   class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors {{ request('estoque') === 'ok' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                    ✅ Estoque OK
+                </a>
+            </div>
+
+            <form method="GET" action="{{ route('insumos.index') }}" id="filter-form">
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Busca -->
+                    <div class="relative flex-1 min-w-[250px]">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <input type="text"
+                               name="search"
+                               id="search-input"
+                               placeholder="Buscar por nome, descrição ou categoria..."
+                               value="{{ request('search') }}"
+                               class="pl-10 w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
+                    </div>
 
                 <!-- Filtro por Categoria -->
                 <select name="categoria"
@@ -95,6 +128,7 @@
                 <select name="sort"
                         class="px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     <option value="nome" @selected(request('sort') === 'nome')>Nome</option>
+                    <option value="estoque_baixo" @selected(request('sort') === 'estoque_baixo')>Estoque Baixo</option>
                     <option value="categoria" @selected(request('sort') === 'categoria')>Categoria</option>
                     <option value="created_at" @selected(request('sort') === 'created_at')>Data de cadastro</option>
                 </select>
@@ -122,6 +156,7 @@
                 @endif
             </div>
         </form>
+        </div>
 
         <!-- Tabela -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -241,6 +276,26 @@
             @endif
         </div>
     </div>
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Busca em tempo real com debounce
+        const searchInput = document.getElementById('search-input');
+        const filterForm = document.getElementById('filter-form');
+        let searchTimeout;
+
+        if (searchInput && filterForm) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(function() {
+                    filterForm.submit();
+                }, 500); // Aguarda 500ms após parar de digitar
+            });
+        }
+    });
+</script>
 @endsection
 
 

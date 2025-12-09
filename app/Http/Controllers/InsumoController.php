@@ -46,7 +46,17 @@ class InsumoController extends Controller
         // Ordenação
         $sortBy = $request->get('sort', 'nome');
         $sortOrder = $request->get('order', 'asc');
-        $query->orderBy($sortBy, $sortOrder);
+        
+        // Ordenação especial por estoque baixo
+        if ($sortBy === 'estoque_baixo') {
+            $query->leftJoin('estoque', 'insumos.id', '=', 'estoque.insumo_id')
+                  ->select('insumos.*')
+                  ->selectRaw('CASE WHEN estoque.quantidade_atual <= insumos.ponto_reposicao_minimo THEN 1 ELSE 0 END as is_baixo')
+                  ->orderBy('is_baixo', 'desc')
+                  ->orderBy('insumos.nome', $sortOrder);
+        } else {
+            $query->orderBy($sortBy, $sortOrder);
+        }
 
         $perPage = $request->get('per_page', 15);
         $insumos = $query->paginate($perPage)->withQueryString();
@@ -61,6 +71,12 @@ class InsumoController extends Controller
             'categorias' => Insumo::where('restaurante_id', $restauranteId)
                 ->distinct()
                 ->count('categoria'),
+            'valor_total' => \App\Models\Estoque::whereHas('insumo', function($q) use ($restauranteId) {
+                $q->where('restaurante_id', $restauranteId);
+            })
+            ->join('insumos', 'estoque.insumo_id', '=', 'insumos.id')
+            ->selectRaw('COALESCE(SUM(estoque.quantidade_atual * insumos.custo_unitario), 0) as total')
+            ->value('total') ?? 0,
         ];
 
         // Categorias disponíveis
@@ -75,7 +91,15 @@ class InsumoController extends Controller
 
     public function create()
     {
-        return view('insumos.create');
+        // Buscar categorias existentes para autocomplete
+        $restauranteId = $this->restauranteId();
+        $categorias = Insumo::where('restaurante_id', $restauranteId)
+            ->whereNotNull('categoria')
+            ->distinct()
+            ->orderBy('categoria')
+            ->pluck('categoria');
+        
+        return view('insumos.create', compact('categorias'));
     }
 
     public function store(Request $request)
@@ -101,7 +125,23 @@ class InsumoController extends Controller
     {
         $this->authorizeInsumo($insumo);
 
-        return view('insumos.edit', compact('insumo'));
+        // Buscar categorias existentes para autocomplete
+        $restauranteId = $this->restauranteId();
+        $categorias = Insumo::where('restaurante_id', $restauranteId)
+            ->whereNotNull('categoria')
+            ->distinct()
+            ->orderBy('categoria')
+            ->pluck('categoria');
+
+        // Estatísticas do insumo
+        $stats = [
+            'estoque_atual' => $insumo->estoque->quantidade_atual ?? 0,
+            'valor_total' => ($insumo->estoque->quantidade_atual ?? 0) * ($insumo->custo_unitario ?? 0),
+            'receitas_count' => $insumo->receitas()->count(),
+            'ultima_atualizacao' => $insumo->estoque->updated_at ?? $insumo->updated_at,
+        ];
+
+        return view('insumos.edit', compact('insumo', 'categorias', 'stats'));
     }
 
     public function update(Request $request, Insumo $insumo)
