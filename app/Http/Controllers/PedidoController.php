@@ -18,6 +18,16 @@ class PedidoController extends Controller
             'status' => ['required', 'in:pendente,recebido,em_preparo,pronto,entregue,concluido,cancelado'],
         ]);
         $pedido->update(['status' => $data['status']]);
+        
+        // Se for requisição AJAX, retornar JSON
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Status do pedido atualizado com sucesso.',
+                'pedido' => $pedido->fresh()
+            ]);
+        }
+        
         return redirect()->route('pedidos.index')->with('success', 'Status do pedido atualizado com sucesso.');
     }
 
@@ -105,8 +115,32 @@ class PedidoController extends Controller
         $sortOrder = $request->get('order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
 
-        $perPage = $request->get('per_page', 15);
-        $pedidos = $query->paginate($perPage)->withQueryString();
+        // Modo de visualização
+        $viewMode = $request->get('view', 'table'); // 'table' ou 'kanban'
+        
+        if ($viewMode === 'kanban') {
+            // Para Kanban, não paginar, apenas agrupar por status
+            $pedidosAgrupados = $query->get()->groupBy('status');
+            // Garantir que todas as colunas existam
+            $statusColunas = ['pendente', 'recebido', 'em_preparo', 'pronto', 'entregue', 'concluido'];
+            foreach ($statusColunas as $status) {
+                if (!$pedidosAgrupados->has($status)) {
+                    $pedidosAgrupados->put($status, collect());
+                }
+            }
+            $pedidos = null;
+        } else {
+            $perPage = $request->get('per_page', 15);
+            $pedidos = $query->paginate($perPage)->withQueryString();
+            $pedidosAgrupados = collect([
+                'pendente' => collect(),
+                'recebido' => collect(),
+                'em_preparo' => collect(),
+                'pronto' => collect(),
+                'entregue' => collect(),
+                'concluido' => collect()
+            ]);
+        }
 
         // Estatísticas
         $stats = [
@@ -130,7 +164,7 @@ class PedidoController extends Controller
             ->orderBy('plataforma_origem')
             ->pluck('plataforma_origem');
 
-        return view('pedidos.index', compact('pedidos', 'stats', 'plataformas'));
+        return view('pedidos.index', compact('pedidos', 'pedidosAgrupados', 'stats', 'plataformas', 'viewMode'));
     }
 
     public function create()

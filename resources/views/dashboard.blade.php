@@ -140,14 +140,6 @@
         </template>
     </div>
 
-    <!-- Indicador de Status do Sistema -->
-    <div class="fixed bottom-4 left-4 z-40" x-data="{ status: 'online' }" x-init="status = navigator.onLine ? 'online' : 'offline'">
-        <div class="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-            <div class="w-2 h-2 rounded-full" 
-                 :class="status === 'online' ? 'bg-green-500 animate-pulse' : 'bg-red-500'"></div>
-            <span class="text-xs font-medium text-gray-700 dark:text-gray-300" x-text="status === 'online' ? 'Sistema Online' : 'Sistema Offline'"></span>
-        </div>
-    </div>
 
     <!-- Insights e Recomendações -->
     @if(count($insights) > 0)

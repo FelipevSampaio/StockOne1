@@ -211,7 +211,24 @@
                 <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-3 sm:py-4 shadow-sm sticky top-0 z-10 w-full">
                     <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                         <div class="flex-1 min-w-0">
+                            <!-- Breadcrumbs (opcional) -->
+                            @hasSection('breadcrumbs')
+                                <nav class="flex items-center gap-1.5 mb-1 text-sm text-gray-500 dark:text-gray-400">
+                                    @yield('breadcrumbs')
+                                </nav>
+                            @endif
+                            
                             <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                                <!-- Nome do Restaurante -->
+                                <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                                    <svg class="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                    </svg>
+                                    <span class="text-sm font-semibold text-red-700 dark:text-red-300 truncate max-w-[200px] lg:max-w-none" title="{{ session('restaurante_nome') }}">
+                                        {{ session('restaurante_nome') }}
+                                    </span>
+                                </div>
+                                
                                 <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">@yield('title', 'Painel')</h1>
                                 @hasSection('subtitle')
                                     <span class="hidden sm:inline text-gray-400 dark:text-gray-600">•</span>
@@ -222,6 +239,80 @@
 
                         <div class="flex items-center justify-end gap-2 sm:gap-3 w-full sm:w-auto ml-auto">
                             @yield('actions')
+
+                            <!-- Barra de Busca Global (Ctrl+K) -->
+                            <div class="relative hidden lg:block" x-data="{ open: false, query: '' }" 
+                                 x-init="
+                                    window.addEventListener('keydown', (e) => {
+                                        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                                            e.preventDefault();
+                                            open = true;
+                                            $nextTick(() => document.querySelector('#global-search-input')?.focus());
+                                        }
+                                    });
+                                 ">
+                                <button @click="open = !open"
+                                        class="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 transition-colors min-w-[200px] justify-between">
+                                    <div class="flex items-center gap-2 flex-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                        </svg>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Buscar...</span>
+                                    </div>
+                                    <kbd class="hidden xl:inline-flex items-center px-1.5 py-0.5 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded">Ctrl+K</kbd>
+                                </button>
+
+                                <!-- Modal de Busca -->
+                                <div x-show="open"
+                                     @click.away="open = false"
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 scale-95"
+                                     x-transition:enter-end="opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-150"
+                                     x-transition:leave-start="opacity-100 scale-100"
+                                     x-transition:leave-end="opacity-0 scale-95"
+                                     class="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50"
+                                     style="display: none;">
+                                    <div class="p-3 border-b border-gray-200 dark:border-gray-700">
+                                        <input type="text" 
+                                               id="global-search-input"
+                                               x-model="query"
+                                               @keydown.escape="open = false"
+                                               placeholder="Buscar pedidos, itens, receitas..."
+                                               class="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 dark:focus:ring-red-400 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500">
+                                    </div>
+                                    <div class="max-h-96 overflow-y-auto p-2">
+                                        <div class="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
+                                            <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                            </svg>
+                                            <p>Digite para buscar...</p>
+                                            <p class="text-xs mt-1 text-gray-400 dark:text-gray-500">Pressione ESC para fechar</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Badge de Pedidos Pendentes -->
+                            @php
+                                $pedidosPendentes = App\Models\Pedido::where('status', 'pendente')
+                                    ->where('restaurante_id', session('restaurante_id'))
+                                    ->count();
+                            @endphp
+                            @if($pedidosPendentes > 0)
+                                <a href="{{ route('pedidos.index', ['status' => 'pendente']) }}" 
+                                   class="relative hidden md:flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors group">
+                                    <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                    </svg>
+                                    <span class="text-sm font-semibold text-red-700 dark:text-red-300">{{ $pedidosPendentes }}</span>
+                                    <span class="hidden lg:inline text-xs text-red-600 dark:text-red-400 group-hover:underline">Pendentes</span>
+                                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
+                                </a>
+                            @endif
+
+                            <!-- Separador Visual -->
+                            <div class="hidden md:block w-px h-6 bg-gray-200 dark:bg-gray-700"></div>
 
                             <!-- Notificações -->
                             <div class="relative" x-data="{ open: false }">
@@ -234,7 +325,7 @@
                                         $alertCount = App\Models\Alerta::where('resolvido', false)->whereHas('insumo', fn($q) => $q->where('restaurante_id', session('restaurante_id')))->count();
                                     @endphp
                                     @if($alertCount > 0)
-                                        <span class="absolute -top-1 -right-1 min-w-[18px] h-4.5 px-1.5 flex items-center justify-center text-xs font-bold text-white bg-red-500 rounded-full ring-2 ring-white dark:ring-gray-800">
+                                        <span class="absolute -top-1 -right-1 min-w-[18px] h-4.5 px-1.5 flex items-center justify-center text-xs font-bold text-white bg-red-500 rounded-full ring-2 ring-white dark:ring-gray-800 animate-pulse">
                                             {{ $alertCount > 9 ? '9+' : $alertCount }}
                                         </span>
                                     @endif
@@ -296,10 +387,66 @@
                                 </div>
                             </div>
 
+                            <!-- Separador Visual -->
+                            <div class="hidden md:block w-px h-6 bg-gray-200 dark:bg-gray-700"></div>
+
+                            <!-- Relógio e Data -->
+                            <div class="hidden xl:flex flex-col items-end px-3 py-1.5 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600"
+                                 x-data="{
+                                     time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                                     date: new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })
+                                 }"
+                                 x-init="
+                                     setInterval(() => {
+                                         time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                                         date = new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
+                                     }, 1000);
+                                 ">
+                                <div class="text-sm font-semibold text-gray-900 dark:text-white" x-text="time"></div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400 capitalize" x-text="date"></div>
+                            </div>
+
+                            <!-- Estatísticas Rápidas (Receita Hoje) -->
+                            @php
+                                $receitaHoje = \App\Models\Pedido::where('restaurante_id', session('restaurante_id'))
+                                    ->whereDate('data_hora_pedido', today())
+                                    ->where('status', 'concluido')
+                                    ->sum('valor_total') ?? 0;
+                            @endphp
+                            <div class="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                                <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <div class="flex flex-col">
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">Hoje</span>
+                                    <span class="text-sm font-bold text-green-700 dark:text-green-400">R$ {{ number_format($receitaHoje, 2, ',', '.') }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Indicador de Status do Sistema -->
+                            <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600" 
+                                 x-data="{ status: 'online' }" 
+                                 x-init="status = navigator.onLine ? 'online' : 'offline'; window.addEventListener('online', () => status = 'online'); window.addEventListener('offline', () => status = 'offline')"
+                                 title="Status da conexão">
+                                <div class="w-2 h-2 rounded-full" 
+                                     :class="status === 'online' ? 'bg-green-500 animate-pulse' : 'bg-red-500'"></div>
+                                <span class="text-xs font-medium text-gray-600 dark:text-gray-300 hidden lg:inline" 
+                                      x-text="status === 'online' ? 'Online' : 'Offline'"></span>
+                            </div>
+
+                            <!-- Botão de Ajuda -->
+                            <button class="hidden lg:flex p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                    title="Ajuda e Suporte"
+                                    onclick="window.open('https://docs.stockone.com.br', '_blank')">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </button>
+
                             <!-- Dark Mode Toggle -->
                             <button @click="toggleDarkMode()"
                                     class="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                                    title="Alternar modo escuro">
+                                    title="Alternar modo escuro (Ctrl+Shift+D)">
                                 <!-- Ícone de lua (modo claro ativo) -->
                                 <svg x-show="!isDark"
                                      x-transition
@@ -324,12 +471,16 @@
                             <!-- User Menu -->
                             <div class="relative" x-data="{ open: false }">
                                 <button @click="open = !open"
-                                        class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white font-bold text-xs">
+                                        class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-700">
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
                                         {{ strtoupper(substr(session('restaurante_nome'), 0, 2)) }}
                                     </div>
-                                    <span class="hidden md:inline">{{ session('restaurante_nome') }}</span>
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="hidden lg:flex flex-col items-start">
+                                        <span class="text-xs font-semibold text-gray-900 dark:text-white leading-tight">{{ session('restaurante_nome') }}</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ Auth::user()->name }}</span>
+                                    </div>
+                                    <span class="hidden md:inline lg:hidden">{{ session('restaurante_nome') }}</span>
+                                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                     </svg>
                                 </button>
@@ -342,21 +493,46 @@
                                      x-transition:leave="transition ease-in duration-150"
                                      x-transition:leave-start="opacity-100 scale-100"
                                      x-transition:leave-end="opacity-0 scale-95"
-                                     class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+                                     class="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
                                      style="display: none;">
                                     <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                                         <p class="text-sm font-medium text-gray-900 dark:text-white">{{ Auth::user()->name }}</p>
                                         <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ Auth::user()->email }}</p>
+                                        <div class="mt-2 flex items-center gap-2">
+                                            <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">{{ session('restaurante_nome') }}</span>
+                                        </div>
                                     </div>
-                                    <form action="{{ route('auth.logout') }}" method="POST" class="p-1">
-                                        @csrf
-                                        <button type="submit" class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">
+                                    
+                                    <div class="py-1">
+                                        <a href="{{ route('dashboard') }}" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                                             </svg>
-                                            Sair
-                                        </button>
-                                    </form>
+                                            Dashboard
+                                        </a>
+                                        <a href="{{ route('public.menu', ['restaurante' => session('restaurante_slug')]) }}" target="_blank" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+                                            </svg>
+                                            Menu Público
+                                            <svg class="w-3 h-3 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                    
+                                    <div class="border-t border-gray-200 dark:border-gray-700 py-1">
+                                        <form action="{{ route('auth.logout') }}" method="POST" class="p-1">
+                                            @csrf
+                                            <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                                </svg>
+                                                Sair
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -488,6 +664,14 @@
                         observer.observe(document.documentElement, {
                             attributes: true,
                             attributeFilter: ['class']
+                        });
+
+                        // Atalho de teclado para dark mode (Ctrl+Shift+D)
+                        document.addEventListener('keydown', (e) => {
+                            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'D') {
+                                e.preventDefault();
+                                this.toggleDarkMode();
+                            }
                         });
                     },
 

@@ -67,6 +67,21 @@
         <!-- Filtros Rápidos (Abas) -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-1">
             <div class="flex flex-wrap gap-2">
+                <a href="{{ route('fila-producao.index') }}"
+                   class="px-4 py-2.5 text-sm font-semibold rounded-lg transition-colors bg-gradient-to-r from-orange-600 to-red-600 text-white shadow-sm hover:from-orange-500 hover:to-red-500 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                    </svg>
+                    Fila de Produção
+                    @php
+                        $filaStats = \App\Models\FilaProducao::whereHas('pedido', fn($q) => $q->where('restaurante_id', session('restaurante_id')))
+                            ->where('status_producao', 'pendente')
+                            ->count();
+                    @endphp
+                    @if($filaStats > 0)
+                        <span class="px-2 py-0.5 bg-white/20 text-white text-xs font-bold rounded-full">{{ $filaStats }}</span>
+                    @endif
+                </a>
                 <a href="{{ route('pedidos.index', ['filtro_rapido' => 'em_producao']) }}"
                    class="px-4 py-2.5 text-sm font-semibold rounded-lg transition-colors {{ request('filtro_rapido') === 'em_producao' || (!request()->hasAny(['filtro_rapido', 'status', 'search', 'plataforma', 'data_inicio', 'data_fim']) && !request()->has('status') && !request()->has('sort')) ? 'bg-red-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
                     <div class="flex items-center gap-2">
@@ -125,6 +140,9 @@
         <form method="GET" action="{{ route('pedidos.index') }}" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
             @if(request('filtro_rapido'))
                 <input type="hidden" name="filtro_rapido" value="{{ request('filtro_rapido') }}">
+            @endif
+            @if(request('view'))
+                <input type="hidden" name="view" value="{{ request('view') }}">
             @endif
             <div class="flex flex-wrap items-center gap-3">
                 <!-- Busca -->
@@ -188,6 +206,24 @@
                     Filtrar
                 </button>
 
+                <!-- Controles de Visualização -->
+                <div class="flex items-center gap-2 border-l border-gray-300 dark:border-gray-600 pl-3 ml-3">
+                    <a href="{{ route('pedidos.index', array_merge(request()->all(), ['view' => 'table'])) }}"
+                       class="p-2 rounded-lg transition-colors {{ ($viewMode ?? 'table') === 'table' ? 'bg-red-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}"
+                       title="Visualização em Tabela">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                        </svg>
+                    </a>
+                    <a href="{{ route('pedidos.index', array_merge(request()->all(), ['view' => 'kanban'])) }}"
+                       class="p-2 rounded-lg transition-colors {{ ($viewMode ?? 'table') === 'kanban' ? 'bg-red-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}"
+                       title="Visualização em Kanban">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
+                        </svg>
+                    </a>
+                </div>
+
                 @if(request()->hasAny(['search', 'status', 'plataforma', 'data_inicio', 'data_fim', 'filtro_rapido']))
                     <a href="{{ route('pedidos.index') }}"
                        class="px-5 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
@@ -225,8 +261,182 @@
             </div>
         </div>
 
-        <!-- Tabela -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        @if(($viewMode ?? 'table') === 'kanban')
+            <!-- Visualização Kanban -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4" 
+                 x-data="kanbanPedidos()"
+                 x-init="initKanban()">
+                <!-- Coluna: Pendente -->
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Pendente</h3>
+                            <span class="px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full text-xs font-bold">
+                                {{ $pedidosAgrupados['pendente']->count() ?? 0 }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="space-y-3 min-h-[200px] kanban-column" data-status="pendente" style="min-height: 200px;">
+                        @if(isset($pedidosAgrupados['pendente']) && $pedidosAgrupados['pendente']->count() > 0)
+                            @foreach($pedidosAgrupados['pendente'] as $pedido)
+                                @include('pedidos._kanban_card', ['pedido' => $pedido])
+                            @endforeach
+                        @else
+                            <div class="text-center py-8 text-gray-400 dark:text-gray-600 text-xs">
+                                Nenhum pedido
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Coluna: Recebido -->
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Recebido</h3>
+                            <span class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-full text-xs font-bold">
+                                {{ $pedidosAgrupados['recebido']->count() ?? 0 }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="space-y-3 min-h-[200px] kanban-column" data-status="recebido" style="min-height: 200px;">
+                        @if(isset($pedidosAgrupados['recebido']) && $pedidosAgrupados['recebido']->count() > 0)
+                            @foreach($pedidosAgrupados['recebido'] as $pedido)
+                                @include('pedidos._kanban_card', ['pedido' => $pedido])
+                            @endforeach
+                        @else
+                            <div class="text-center py-8 text-gray-400 dark:text-gray-600 text-xs">
+                                Nenhum pedido
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Coluna: Em Preparo -->
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Em Preparo</h3>
+                            <span class="px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded-full text-xs font-bold">
+                                {{ $pedidosAgrupados['em_preparo']->count() ?? 0 }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="space-y-3 min-h-[200px] kanban-column" data-status="em_preparo" style="min-height: 200px;">
+                        @if(isset($pedidosAgrupados['em_preparo']) && $pedidosAgrupados['em_preparo']->count() > 0)
+                            @foreach($pedidosAgrupados['em_preparo'] as $pedido)
+                                @include('pedidos._kanban_card', ['pedido' => $pedido])
+                            @endforeach
+                        @else
+                            <div class="text-center py-8 text-gray-400 dark:text-gray-600 text-xs">
+                                Nenhum pedido
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Coluna: Pronto -->
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Pronto</h3>
+                            <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-xs font-bold">
+                                {{ $pedidosAgrupados['pronto']->count() ?? 0 }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="space-y-3 min-h-[200px] kanban-column" data-status="pronto" style="min-height: 200px;">
+                        @if(isset($pedidosAgrupados['pronto']) && $pedidosAgrupados['pronto']->count() > 0)
+                            @foreach($pedidosAgrupados['pronto'] as $pedido)
+                                @include('pedidos._kanban_card', ['pedido' => $pedido])
+                            @endforeach
+                        @else
+                            <div class="text-center py-8 text-gray-400 dark:text-gray-600 text-xs">
+                                Nenhum pedido
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Coluna: Entregue -->
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Entregue</h3>
+                            <span class="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs font-bold">
+                                {{ $pedidosAgrupados['entregue']->count() ?? 0 }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="space-y-3 min-h-[200px] kanban-column" data-status="entregue" style="min-height: 200px;">
+                        @if(isset($pedidosAgrupados['entregue']) && $pedidosAgrupados['entregue']->count() > 0)
+                            @foreach($pedidosAgrupados['entregue'] as $pedido)
+                                @include('pedidos._kanban_card', ['pedido' => $pedido])
+                            @endforeach
+                        @else
+                            <div class="text-center py-8 text-gray-400 dark:text-gray-600 text-xs">
+                                Nenhum pedido
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Coluna: Concluído -->
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                </svg>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Concluído</h3>
+                            <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-bold">
+                                {{ $pedidosAgrupados['concluido']->count() ?? 0 }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="space-y-3 min-h-[200px] kanban-column" data-status="concluido" style="min-height: 200px;">
+                        @if(isset($pedidosAgrupados['concluido']) && $pedidosAgrupados['concluido']->count() > 0)
+                            @foreach($pedidosAgrupados['concluido'] as $pedido)
+                                @include('pedidos._kanban_card', ['pedido' => $pedido])
+                            @endforeach
+                        @else
+                            <div class="text-center py-8 text-gray-400 dark:text-gray-600 text-xs">
+                                Nenhum pedido
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @else
+            <!-- Tabela -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
@@ -363,7 +573,7 @@
                                     {{ $pedido->data_hora_pedido?->format('d/m/Y H:i') ?? '—' }}
                                 </td>
                                 <td class="px-4 sm:px-6 py-4" @click.stop>
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-2 flex-wrap">
                                         @if($pedido->status !== 'cancelado' && $pedido->status !== 'concluido' && $pedido->status !== 'entregue')
                                             @php
                                                 $nextStatus = null;
@@ -395,6 +605,18 @@
                                                         {{ $nextStatus['label'] }}
                                                     </button>
                                                 </form>
+                                            @endif
+                                            
+                                            <!-- Botão para adicionar à fila de produção -->
+                                            @if(in_array($pedido->status, ['pendente', 'recebido', 'em_preparo']))
+                                                <a href="{{ route('fila-producao.create', ['pedido_id' => $pedido->id]) }}"
+                                                   class="px-3 py-1.5 bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+                                                   title="Adicionar itens à fila de produção">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                                                    </svg>
+                                                    Fila
+                                                </a>
                                             @endif
                                         @endif
                                         @if($pedido->status !== 'cancelado')
@@ -435,7 +657,8 @@
                     {{ $pedidos->links() }}
                 </div>
             @endif
-        </div>
+            </div>
+        @endif
 
         <!-- Modal de Detalhes do Pedido -->
         <div x-show="showDetails"
@@ -543,6 +766,148 @@
                             document.getElementById('pedido-details-content').innerHTML = 
                                 '<div class="text-center py-8 text-red-600 dark:text-red-400">Erro ao carregar detalhes do pedido.</div>';
                         });
+                }
+            }
+        }
+
+        function kanbanPedidos() {
+            return {
+                draggedElement: null,
+                draggedStatus: null,
+
+                initKanban() {
+                    // Configurar drag and drop nativo HTML5
+                    const cards = document.querySelectorAll('.kanban-card');
+                    const columns = document.querySelectorAll('.kanban-column');
+
+                    cards.forEach(card => {
+                        card.draggable = true;
+                        card.addEventListener('dragstart', (e) => {
+                            this.draggedElement = e.target;
+                            this.draggedStatus = e.target.closest('.kanban-column').dataset.status;
+                            e.target.style.opacity = '0.5';
+                        });
+
+                        card.addEventListener('dragend', (e) => {
+                            e.target.style.opacity = '1';
+                        });
+                    });
+
+                    columns.forEach(column => {
+                        column.addEventListener('dragover', (e) => {
+                            e.preventDefault();
+                            column.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                        });
+
+                        column.addEventListener('dragleave', (e) => {
+                            column.style.backgroundColor = '';
+                        });
+
+                        column.addEventListener('drop', (e) => {
+                            e.preventDefault();
+                            column.style.backgroundColor = '';
+                            
+                            const newStatus = column.dataset.status;
+                            const card = this.draggedElement;
+                            
+                            if (newStatus !== this.draggedStatus && card) {
+                                this.moveCard(card, newStatus, this.draggedStatus);
+                            }
+                        });
+                    });
+                },
+
+                moveCard(card, newStatus, oldStatus) {
+                    const pedidoId = card.dataset.pedidoId;
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                    
+                    // Atualizar via AJAX
+                    fetch(`/pedidos/${pedidoId}/atualizar-status`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ status: newStatus })
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Erro na requisição');
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            // Mover o card visualmente
+                            const newColumn = document.querySelector(`[data-status="${newStatus}"]`);
+                            if (newColumn) {
+                                // Remover mensagem vazia se existir
+                                const emptyDiv = newColumn.querySelector('.text-center');
+                                if (emptyDiv) {
+                                    emptyDiv.remove();
+                                }
+                                
+                                // Remover card da coluna antiga
+                                card.remove();
+                                
+                                // Adicionar card na nova coluna
+                                newColumn.appendChild(card);
+                                
+                                // Atualizar contadores
+                                this.updateCounters();
+                                
+                                // Mostrar notificação
+                                this.showNotification('Status atualizado com sucesso!', 'success');
+                            }
+                        } else {
+                            this.showNotification('Erro ao atualizar status', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro:', error);
+                        this.showNotification('Erro ao atualizar status', 'error');
+                        // Recarregar página em caso de erro
+                        window.location.reload();
+                    });
+                },
+
+                updateCounters() {
+                    // Atualizar contadores das colunas
+                    const columns = document.querySelectorAll('.kanban-column');
+                    columns.forEach(column => {
+                        const count = column.querySelectorAll('.kanban-card').length;
+                        const columnContainer = column.closest('.bg-gray-50');
+                        if (columnContainer) {
+                            const counter = columnContainer.querySelector('.rounded-full');
+                            if (counter) {
+                                counter.textContent = count;
+                            }
+                            // Se não houver cards, mostrar mensagem vazia
+                            if (count === 0) {
+                                const emptyDiv = column.querySelector('.text-center');
+                                if (!emptyDiv) {
+                                    const emptyMsg = document.createElement('div');
+                                    emptyMsg.className = 'text-center py-8 text-gray-400 dark:text-gray-600 text-xs';
+                                    emptyMsg.textContent = 'Nenhum pedido';
+                                    column.appendChild(emptyMsg);
+                                }
+                            }
+                        }
+                    });
+                },
+
+                showNotification(message, type) {
+                    // Criar notificação simples
+                    const notification = document.createElement('div');
+                    notification.className = `fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 ${
+                        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                    }`;
+                    notification.textContent = message;
+                    document.body.appendChild(notification);
+                    
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 3000);
                 }
             }
         }

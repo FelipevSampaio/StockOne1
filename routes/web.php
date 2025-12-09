@@ -12,6 +12,7 @@ use App\Http\Controllers\CompraSugestaoController;
 use App\Http\Controllers\EstoqueController;
 use App\Http\Controllers\FilaProducaoController;
 use App\Http\Controllers\InsumoController;
+use App\Http\Controllers\CategoriaInsumoController;
 use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\PedidoItemController;
 use App\Http\Controllers\PublicCartController;
@@ -136,6 +137,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/dashboard/clear-cache', [\App\Http\Controllers\DashboardController::class, 'clearCache'])->name('dashboard.clear-cache');
 
         Route::resource('insumos', InsumoController::class)->except(['show']);
+        Route::resource('categoria-insumos', CategoriaInsumoController::class)->only(['index', 'store', 'destroy']);
         Route::resource('cardapio-itens', CardapioItemController::class)
             ->parameters(['cardapio-itens' => 'cardapio_item'])
             ->except(['show']);

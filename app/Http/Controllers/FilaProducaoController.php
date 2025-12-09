@@ -43,8 +43,29 @@ class FilaProducaoController extends Controller
         // Ordenação
         $query->orderBy('prioridade', 'desc')->orderBy('created_at');
 
-        $perPage = $request->get('per_page', 15);
-        $filas = $query->paginate($perPage)->withQueryString();
+        // Modo de visualização
+        $viewMode = $request->get('view', 'table'); // 'table' ou 'kanban'
+        
+        if ($viewMode === 'kanban') {
+            // Para Kanban, não paginar, apenas agrupar por status
+            $filasAgrupadas = $query->get()->groupBy('status_producao');
+            // Garantir que todas as colunas existam
+            $statusColunas = ['pendente', 'em_producao', 'pronto'];
+            foreach ($statusColunas as $status) {
+                if (!$filasAgrupadas->has($status)) {
+                    $filasAgrupadas->put($status, collect());
+                }
+            }
+            $filas = null;
+        } else {
+            $perPage = $request->get('per_page', 15);
+            $filas = $query->paginate($perPage)->withQueryString();
+            $filasAgrupadas = collect([
+                'pendente' => collect(),
+                'em_producao' => collect(),
+                'pronto' => collect()
+            ]);
+        }
 
         // Estatísticas
         $totalItens = FilaProducao::whereHas('pedido', fn ($q) => $q->where('restaurante_id', $restauranteId))->count();
@@ -70,14 +91,15 @@ class FilaProducaoController extends Controller
             ->distinct('status_producao')
             ->pluck('status_producao');
 
-        return view('fila_producao.index', compact('filas', 'stats', 'statusList'));
+        return view('fila_producao.index', compact('filas', 'filasAgrupadas', 'stats', 'statusList', 'viewMode'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $pedidoItens = $this->pedidoItensDisponiveis();
+        $pedidoId = $request->get('pedido_id');
+        $pedidoItens = $this->pedidoItensDisponiveis($pedidoId);
 
-        return view('fila_producao.create', compact('pedidoItens'));
+        return view('fila_producao.create', compact('pedidoItens', 'pedidoId'));
     }
 
     public function store(Request $request)
@@ -120,6 +142,40 @@ class FilaProducaoController extends Controller
 
         $restauranteId = $this->restauranteId();
 
+        // Atualização rápida de status (sem precisar do pedido_item_id)
+        if ($request->has('status_producao') && !$request->has('pedido_item_id')) {
+            $updateData = ['status_producao' => $request->status_producao];
+            
+            // Se iniciando produção, registrar data/hora de início
+            if ($request->status_producao === 'em_producao' && !$filaProducao->data_hora_inicio) {
+                $updateData['data_hora_inicio'] = now();
+            }
+            
+            // Se finalizando produção, registrar data/hora de fim
+            if ($request->status_producao === 'pronto' && !$filaProducao->data_hora_fim) {
+                $updateData['data_hora_fim'] = now();
+            }
+            
+            // Se foi enviado data_hora_inicio ou data_hora_fim, usar o valor enviado
+            if ($request->filled('data_hora_inicio')) {
+                $updateData['data_hora_inicio'] = $request->data_hora_inicio;
+            }
+            if ($request->filled('data_hora_fim')) {
+                $updateData['data_hora_fim'] = $request->data_hora_fim;
+            }
+            
+            $filaProducao->update($updateData);
+            
+            $mensagem = match($request->status_producao) {
+                'em_producao' => 'Produção iniciada com sucesso.',
+                'pronto' => 'Item marcado como pronto.',
+                default => 'Status atualizado com sucesso.'
+            };
+            
+            return redirect()->route('fila-producao.index')->with('success', $mensagem);
+        }
+
+        // Atualização completa
         $data = $request->validate([
             'pedido_item_id' => ['required', 'exists:pedido_itens,id'],
             'status_producao' => ['required', 'string', 'max:50'],
@@ -152,17 +208,54 @@ class FilaProducaoController extends Controller
         abort_unless($filaProducao->pedido?->restaurante_id === $this->restauranteId(), 403);
     }
 
-    protected function pedidoItensDisponiveis()
+    protected function pedidoItensDisponiveis($pedidoId = null)
     {
         $restauranteId = $this->restauranteId();
 
-        return PedidoItem::with(['pedido', 'cardapioItem'])
+        // Buscar IDs de itens que já estão na fila
+        $itensNaFila = FilaProducao::whereHas('pedido', fn ($q) => $q->where('restaurante_id', $restauranteId))
+            ->whereIn('status_producao', ['pendente', 'em_producao'])
+            ->pluck('pedido_item_id')
+            ->toArray();
+
+        $query = PedidoItem::with(['pedido', 'cardapioItem', 'filaProducao'])
             ->whereHas('pedido', fn ($query) => $query->where('restaurante_id', $restauranteId))
-            ->orderByDesc('created_at')
+            ->whereNotIn('id', $itensNaFila) // Excluir itens já na fila
+            ->whereHas('pedido', fn ($q) => $q->whereIn('status', ['pendente', 'recebido', 'em_preparo'])); // Apenas pedidos em produção
+
+        // Filtrar por pedido específico se fornecido
+        if ($pedidoId) {
+            $query->where('pedido_id', $pedidoId);
+        }
+
+        return $query->orderByDesc('created_at')
             ->get()
             ->mapWithKeys(function ($item) {
                 $pedidoNumero = $item->pedido?->numero_pedido_externo ?? $item->pedido_id;
-                $label = sprintf('#%s - %s', $pedidoNumero, $item->cardapioItem?->nome ?? 'Item');
+                $statusPedido = $item->pedido?->status ?? 'pendente';
+                $quantidade = $item->quantidade ?? 1;
+                $nomeItem = $item->cardapioItem?->nome ?? 'Item';
+                
+                // Formatar label com mais informações
+                $statusLabel = '';
+                switch($statusPedido) {
+                    case 'pendente':
+                        $statusLabel = '⏳ Pendente';
+                        break;
+                    case 'recebido':
+                        $statusLabel = '📥 Recebido';
+                        break;
+                    case 'em_preparo':
+                        $statusLabel = '👨‍🍳 Em Preparo';
+                        break;
+                }
+                
+                $label = sprintf('#%s - %s (Qtd: %d) %s', 
+                    $pedidoNumero, 
+                    $nomeItem, 
+                    $quantidade,
+                    $statusLabel
+                );
 
                 return [$item->id => $label];
             });

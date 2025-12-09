@@ -163,19 +163,65 @@ class EstoqueController extends Controller
 
         $restauranteId = $this->restauranteId();
 
+        // Verificar se o estoque ainda existe antes de atualizar
+        if (!$estoque->exists) {
+            return redirect()->route('estoque.index')
+                ->with('error', 'O registro de estoque não foi encontrado.');
+        }
+
         $data = $request->validate([
-            'insumo_id' => [
-                'required',
-                Rule::exists('insumos', 'id')->where('restaurante_id', $restauranteId),
-                Rule::unique('estoque', 'insumo_id')->ignore($estoque->id),
-            ],
-            'quantidade_atual' => ['required', 'numeric'],
+            'quantidade_atual' => ['required', 'numeric', 'min:0'],
             'localizacao' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $estoque->update($data);
+        // Garantir que quantidade_atual seja um número válido
+        // Converter vírgula para ponto se necessário (formato brasileiro)
+        $quantidade = $data['quantidade_atual'];
+        if (is_string($quantidade)) {
+            $quantidade = str_replace(',', '.', $quantidade);
+        }
+        $quantidade = (float) $quantidade;
+        
+        // Validar que a quantidade não seja negativa
+        if ($quantidade < 0) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['quantidade_atual' => 'A quantidade não pode ser negativa.']);
+        }
+        
+        // Verificar novamente se o estoque ainda existe antes de atualizar
+        $estoque->refresh();
+        if (!$estoque->exists) {
+            return redirect()->route('estoque.index')
+                ->with('error', 'O registro de estoque foi removido durante a atualização.');
+        }
 
-        return redirect()->route('estoque.index')->with('success', 'Estoque atualizado com sucesso.');
+        // Não incluir insumo_id nos dados de atualização (não pode ser alterado)
+        // Atualizar apenas quantidade_atual e localizacao
+        try {
+            $updated = $estoque->update([
+                'quantidade_atual' => $quantidade,
+                'localizacao' => $data['localizacao'] ?? null,
+            ]);
+
+            if (!$updated) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Não foi possível atualizar o estoque. Tente novamente.');
+            }
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Se houver erro de unique constraint, pode ser que o insumo_id foi alterado para um que já existe
+            if (str_contains($e->getMessage(), 'Duplicate entry')) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['insumo_id' => 'Este insumo já possui um registro de estoque.']);
+            }
+            throw $e;
+        }
+
+        // Garantir que a mensagem de sucesso seja exibida corretamente
+        return redirect()->route('estoque.index')
+            ->with('success', 'Estoque atualizado com sucesso!');
     }
 
     public function destroy(Estoque $estoque)

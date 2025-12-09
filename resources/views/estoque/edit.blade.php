@@ -48,7 +48,8 @@
         </div>
         @endif
 
-        <form action="{{ route('estoque.update', $estoque) }}" 
+        <form id="form-update-estoque"
+              action="{{ route('estoque.update', $estoque) }}" 
               method="POST" 
               class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
               x-data="{ isSubmitting: false }"
@@ -68,16 +69,15 @@
                 </a>
 
                 <div class="flex items-center gap-3">
-                    <form id="delete-estoque" action="{{ route('estoque.destroy', $estoque) }}" method="POST" class="inline">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit"
-                                data-confirm="⚠️ Atenção: Esta ação é permanente e não pode ser desfeita. O registro de estoque será removido completamente. Deseja realmente excluir?"
-                                class="px-5 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 bg-white dark:bg-gray-700 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                            Excluir
-                        </button>
-                    </form>
+                    <button type="button"
+                            id="btn-delete-estoque"
+                            onclick="confirmDelete()"
+                            class="px-5 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 bg-white dark:bg-gray-700 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                        Excluir
+                    </button>
                     <button type="submit" 
+                            id="btn-update-estoque"
+                            form="form-update-estoque"
                             :disabled="isSubmitting"
                             class="px-5 py-2.5 text-sm font-semibold text-white bg-red-600 rounded-lg shadow-sm hover:bg-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
                         <svg x-show="!isSubmitting" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -119,6 +119,41 @@
             updateUnidade();
             insumoSelect.addEventListener('change', updateUnidade);
         }
+
+        // Garantir que o formulário de update não seja afetado pelo formulário de delete
+        const formUpdate = document.getElementById('form-update-estoque');
+        if (formUpdate) {
+            formUpdate.addEventListener('submit', function(e) {
+                // Garantir que este é o formulário correto
+                if (e.target.id !== 'form-update-estoque') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        }
     });
+
+    function confirmDelete() {
+        if (confirm('⚠️ Atenção: Esta ação é permanente e não pode ser desfeita. O registro de estoque será removido completamente. Deseja realmente excluir?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route('estoque.destroy', $estoque) }}';
+            
+            const csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = '_token';
+            csrf.value = '{{ csrf_token() }}';
+            form.appendChild(csrf);
+            
+            const method = document.createElement('input');
+            method.type = 'hidden';
+            method.name = '_method';
+            method.value = 'DELETE';
+            form.appendChild(method);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
 </script>
 @endsection

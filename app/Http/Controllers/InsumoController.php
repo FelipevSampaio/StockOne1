@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Insumo;
+use App\Models\CategoriaInsumo;
 use Illuminate\Http\Request;
 
 class InsumoController extends Controller
@@ -91,30 +92,52 @@ class InsumoController extends Controller
 
     public function create()
     {
-        // Buscar categorias existentes para autocomplete
         $restauranteId = $this->restauranteId();
-        $categorias = Insumo::where('restaurante_id', $restauranteId)
-            ->whereNotNull('categoria')
-            ->distinct()
-            ->orderBy('categoria')
-            ->pluck('categoria');
+        
+        // Garantir que categorias predefinidas existam
+        CategoriaInsumo::criarPredefinidas($restauranteId);
+        
+        // Buscar categorias da tabela
+        $categorias = CategoriaInsumo::where('restaurante_id', $restauranteId)
+            ->orderBy('ordem')
+            ->orderBy('nome')
+            ->pluck('nome', 'id');
         
         return view('insumos.create', compact('categorias'));
     }
 
     public function store(Request $request)
     {
+        $restauranteId = $this->restauranteId();
+        
         $data = $request->validate([
             'nome' => ['required', 'string', 'max:255'],
             'descricao' => ['nullable', 'string', 'max:255'],
             'categoria' => ['nullable', 'string', 'max:100'],
+            'nova_categoria' => ['nullable', 'string', 'max:100'],
+            'categoria_id' => ['nullable', 'exists:categoria_insumos,id'],
             'unidade_medida' => ['required', 'string', 'max:50'],
             'ponto_reposicao_minimo' => ['nullable', 'numeric'],
             'custo_unitario' => ['nullable', 'numeric'],
             'data_validade_minima' => ['nullable', 'date'],
         ]);
 
-        $data['restaurante_id'] = $this->restauranteId();
+        // Se foi selecionada uma nova categoria, criar ela
+        if ($request->filled('nova_categoria')) {
+            $categoria = CategoriaInsumo::create([
+                'restaurante_id' => $restauranteId,
+                'nome' => $request->nova_categoria,
+                'predefinida' => false,
+                'ordem' => CategoriaInsumo::where('restaurante_id', $restauranteId)->max('ordem') + 1,
+            ]);
+            $data['categoria'] = $categoria->nome;
+        } elseif ($request->filled('categoria_id')) {
+            // Se foi selecionada uma categoria existente, usar o nome dela
+            $categoria = CategoriaInsumo::findOrFail($request->categoria_id);
+            $data['categoria'] = $categoria->nome;
+        }
+
+        $data['restaurante_id'] = $restauranteId;
 
         Insumo::create($data);
 
@@ -125,13 +148,16 @@ class InsumoController extends Controller
     {
         $this->authorizeInsumo($insumo);
 
-        // Buscar categorias existentes para autocomplete
         $restauranteId = $this->restauranteId();
-        $categorias = Insumo::where('restaurante_id', $restauranteId)
-            ->whereNotNull('categoria')
-            ->distinct()
-            ->orderBy('categoria')
-            ->pluck('categoria');
+        
+        // Garantir que categorias predefinidas existam
+        CategoriaInsumo::criarPredefinidas($restauranteId);
+        
+        // Buscar categorias da tabela
+        $categorias = CategoriaInsumo::where('restaurante_id', $restauranteId)
+            ->orderBy('ordem')
+            ->orderBy('nome')
+            ->pluck('nome', 'id');
 
         // Estatísticas do insumo
         $stats = [
@@ -148,15 +174,34 @@ class InsumoController extends Controller
     {
         $this->authorizeInsumo($insumo);
 
+        $restauranteId = $this->restauranteId();
+        
         $data = $request->validate([
             'nome' => ['required', 'string', 'max:255'],
             'descricao' => ['nullable', 'string', 'max:255'],
             'categoria' => ['nullable', 'string', 'max:100'],
+            'nova_categoria' => ['nullable', 'string', 'max:100'],
+            'categoria_id' => ['nullable', 'exists:categoria_insumos,id'],
             'unidade_medida' => ['required', 'string', 'max:50'],
             'ponto_reposicao_minimo' => ['nullable', 'numeric'],
             'custo_unitario' => ['nullable', 'numeric'],
             'data_validade_minima' => ['nullable', 'date'],
         ]);
+
+        // Se foi selecionada uma nova categoria, criar ela
+        if ($request->filled('nova_categoria')) {
+            $categoria = CategoriaInsumo::create([
+                'restaurante_id' => $restauranteId,
+                'nome' => $request->nova_categoria,
+                'predefinida' => false,
+                'ordem' => CategoriaInsumo::where('restaurante_id', $restauranteId)->max('ordem') + 1,
+            ]);
+            $data['categoria'] = $categoria->nome;
+        } elseif ($request->filled('categoria_id')) {
+            // Se foi selecionada uma categoria existente, usar o nome dela
+            $categoria = CategoriaInsumo::findOrFail($request->categoria_id);
+            $data['categoria'] = $categoria->nome;
+        }
 
         $insumo->update($data);
 

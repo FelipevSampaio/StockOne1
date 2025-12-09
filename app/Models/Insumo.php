@@ -113,6 +113,12 @@ class Insumo extends Model
         return $this->hasMany(Receita::class);
     }
 
+    public function categoriaInsumo()
+    {
+        return $this->hasOne(CategoriaInsumo::class, 'nome', 'categoria')
+            ->where('restaurante_id', $this->restaurante_id);
+    }
+
         /**
          * Verifica se o insumo está abaixo do ponto de reposição mínimo e cria alerta automático
          */

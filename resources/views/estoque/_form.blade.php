@@ -18,28 +18,43 @@
         <div class="grid gap-4 md:grid-cols-2">
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Insumo <span class="text-red-600">*</span>
+                    Insumo
                 </label>
-                <select name="insumo_id" 
-                        id="insumo_id"
-                        required 
-                        class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    <option value="">Selecione um insumo...</option>
-                    @foreach ($insumos as $insumo)
-                        <option value="{{ $insumo->id }}" 
-                                @selected(old('insumo_id', $registro->insumo_id ?? ($insumoSelecionado && $insumoSelecionado->id == $insumo->id ? $insumo->id : '')) == $insumo->id)
-                                data-unidade="{{ $insumo->unidade_medida }}"
-                                data-ponto-minimo="{{ $insumo->ponto_reposicao_minimo ?? 0 }}">
-                            {{ $insumo->nome }} 
-                            @if($insumo->categoria)
-                                ({{ $insumo->categoria }})
-                            @endif
-                        </option>
-                    @endforeach
-                </select>
-                @error('insumo_id')
-                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                @enderror
+                @if($registro && $registro->exists && $registro->insumo_id)
+                    {{-- Em modo de edição, mostrar o insumo como texto (não editável) --}}
+                    <div class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                        <span class="font-medium">{{ $registro->insumo?->nome ?? 'Insumo removido' }}</span>
+                        @if($registro->insumo?->categoriaInsumo)
+                            <span class="text-xs text-gray-500 dark:text-gray-400">({{ $registro->insumo->categoriaInsumo->nome }})</span>
+                        @endif
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">O insumo não pode ser alterado após a criação do estoque.</p>
+                @else
+                    {{-- Em modo de criação, permitir seleção --}}
+                    <select name="insumo_id" 
+                            id="insumo_id"
+                            required 
+                            class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                        <option value="">Selecione um insumo...</option>
+                        @foreach ($insumos as $insumo)
+                            <option value="{{ $insumo->id }}" 
+                                    @selected(old('insumo_id', ($insumoSelecionado && $insumoSelecionado->id == $insumo->id ? $insumo->id : '')) == $insumo->id)
+                                    data-unidade="{{ $insumo->unidade_medida }}"
+                                    data-ponto-minimo="{{ $insumo->ponto_reposicao_minimo ?? 0 }}">
+                                {{ $insumo->nome }} 
+                                @if($insumo->categoriaInsumo)
+                                    ({{ $insumo->categoriaInsumo->nome }})
+                                @endif
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('insumo_id')
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                @endif
             </div>
 
             <div>
@@ -52,7 +67,7 @@
                            min="0"
                            name="quantidade_atual" 
                            id="quantidade-input"
-                           value="{{ old('quantidade_atual', $registro->quantidade_atual ?? '') }}" 
+                           value="{{ old('quantidade_atual', $registro && $registro->quantidade_atual !== null ? number_format($registro->quantidade_atual, 3, '.', '') : '') }}" 
                            required 
                            placeholder="0.000"
                            class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">

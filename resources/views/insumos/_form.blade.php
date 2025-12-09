@@ -1,6 +1,14 @@
 @php
     $insumo = $insumo ?? null;
     $categorias = $categorias ?? collect();
+    // Buscar categoria_id se o insumo já existe e tem categoria
+    $categoriaIdSelecionada = '';
+    if ($insumo && $insumo->categoria && $insumo->exists) {
+        $categoria = \App\Models\CategoriaInsumo::where('nome', $insumo->categoria)
+            ->where('restaurante_id', $insumo->restaurante_id)
+            ->first();
+        $categoriaIdSelecionada = $categoria ? $categoria->id : '';
+    }
 @endphp
 
 <div class="space-y-6">
@@ -29,26 +37,80 @@
                 @enderror
             </div>
 
-            <div>
+            <div x-data="categoriaManager()">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Categoria
                 </label>
-                <input type="text" 
-                       name="categoria" 
-                       id="categoria-input"
-                       value="{{ old('categoria', $insumo->categoria ?? '') }}" 
-                       list="categorias-list"
-                       placeholder="Ex: Grãos, Laticínios, Carnes..."
-                       class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
-                <datalist id="categorias-list">
-                    @foreach($categorias as $cat)
-                        <option value="{{ $cat }}">
-                    @endforeach
-                </datalist>
+                <div class="flex gap-2">
+                    <select name="categoria_id" 
+                            x-model="categoriaId"
+                            @change="updateCategoriaNome()"
+                            class="flex-1 px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                        <option value="">Selecione uma categoria...</option>
+                        @foreach($categorias as $id => $nome)
+                            <option value="{{ $id }}" 
+                                    data-nome="{{ $nome }}"
+                                    @selected(old('categoria_id', $categoriaIdSelecionada) == $id)>
+                                {{ $nome }}
+                            </option>
+                        @endforeach
+                        <option value="nova">+ Criar nova categoria</option>
+                    </select>
+                    <a href="{{ route('categoria-insumos.index') }}" 
+                       target="_blank"
+                       class="px-3 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center"
+                       title="Gerenciar categorias">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </a>
+                </div>
+                
+                <!-- Campo para nova categoria -->
+                <div x-show="categoriaId === 'nova'" 
+                     x-transition
+                     class="mt-2">
+                    <input type="text" 
+                           name="nova_categoria" 
+                           x-model="novaCategoriaNome"
+                           placeholder="Nome da nova categoria..."
+                           class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">A categoria será criada automaticamente ao salvar o insumo.</p>
+                </div>
+                
+                <!-- Campo hidden para enviar o nome da categoria selecionada -->
+                <input type="hidden" name="categoria" x-model="categoriaNome">
+                
                 @error('categoria')
                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             </div>
+            
+            <script>
+                function categoriaManager() {
+                    return {
+                        categoriaId: '{{ old('categoria_id', $insumo->categoriaInsumo?->id ?? '') }}',
+                        novaCategoriaNome: '',
+                        categoriaNome: '{{ old('categoria', $insumo->categoria ?? '') }}',
+                        
+                        init() {
+                            this.updateCategoriaNome();
+                        },
+                        
+                        updateCategoriaNome() {
+                            if (this.categoriaId === 'nova') {
+                                this.categoriaNome = this.novaCategoriaNome;
+                            } else if (this.categoriaId) {
+                                const option = document.querySelector(`select[name="categoria_id"] option[value="${this.categoriaId}"]`);
+                                this.categoriaNome = option ? option.dataset.nome : '';
+                            } else {
+                                this.categoriaNome = '';
+                            }
+                        }
+                    }
+                }
+            </script>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

@@ -118,6 +118,18 @@ class AlertaController extends Controller
 
         $restauranteId = $this->restauranteId();
 
+        // Se apenas visualizado ou resolvido foram enviados, fazer atualização parcial
+        if ($request->has('visualizado') && !$request->has('insumo_id')) {
+            $alerta->update(['visualizado' => $request->boolean('visualizado')]);
+            return redirect()->route('alertas.index')->with('success', 'Alerta marcado como visualizado.');
+        }
+
+        if ($request->has('resolvido') && !$request->has('insumo_id')) {
+            $alerta->update(['resolvido' => $request->boolean('resolvido')]);
+            return redirect()->route('alertas.index')->with('success', 'Alerta marcado como resolvido.');
+        }
+
+        // Atualização completa
         $data = $request->validate([
             'insumo_id' => [
                 'required',

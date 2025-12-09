@@ -182,9 +182,9 @@
                                     </div>
                                 </td>
                                 <td class="px-4 py-4">
-                                    <div class="flex flex-col">
+                                    <div class="flex items-baseline gap-1.5">
                                         <span class="text-lg font-bold text-gray-900 dark:text-white">{{ number_format($registro->quantidade_atual, 2, ',', '.') }}</span>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ $registro->insumo?->unidade_medida ?? '—' }}</span>
+                                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400" title="Unidade de medida">{{ $registro->insumo?->unidade_medida ?? '—' }}</span>
                                     </div>
                                 </td>
                                 <td class="px-4 py-4">
