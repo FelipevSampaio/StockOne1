@@ -33,16 +33,13 @@
                         </div>
                         <div class="w-full sm:w-72">
                             <div class="relative">
-                                <svg class="pointer-events-none absolute inset-y-0 left-0 ml-3 flex h-full items-center text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1010.5 18.5a7.5 7.5 0 006.15-3.85z" />
-                                </svg>
                                 <input
                                     id="menu-search-input"
                                     type="text"
                                     x-model="searchQuery"
                                     @input="applyFilters()"
-                                    placeholder=" Buscar itens do cardápio..."
-                                    class="block w-full rounded-full border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-10 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-red-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all"
+                                    placeholder="Buscar pratos, bebidas e itens do cardápio..."
+                                    class="block w-full rounded-full border border-gray-200 bg-gray-50 py-2.5 pl-4 pr-10 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-red-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all"
                                 >
                                 <button x-show="searchQuery" 
                                         @click="searchQuery = ''; applyFilters()"
@@ -179,7 +176,7 @@
                                             <span class="text-2xl font-bold text-gray-900">R$ {{ number_format($item->preco_venda, 2, ',', '.') }}</span>
                                             <span class="text-xs uppercase tracking-[0.3em] text-red-500">{{ $item->tempo_preparo_minutos ? $item->tempo_preparo_minutos . ' min' : 'Entrega rápida' }}</span>
                                         </div>
-                                        <div class="flex items-center justify-between gap-2">
+                                        <div class="flex items-center justify-between gap-2 menu-item-actions">
                                             @if ($cartItem)
                                                 <div class="flex items-center gap-3 rounded-full border border-red-100 bg-red-50 px-3 py-1 text-sm font-semibold text-red-600">
                                                     <form action="{{ route('public.cart.update', $item->id) }}" method="POST">
@@ -351,9 +348,19 @@
     </div>
 
     <!-- Carrinho Flutuante Mobile -->
-    <div x-data="{ cartOpen: false }" 
+    <div x-data="{ 
+            cartOpen: false, 
+            cartCount: {{ $cartCount }}, 
+            cartTotal: {{ $cartTotal }},
+            init() {
+                window.addEventListener('cart-updated', (e) => {
+                    this.cartCount = e.detail.count;
+                    this.cartTotal = e.detail.total;
+                });
+            }
+         }" 
          class="lg:hidden fixed bottom-0 left-0 right-0 z-40"
-         x-show="cartOpen || {{ $cartCount }} > 0"
+         x-show="cartOpen || cartCount > 0"
          x-transition>
         <button @click="cartOpen = !cartOpen"
                 class="w-full bg-red-600 text-white px-6 py-4 flex items-center justify-between shadow-lg">
@@ -362,11 +369,11 @@
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
-                    <span class="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-red-600">{{ $cartCount }}</span>
+                    <span class="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-red-600" x-text="cartCount"></span>
                 </div>
                 <div class="text-left">
-                    <p class="text-sm font-semibold">{{ $cartCount }} itens</p>
-                    <p class="text-xs opacity-90">R$ {{ number_format($cartTotal, 2, ',', '.') }}</p>
+                    <p class="text-sm font-semibold" x-text="cartCount + ' itens'"></p>
+                    <p class="text-xs opacity-90" x-text="'R$ ' + cartTotal.toFixed(2).replace('.', ',')"></p>
                 </div>
             </div>
             <svg class="w-5 h-5 transition-transform" :class="{ 'rotate-180': cartOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -498,8 +505,9 @@
                 },
                 
                 addToCart(event, itemId) {
+                    event.preventDefault();
                     const form = event.target.closest('form');
-                    const button = event.target;
+                    const button = form.querySelector('button[type="submit"]');
                     const originalText = button.innerHTML;
                     
                     button.disabled = true;
@@ -510,22 +518,49 @@
                         body: new FormData(form),
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || form.querySelector('input[name="_token"]')?.value
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || form.querySelector('input[name="_token"]')?.value,
+                            'Accept': 'application/json'
                         }
                     })
-                    .then(response => {
-                        if (response.ok) {
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Disparar evento para atualizar o carrinho
+                            window.dispatchEvent(new CustomEvent('cart-updated', {
+                                detail: {
+                                    count: data.cart.count,
+                                    total: data.cart.total,
+                                    items: data.cart.items
+                                }
+                            }));
+                            
+                            // Recarregar a página para atualizar a interface
                             window.location.reload();
                         } else {
-                            button.disabled = false;
-                            button.innerHTML = originalText;
+                            throw new Error(data.message || 'Erro ao adicionar item');
                         }
                     })
                     .catch(error => {
                         console.error('Erro:', error);
+                        this.showNotification('Erro ao adicionar item ao carrinho. Tente novamente.', 'error');
                         button.disabled = false;
                         button.innerHTML = originalText;
                     });
+                },
+                
+                showNotification(message, type = 'success') {
+                    const notification = document.createElement('div');
+                    notification.className = `fixed top-4 right-4 z-50 rounded-lg px-4 py-3 shadow-lg ${
+                        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                    }`;
+                    notification.textContent = message;
+                    document.body.appendChild(notification);
+                    
+                    setTimeout(() => {
+                        notification.style.transition = 'opacity 0.3s';
+                        notification.style.opacity = '0';
+                        setTimeout(() => notification.remove(), 300);
+                    }, 3000);
                 }
             }
         }

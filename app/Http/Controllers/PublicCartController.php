@@ -24,6 +24,19 @@ class PublicCartController extends Controller
 
         PublicCart::add($item, $data['quantity'] ?? 1);
 
+        // Se for requisição AJAX, retornar JSON
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "{$item->nome} adicionado ao pedido.",
+                'cart' => [
+                    'count' => PublicCart::itemsCount(),
+                    'total' => PublicCart::subtotal(),
+                    'items' => PublicCart::all()->values()->all(),
+                ],
+            ]);
+        }
+
         return redirect()->route('public.menu')->with('success', "{$item->nome} adicionado ao pedido.");
     }
 

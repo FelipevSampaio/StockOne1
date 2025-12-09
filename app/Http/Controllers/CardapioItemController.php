@@ -118,7 +118,7 @@ class CardapioItemController extends Controller
             'complexidade_preparo' => ['required', 'integer', 'min:1', 'max:10'],
             'categoria' => ['nullable', 'string', 'max:100'],
             'ativo_online' => ['nullable', 'boolean'], // Keep this line for validation
-            'imagem' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:8192'],
+            'imagem' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'mimetypes:image/jpeg,image/png,image/gif,image/webp', 'max:8192'],
             'disponibilidade' => ['nullable', 'boolean'],
             'ingredientes' => ['nullable', 'string'],
             'promocao' => ['nullable', 'string'],
@@ -155,7 +155,23 @@ class CardapioItemController extends Controller
     {
         $this->authorizeItem($cardapioItem);
 
-        return view('cardapio_itens.edit', ['item' => $cardapioItem]);
+        // Estatísticas do item
+        $stats = [
+            'total_vendido' => \App\Models\PedidoItem::where('cardapio_item_id', $cardapioItem->id)
+                ->sum('quantidade'),
+            'receita_total' => \App\Models\PedidoItem::where('cardapio_item_id', $cardapioItem->id)
+                ->selectRaw('SUM(preco_unitario * quantidade) as total')
+                ->value('total') ?? 0,
+            'pedidos_count' => \App\Models\PedidoItem::where('cardapio_item_id', $cardapioItem->id)
+                ->distinct('pedido_id')
+                ->count('pedido_id'),
+            'ultimo_pedido' => \App\Models\PedidoItem::where('cardapio_item_id', $cardapioItem->id)
+                ->join('pedidos', 'pedido_itens.pedido_id', '=', 'pedidos.id')
+                ->orderBy('pedidos.data_hora_pedido', 'desc')
+                ->first(),
+        ];
+
+        return view('cardapio_itens.edit', ['item' => $cardapioItem, 'stats' => $stats]);
     }
 
     public function update(Request $request, CardapioItem $cardapioItem)
@@ -170,7 +186,7 @@ class CardapioItemController extends Controller
             'complexidade_preparo' => ['required', 'integer', 'min:1', 'max:10'],
             'categoria' => ['nullable', 'string', 'max:100'],
             'ativo_online' => ['nullable', 'boolean'],
-            'imagem' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:8192'],
+            'imagem' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'mimetypes:image/jpeg,image/png,image/gif,image/webp', 'max:8192'],
             'disponibilidade' => ['nullable', 'boolean'],
             'ingredientes' => ['nullable', 'string'],
             'promocao' => ['nullable', 'string'],
@@ -206,18 +222,58 @@ class CardapioItemController extends Controller
         return redirect()->route('admin.cardapio.index')->with('success', 'Item de cardápio atualizado com sucesso.');
     }
 
+    public function toggleStatus(CardapioItem $cardapio_item)
+    {
+        $this->authorizeItem($cardapio_item);
+
+        $cardapio_item->ativo_online = !$cardapio_item->ativo_online;
+        $cardapio_item->save();
+
+        $message = $cardapio_item->ativo_online 
+            ? 'Item ativado com sucesso. Agora ele aparece no menu público.' 
+            : 'Item desativado com sucesso. Ele não aparecerá mais no menu público, mas o histórico de pedidos será preservado para relatórios.';
+
+        return redirect()
+            ->route('cardapio-itens.index')
+            ->with('success', $message);
+    }
+
     public function destroy(CardapioItem $cardapioItem)
     {
         $this->authorizeItem($cardapioItem);
+
+        // Verificar se há pedidos relacionados
+        $pedidosCount = \App\Models\PedidoItem::where('cardapio_item_id', $cardapioItem->id)->count();
+        
+        if ($pedidosCount > 0) {
+            return redirect()
+                ->route('cardapio-itens.index')
+                ->with('error', "Não é possível excluir este item porque ele está relacionado a {$pedidosCount} pedido(s). Use o botão 'Desativar' para removê-lo do menu público mantendo o histórico de pedidos para relatórios.");
+        }
+
+        // Verificar se há receitas relacionadas
+        $receitasCount = $cardapioItem->receitas()->count();
+        if ($receitasCount > 0) {
+            // Deletar receitas relacionadas primeiro
+            $cardapioItem->receitas()->delete();
+        }
 
         // Remove a imagem se existir
         if ($cardapioItem->imagem) {
             Storage::disk('public')->delete($cardapioItem->imagem);
         }
 
-        $cardapioItem->delete();
-
-        return redirect()->route('cardapio-itens.index')->with('success', 'Item de cardápio removido com sucesso.');
+        try {
+            $cardapioItem->delete();
+            return redirect()
+                ->route('cardapio-itens.index')
+                ->with('success', 'Item de cardápio removido com sucesso.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Fallback caso ainda haja alguma constraint
+            return redirect()
+                ->route('cardapio-itens.index')
+                ->with('error', 'Não foi possível excluir este item. Ele pode estar relacionado a outros registros no sistema. Use o botão "Desativar" para removê-lo do menu público mantendo o histórico.');
+        }
     }
 
     protected function restauranteId(): int

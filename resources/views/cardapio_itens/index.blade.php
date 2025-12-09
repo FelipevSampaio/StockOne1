@@ -145,9 +145,9 @@
                     $ctrl = app(\App\Http\Controllers\CardapioItemController::class);
                     $disp = $ctrl->verificarDisponibilidadeEsubstituicoes($item);
                 @endphp
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow {{ !$item->ativo_online ? 'opacity-75' : '' }}">
                     <!-- Imagem -->
-                    <div class="relative h-48 bg-gray-100 dark:bg-gray-700">
+                    <div class="relative h-48 bg-gray-100 dark:bg-gray-700 {{ !$item->ativo_online ? 'grayscale' : '' }}">
                         @if ($item->imagem)
                             <img src="{{ asset('storage/' . $item->imagem) }}" alt="{{ $item->nome }}" class="w-full h-full object-cover">
                         @else
@@ -161,12 +161,18 @@
                         <!-- Badge de Status -->
                         <div class="absolute top-3 right-3">
                             @if($item->ativo_online)
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                                    Online
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Ativo
                                 </span>
                             @else
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
-                                    Offline
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Desativado
                                 </span>
                             @endif
                         </div>
@@ -210,6 +216,25 @@
                             </span>
 
                             <div class="flex items-center gap-2">
+                                <!-- Botão Desativar/Ativar -->
+                                <form action="{{ route('cardapio-itens.toggle-status', $item) }}" method="POST" class="inline">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit"
+                                            class="p-2 {{ $item->ativo_online ? 'text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/20' : 'text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20' }} rounded-lg transition-colors"
+                                            title="{{ $item->ativo_online ? 'Desativar item (mantém histórico de pedidos)' : 'Ativar item' }}">
+                                        @if($item->ativo_online)
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                            </svg>
+                                        @else
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                        @endif
+                                    </button>
+                                </form>
+                                
                                 <a href="{{ route('cardapio-itens.edit', $item) }}"
                                    class="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                    title="Editar">
@@ -217,12 +242,16 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                     </svg>
                                 </a>
-                                <form action="{{ route('cardapio-itens.destroy', $item) }}" method="POST" data-confirm="Deseja remover este item?" class="inline">
+                                
+                                <form action="{{ route('cardapio-itens.destroy', $item) }}" 
+                                      method="POST" 
+                                      data-confirm="⚠️ Atenção: Esta ação é permanente e não pode ser desfeita. O item será removido completamente do sistema. Se você quiser apenas removê-lo do menu público mantendo o histórico de pedidos, use o botão 'Desativar' ao invés disso. Deseja realmente excluir?" 
+                                      class="inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit"
                                             class="p-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                            title="Excluir">
+                                            title="Excluir permanentemente (use 'Desativar' para manter histórico)">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                         </svg>

@@ -16,14 +16,28 @@
         @endif
         <style>
             [x-cloak] { display: none !important; }
+
+            /* Prevenir flash de conteúdo incorreto no dark mode */
+            html {
+                color-scheme: light dark;
+            }
         </style>
         <script>
-            // Dark Mode: Carregar preferência antes do render
-            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
+            // Dark Mode: Carregar preferência ANTES de qualquer render para evitar flash
+            (function() {
+                try {
+                    const theme = localStorage.getItem('theme');
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+                    if (theme === 'dark' || (!theme && prefersDark)) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                } catch (e) {
+                    console.warn('Erro ao carregar tema:', e);
+                }
+            })();
         </script>
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     </head>
@@ -287,11 +301,22 @@
                                     class="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                     title="Alternar modo escuro">
                                 <!-- Ícone de lua (modo claro ativo) -->
-                                <svg x-show="!document.documentElement.classList.contains('dark')" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg x-show="!isDark"
+                                     x-transition
+                                     class="w-6 h-6"
+                                     fill="none"
+                                     stroke="currentColor"
+                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
                                 </svg>
                                 <!-- Ícone de sol (modo escuro ativo) -->
-                                <svg x-show="document.documentElement.classList.contains('dark')" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg x-show="isDark"
+                                     x-transition
+                                     x-cloak
+                                     class="w-6 h-6"
+                                     fill="none"
+                                     stroke="currentColor"
+                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
                                 </svg>
                             </button>
@@ -366,6 +391,31 @@
                         </div>
                     @endif
 
+                    @if (session('error'))
+                        <div x-data="{ show: true }"
+                             x-show="show"
+                             x-init="setTimeout(() => show = false, 8000)"
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0 transform scale-90"
+                             x-transition:enter-end="opacity-100 transform scale-100"
+                             x-transition:leave="transition ease-in duration-200"
+                             x-transition:leave-start="opacity-100 transform scale-100"
+                             x-transition:leave-end="opacity-0 transform scale-90"
+                             class="mb-6 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-800 dark:text-red-200 flex items-center justify-between shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                                <span>{{ session('error') }}</span>
+                            </div>
+                            <button @click="show = false" class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                    @endif
+
                     @if ($errors->any())
                         <div x-data="{ show: true }"
                              x-show="show"
@@ -424,13 +474,32 @@
         <script>
             function appLayout() {
                 return {
+                    isDark: document.documentElement.classList.contains('dark'),
+
+                    init() {
+                        // Sincronizar estado inicial
+                        this.isDark = document.documentElement.classList.contains('dark');
+
+                        // Observar mudanças na classe dark do documento
+                        const observer = new MutationObserver(() => {
+                            this.isDark = document.documentElement.classList.contains('dark');
+                        });
+
+                        observer.observe(document.documentElement, {
+                            attributes: true,
+                            attributeFilter: ['class']
+                        });
+                    },
+
                     toggleDarkMode() {
                         if (document.documentElement.classList.contains('dark')) {
                             document.documentElement.classList.remove('dark');
                             localStorage.theme = 'light';
+                            this.isDark = false;
                         } else {
                             document.documentElement.classList.add('dark');
                             localStorage.theme = 'dark';
+                            this.isDark = true;
                         }
                     }
                 }
