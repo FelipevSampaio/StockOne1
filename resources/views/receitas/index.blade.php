@@ -284,8 +284,8 @@
                                             <p class="text-xs text-gray-500 dark:text-gray-400">
                                                 {{ number_format($receita->quantidade_necessaria, 2, ',', '.') }} {{ $receita->insumo?->unidade_medida ?? '' }}
                                                 @if($receita->insumo && $receita->insumo->custo_unitario)
-                                                    · R$ {{ number_format($receita->insumo->custo_unitario, 2, ',', '.') }}/{{ $receita->insumo->unidade_medida }}
-                                                    · Subtotal: R$ {{ number_format($receita->quantidade_necessaria * $receita->insumo->custo_unitario, 2, ',', '.') }}
+                                                    · R$ {{ $receita->insumo->custo_unitario < 0.01 ? number_format($receita->insumo->custo_unitario, 6, ',', '.') : number_format($receita->insumo->custo_unitario, 2, ',', '.') }}/{{ $receita->insumo->unidade_medida }}
+                                                    · Subtotal: R$ {{ ($receita->quantidade_necessaria * $receita->insumo->custo_unitario) < 0.01 ? number_format($receita->quantidade_necessaria * $receita->insumo->custo_unitario, 6, ',', '.') : number_format($receita->quantidade_necessaria * $receita->insumo->custo_unitario, 2, ',', '.') }}
                                                 @endif
                                             </p>
                                         </div>
@@ -402,10 +402,10 @@
                                     @if($receita->insumo && $receita->insumo->custo_unitario)
                                         <div>
                                             <p class="font-medium text-gray-900 dark:text-white">
-                                                R$ {{ number_format($receita->quantidade_necessaria * $receita->insumo->custo_unitario, 2, ',', '.') }}
+                                                R$ {{ ($receita->quantidade_necessaria * $receita->insumo->custo_unitario) < 0.01 ? number_format($receita->quantidade_necessaria * $receita->insumo->custo_unitario, 6, ',', '.') : number_format($receita->quantidade_necessaria * $receita->insumo->custo_unitario, 2, ',', '.') }}
                                             </p>
                                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                                R$ {{ number_format($receita->insumo->custo_unitario, 2, ',', '.') }}/{{ $receita->insumo->unidade_medida }}
+                                                R$ {{ $receita->insumo->custo_unitario < 0.01 ? number_format($receita->insumo->custo_unitario, 6, ',', '.') : number_format($receita->insumo->custo_unitario, 2, ',', '.') }}/{{ $receita->insumo->unidade_medida }}
                                             </p>
                                         </div>
                                     @else

@@ -218,7 +218,7 @@
                                 <td class="px-4 py-4 text-center">
                                     @if($insumo->custo_unitario)
                                         <span class="text-sm font-semibold text-gray-900 dark:text-white">
-                                            R$ {{ number_format($insumo->custo_unitario, 2, ',', '.') }}
+                                            R$ {{ $insumo->custo_unitario < 0.01 ? number_format($insumo->custo_unitario, 6, ',', '.') : number_format($insumo->custo_unitario, 2, ',', '.') }}
                                         </span>
                                     @else
                                         <span class="text-sm text-gray-400 dark:text-gray-500">—</span>

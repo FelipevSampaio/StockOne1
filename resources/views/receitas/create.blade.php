@@ -195,7 +195,7 @@
                                         data-categoria="{{ $insumo->categoria ?? '' }}">
                                     {{ $nome }} 
                                     @if($insumo && $insumo->custo_unitario)
-                                        (R$ {{ number_format($insumo->custo_unitario, 2, ',', '.') }}/{{ $insumo->unidade_medida }})
+                                        (R$ {{ $insumo->custo_unitario < 0.01 ? number_format($insumo->custo_unitario, 6, ',', '.') : number_format($insumo->custo_unitario, 2, ',', '.') }}/{{ $insumo->unidade_medida }})
                                     @endif
                                 </option>
                             @endforeach

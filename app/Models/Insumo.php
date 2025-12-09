@@ -85,7 +85,7 @@ class Insumo extends Model
     protected $casts = [
         'data_validade_minima' => 'date',
         'ponto_reposicao_minimo' => 'decimal:2',
-        'custo_unitario' => 'decimal:2',
+        'custo_unitario' => 'decimal:6',
     ];
 
     public function restaurante()

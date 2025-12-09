@@ -220,7 +220,7 @@
                                 <td class="px-4 py-4">
                                     @if($registro->insumo && $registro->insumo->custo_unitario)
                                         <span class="text-sm font-semibold text-green-600 dark:text-green-400">
-                                            R$ {{ number_format($registro->quantidade_atual * $registro->insumo->custo_unitario, 2, ',', '.') }}
+                                            R$ {{ ($registro->quantidade_atual * $registro->insumo->custo_unitario) < 0.01 ? number_format($registro->quantidade_atual * $registro->insumo->custo_unitario, 6, ',', '.') : number_format($registro->quantidade_atual * $registro->insumo->custo_unitario, 2, ',', '.') }}
                                         </span>
                                     @else
                                         <span class="text-sm text-gray-400 dark:text-gray-500">—</span>

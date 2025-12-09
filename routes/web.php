@@ -151,6 +151,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('estoque', EstoqueController::class)->except(['show']);
         Route::resource('alertas', AlertaController::class)->except(['show']);
         Route::resource('compras-sugestoes', CompraSugestaoController::class)->except(['show']);
+        Route::patch('compras-sugestoes/{compraSugestao}/status', [CompraSugestaoController::class, 'updateStatus'])->name('compras-sugestoes.update-status');
         Route::resource('receitas', ReceitaController::class)->except(['show']);
         Route::get('receitas/{receita}/detalhes', [ReceitaController::class, 'detalhes'])->name('receitas.detalhes');
         Route::resource('pedido-itens', PedidoItemController::class)->except(['show']);

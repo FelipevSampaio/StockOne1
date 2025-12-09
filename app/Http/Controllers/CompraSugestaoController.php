@@ -13,7 +13,7 @@ class CompraSugestaoController extends Controller
     {
         $restauranteId = $this->restauranteId();
 
-        $query = CompraSugestao::with('insumo')
+        $query = CompraSugestao::with(['insumo.estoque', 'insumo'])
             ->whereHas('insumo', fn ($q) => $q->where('restaurante_id', $restauranteId));
 
         // Filtro de busca
@@ -147,6 +147,28 @@ class CompraSugestaoController extends Controller
         $compraSugestao->delete();
 
         return redirect()->route('compras-sugestoes.index')->with('success', 'Sugestão de compra removida com sucesso.');
+    }
+
+    public function updateStatus(Request $request, CompraSugestao $compraSugestao)
+    {
+        $this->authorizeSugestao($compraSugestao);
+
+        $request->validate([
+            'status' => ['required', 'string', 'in:pendente,aprovada,rejeitada'],
+        ]);
+
+        $compraSugestao->update(['status' => $request->status]);
+
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Status atualizado com sucesso.',
+                'status' => $compraSugestao->status,
+            ]);
+        }
+
+        return redirect()->route('compras-sugestoes.index')
+            ->with('success', 'Status da sugestão atualizado com sucesso.');
     }
 
     protected function authorizeSugestao(CompraSugestao $compraSugestao): void
