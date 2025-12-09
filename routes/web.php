@@ -140,6 +140,7 @@ Route::middleware('auth')->group(function () {
             ->parameters(['cardapio-itens' => 'cardapio_item'])
             ->except(['show']);
         Route::patch('cardapio-itens/{cardapio_item}/toggle-status', [CardapioItemController::class, 'toggleStatus'])->name('cardapio-itens.toggle-status');
+        Route::post('cardapio-itens/{cardapio_item}/duplicate', [CardapioItemController::class, 'duplicate'])->name('cardapio-itens.duplicate');
             // Dashboard do Restaurante
             Route::get('admin/restaurantes/dashboard', [\App\Http\Controllers\RestauranteController::class, 'dashboard'])->name('admin.restaurantes.dashboard');
         Route::resource('pedidos', PedidoController::class)->except(['show']);

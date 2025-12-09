@@ -77,7 +77,18 @@ class CardapioItemController extends Controller
         // Ordenação
         $sortBy = $request->get('sort', 'nome');
         $sortOrder = $request->get('order', 'asc');
-        $query->orderBy($sortBy, $sortOrder);
+        
+        // Adicionar contagem de vendas para todos os itens
+        $query->withCount(['pedidoItens as total_vendido' => function($q) {
+            $q->selectRaw('COALESCE(SUM(quantidade), 0)');
+        }]);
+
+        // Ordenação especial por mais vendidos
+        if ($sortBy === 'vendas') {
+            $query->orderBy('total_vendido', $sortOrder);
+        } else {
+            $query->orderBy($sortBy, $sortOrder);
+        }
 
         $perPage = $request->get('per_page', 15);
         $itens = $query->paginate($perPage)->withQueryString();
@@ -91,6 +102,10 @@ class CardapioItemController extends Controller
                 ->where('ativo_online', false)->count(),
             'categorias' => CardapioItem::where('restaurante_id', $restauranteId)
                 ->distinct()->count('categoria'),
+            'receita_total' => \App\Models\PedidoItem::whereHas('pedido', function($q) use ($restauranteId) {
+                $q->where('restaurante_id', $restauranteId);
+            })->selectRaw('COALESCE(SUM(preco_unitario * quantidade), 0) as total')
+              ->value('total') ?? 0,
         ];
 
         // Categorias disponíveis
@@ -236,6 +251,27 @@ class CardapioItemController extends Controller
         return redirect()
             ->route('cardapio-itens.index')
             ->with('success', $message);
+    }
+
+    public function duplicate(CardapioItem $cardapio_item)
+    {
+        $this->authorizeItem($cardapio_item);
+
+        $newItem = $cardapio_item->replicate();
+        $newItem->nome = $cardapio_item->nome . ' (Cópia)';
+        $newItem->ativo_online = false; // Desativado por padrão
+        $newItem->save();
+
+        // Duplicar receitas
+        foreach ($cardapio_item->receitas as $receita) {
+            $newReceita = $receita->replicate();
+            $newReceita->cardapio_item_id = $newItem->id;
+            $newReceita->save();
+        }
+
+        return redirect()
+            ->route('cardapio-itens.edit', $newItem)
+            ->with('success', 'Item duplicado com sucesso! Revise as informações antes de ativar.');
     }
 
     public function destroy(CardapioItem $cardapioItem)
