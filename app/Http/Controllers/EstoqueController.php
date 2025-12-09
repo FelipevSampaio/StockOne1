@@ -39,7 +39,14 @@ class EstoqueController extends Controller
         $sortField = $request->get('sort', 'updated_at');
         $sortDirection = $request->get('direction', 'desc');
 
-        if ($sortField === 'insumo') {
+        // Ordenação especial por estoque baixo
+        if ($sortField === 'estoque_baixo') {
+            $query->join('insumos', 'estoque.insumo_id', '=', 'insumos.id')
+                  ->select('estoque.*')
+                  ->selectRaw('CASE WHEN estoque.quantidade_atual <= insumos.ponto_reposicao_minimo THEN 1 ELSE 0 END as is_baixo')
+                  ->orderBy('is_baixo', 'desc')
+                  ->orderBy('insumos.nome', $sortDirection);
+        } elseif ($sortField === 'insumo') {
             $query->join('insumos', 'estoque.insumo_id', '=', 'insumos.id')
                   ->orderBy('insumos.nome', $sortDirection)
                   ->select('estoque.*');
@@ -77,14 +84,31 @@ class EstoqueController extends Controller
         return view('estoque.index', compact('estoques', 'stats'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $insumos = Insumo::where('restaurante_id', $this->restauranteId())
+        $restauranteId = $this->restauranteId();
+        $insumos = Insumo::where('restaurante_id', $restauranteId)
             ->doesntHave('estoque')
             ->orderBy('nome')
-            ->pluck('nome', 'id');
+            ->get();
 
-        return view('estoque.create', compact('insumos'));
+        // Se insumo_id foi passado na query, pré-selecionar
+        $insumoSelecionado = null;
+        if ($request->has('insumo_id')) {
+            $insumoSelecionado = Insumo::where('restaurante_id', $restauranteId)
+                ->where('id', $request->insumo_id)
+                ->doesntHave('estoque')
+                ->first();
+        }
+
+        // Buscar localizações existentes para autocomplete
+        $localizacoes = Estoque::whereHas('insumo', fn ($q) => $q->where('restaurante_id', $restauranteId))
+            ->whereNotNull('localizacao')
+            ->distinct()
+            ->orderBy('localizacao')
+            ->pluck('localizacao');
+
+        return view('estoque.create', compact('insumos', 'localizacoes', 'insumoSelecionado'));
     }
 
     public function store(Request $request)
@@ -110,11 +134,27 @@ class EstoqueController extends Controller
     {
         $this->authorizeEstoque($estoque);
 
-        $insumos = Insumo::where('restaurante_id', $this->restauranteId())
+        $restauranteId = $this->restauranteId();
+        $insumos = Insumo::where('restaurante_id', $restauranteId)
             ->orderBy('nome')
-            ->pluck('nome', 'id');
+            ->get();
 
-        return view('estoque.edit', compact('estoque', 'insumos'));
+        // Buscar localizações existentes para autocomplete
+        $localizacoes = Estoque::whereHas('insumo', fn ($q) => $q->where('restaurante_id', $restauranteId))
+            ->whereNotNull('localizacao')
+            ->distinct()
+            ->orderBy('localizacao')
+            ->pluck('localizacao');
+
+        // Estatísticas do estoque
+        $stats = [
+            'valor_total' => ($estoque->quantidade_atual ?? 0) * ($estoque->insumo->custo_unitario ?? 0),
+            'percentual_minimo' => $estoque->insumo && $estoque->insumo->ponto_reposicao_minimo 
+                ? ($estoque->quantidade_atual / $estoque->insumo->ponto_reposicao_minimo) * 100 
+                : 0,
+        ];
+
+        return view('estoque.edit', compact('estoque', 'insumos', 'localizacoes', 'stats'));
     }
 
     public function update(Request $request, Estoque $estoque)

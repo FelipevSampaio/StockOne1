@@ -15,7 +15,7 @@
 @section('content')
     <div class="space-y-6" x-data="receitasData()" x-init="init()">
         <!-- Estatísticas -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <div class="flex items-center justify-between">
                     <div>
@@ -71,13 +71,61 @@
                     </div>
                 </div>
             </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Custo Total</p>
+                        <p class="text-2xl font-bold text-orange-600 dark:text-orange-400 mt-2">R$ {{ number_format($stats['custo_total'], 2, ',', '.') }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Margem Média</p>
+                        <p class="text-2xl font-bold {{ $stats['margem_media'] >= 50 ? 'text-green-600 dark:text-green-400' : ($stats['margem_media'] >= 30 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400') }} mt-2">
+                            {{ number_format($stats['margem_media'], 1) }}%
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Filtros -->
-        <form method="GET" action="{{ route('receitas.index') }}" 
-              class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4"
-              @submit.prevent="applyFilters()">
-            <div class="flex flex-wrap items-center gap-3">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+            <!-- Filtros Rápidos -->
+            <div class="flex flex-wrap items-center gap-2 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros rápidos:</span>
+                <a href="{{ route('receitas.index', array_merge(request()->except(['essencial']))) }}" 
+                   class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors {{ !request('essencial') ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                    Todos
+                </a>
+                <a href="{{ route('receitas.index', array_merge(request()->except(['essencial']), ['essencial' => 'sim'])) }}" 
+                   class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors {{ request('essencial') === 'sim' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                    ⭐ Essenciais
+                </a>
+                <a href="{{ route('receitas.index', array_merge(request()->except(['essencial']), ['essencial' => 'nao'])) }}" 
+                   class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors {{ request('essencial') === 'nao' ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                    Opcionais
+                </a>
+            </div>
+
+            <form method="GET" action="{{ route('receitas.index') }}" 
+                  id="filter-form"
+                  @submit.prevent="applyFilters()">
+                <div class="flex flex-wrap items-center gap-3">
                 <!-- Busca em Tempo Real -->
                 <div class="relative flex-1 min-w-[250px]">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,8 +133,9 @@
                     </svg>
                     <input type="text"
                            name="search"
+                           id="search-input"
                            x-model="searchQuery"
-                           @input.debounce.300ms="applyFilters()"
+                           @input.debounce.500ms="applyFilters()"
                            placeholder="Buscar por item ou insumo..."
                            value="{{ request('search') }}"
                            class="pl-10 w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
@@ -133,6 +182,7 @@
                 @endif
             </div>
         </form>
+        </div>
 
         <!-- Modo de Visualização -->
         <div class="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
@@ -277,49 +327,49 @@
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-900">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                 <input type="checkbox" 
                                        x-model="selectAll" 
                                        @change="toggleSelectAll()"
                                        class="rounded border-gray-300 text-red-600 focus:ring-red-500">
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                                 @click="sortBy('cardapio_item_id')">
                                 Item do Cardápio
                                 <svg class="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
                                 </svg>
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                                 @click="sortBy('insumo_id')">
                                 Insumo
                                 <svg class="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
                                 </svg>
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                                 @click="sortBy('quantidade_necessaria')">
                                 Quantidade
                                 <svg class="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
                                 </svg>
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Custo</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Ações</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Custo</th>
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider min-w-[150px]">Ações</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         @forelse ($receitas as $receita)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                                 x-data="{ itemId: {{ $receita->id }} }">
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-4">
                                     <input type="checkbox" 
                                            :value="itemId"
                                            x-model="selectedItems"
                                            class="rounded border-gray-300 text-red-600 focus:ring-red-500">
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-4">
                                     <div class="flex items-center gap-3">
                                         <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
                                             <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -334,7 +384,7 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-4">
                                     <div>
                                         <p class="font-medium text-gray-900 dark:text-white">{{ $receita->insumo?->nome ?? 'Insumo removido' }}</p>
                                         @if($receita->insumo)
@@ -342,13 +392,13 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-4 text-center">
                                     <span class="text-lg font-bold text-gray-900 dark:text-white">{{ number_format($receita->quantidade_necessaria, 2, ',', '.') }}</span>
                                     @if($receita->insumo)
-                                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">{{ $receita->insumo->unidade_medida }}</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400 block mt-1">{{ $receita->insumo->unidade_medida }}</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-4 text-center">
                                     @if($receita->insumo && $receita->insumo->custo_unitario)
                                         <div>
                                             <p class="font-medium text-gray-900 dark:text-white">
@@ -359,25 +409,25 @@
                                             </p>
                                         </div>
                                     @else
-                                        <span class="text-sm text-gray-400 dark:text-gray-500">-</span>
+                                        <span class="text-sm text-gray-400 dark:text-gray-500">—</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-4 text-center">
                                     @if($receita->essencial)
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
+                                        <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
                                             <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                             </svg>
                                             Essencial
                                         </span>
                                     @else
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                        <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
                                             Opcional
                                         </span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center justify-end gap-2">
+                                <td class="px-4 py-4">
+                                    <div class="flex items-center justify-end gap-2 flex-wrap">
                                         <button @click="showDetails({{ $receita->id }})"
                                                 class="p-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                                 title="Ver detalhes">
@@ -409,7 +459,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-6 py-16 text-center">
+                                <td colspan="7" class="px-4 py-16 text-center">
                                     <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>

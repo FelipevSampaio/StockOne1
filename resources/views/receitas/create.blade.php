@@ -5,12 +5,33 @@
 
 @section('content')
     <div x-data="receitaForm()" x-init="init()" class="space-y-6">
+        <!-- Banner Informativo -->
+        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+            <div class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="flex-1">
+                    <h4 class="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-1">Dicas para criar receitas</h4>
+                    <ul class="text-xs text-blue-800 dark:text-blue-400 space-y-1">
+                        <li>• Você pode adicionar múltiplos insumos à mesma receita antes de salvar</li>
+                        <li>• Marque como "Essencial" os insumos que não podem faltar na produção</li>
+                        <li>• O sistema calcula automaticamente o custo total e a margem de lucro</li>
+                        <li>• Verifique se o custo não ultrapassa o preço de venda do item</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
         <!-- Preview da Receita -->
         <div x-show="receitaItems.length > 0" 
              x-transition
              class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Preview da Receita</h3>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Preview da Receita</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1" x-show="itemSelecionado" x-text="`Item: ${cardapioItens.find(i => i.id == itemSelecionado)?.nome || ''}`"></p>
+                </div>
                 <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-sm font-semibold rounded-full" x-text="`${receitaItems.length} insumo(s)`"></span>
             </div>
             <div class="space-y-3">
@@ -61,18 +82,23 @@
         <!-- Formulário Principal -->
         <form action="{{ route('receitas.store') }}" method="POST" 
               @submit.prevent="submitForm()"
-              class="space-y-6 rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-8 shadow-sm">
+              class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+              x-data="{ isSubmitting: false }"
+              @submit="isSubmitting = true">
             @csrf
 
-            <!-- Adicionar Múltiplos Insumos -->
-            <div class="bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Adicionar Insumo à Receita</h3>
-                
-                <div class="grid gap-4 md:grid-cols-2">
-                    <div>
-                        <label class="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-2">
-                            Item do cardápio *
-                        </label>
+            <!-- Seleção do Item do Cardápio -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    Item do Cardápio
+                </h3>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Item do cardápio <span class="text-red-600">*</span>
+                    </label>
                         <div class="relative">
                             <input type="text" 
                                    x-model="searchItem"
@@ -112,11 +138,22 @@
                                 <span x-show="precoVenda > 0" x-text="`Preço de venda: R$ ${precoVenda.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')}`"></span>
                             </p>
                         </div>
-                    </div>
+                </div>
+            </div>
 
+            <!-- Adicionar Insumos -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                    Adicionar Insumos à Receita
+                </h3>
+                
+                <div class="grid gap-4 md:grid-cols-2">
                     <div>
-                        <label class="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-2">
-                            Insumo *
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Insumo <span class="text-red-600">*</span>
                         </label>
                         <div class="relative">
                             <input type="text" 
@@ -124,7 +161,8 @@
                                    @input="filterInsumos()"
                                    @focus="showInsumoDropdown = true"
                                    @click.away="showInsumoDropdown = false"
-                                   placeholder="Buscar insumo..."
+                                   @keydown.enter.prevent="if(filteredInsumos.length === 1) selectInsumo(filteredInsumos[0])"
+                                   placeholder="Buscar insumo... (Enter para selecionar único resultado)"
                                    class="w-full rounded-xl border-gray-200 dark:border-gray-600 px-4 py-2.5 text-sm focus:border-red-500 focus:ring-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                             <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -168,8 +206,8 @@
                     </div>
 
                     <div>
-                        <label class="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-2">
-                            Quantidade necessária *
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Quantidade necessária <span class="text-red-600">*</span>
                         </label>
                         <div class="relative">
                             <input type="number" 
@@ -177,6 +215,8 @@
                                    min="0.01"
                                    x-model="quantidade"
                                    @input="calculateCusto()"
+                                   @keydown.enter.prevent="addItem()"
+                                   @keydown.ctrl.enter.prevent="addItemAndContinue()"
                                    placeholder="0.00"
                                    class="w-full rounded-xl border-gray-200 dark:border-gray-600 px-4 py-2.5 text-sm focus:border-red-500 focus:ring-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                             <span x-show="insumoInfo" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400" x-text="insumoInfo.unidade"></span>
@@ -194,23 +234,58 @@
                     </div>
                 </div>
 
-                <button type="button"
-                        @click="addItem()"
-                        :disabled="!canAddItem"
-                        :class="canAddItem ? 'bg-red-600 hover:bg-red-500' : 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'"
-                        class="mt-4 w-full rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow transition-colors flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    Adicionar à Receita
-                </button>
+                <div x-show="insumoSelecionado && receitaItems.some(item => item.insumoId == insumoSelecionado && item.cardapioItemId == itemSelecionado)" 
+                     class="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                    <p class="text-xs text-yellow-700 dark:text-yellow-400 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        Este insumo já foi adicionado à receita. Você pode adicionar novamente se necessário.
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-3 mt-4">
+                    <button type="button"
+                            @click="addItem()"
+                            :disabled="!canAddItem"
+                            @keydown.enter.prevent="addItem()"
+                            :class="canAddItem ? 'bg-red-600 hover:bg-red-500' : 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'"
+                            class="flex-1 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Adicionar à Receita
+                    </button>
+                    <button type="button"
+                            @click="addItemAndContinue()"
+                            :disabled="!canAddItem"
+                            @keydown.ctrl.enter.prevent="addItemAndContinue()"
+                            :class="canAddItem ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'"
+                            class="rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Adicionar e continuar (Ctrl+Enter)">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <span class="hidden sm:inline">Adicionar e Continuar</span>
+                        <span class="sm:hidden">+</span>
+                    </button>
+                </div>
+                
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
+                    💡 Dica: Use <kbd class="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Enter</kbd> para adicionar ou <kbd class="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Ctrl+Enter</kbd> para adicionar e continuar
+                </p>
             </div>
 
             <!-- Lista de Receitas para Salvar -->
             <div x-show="receitaItems.length > 0" 
                  x-transition
-                 class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Receitas a serem criadas</h3>
+                 class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Receitas a serem criadas (<span x-text="receitaItems.length"></span>)
+                </h3>
                 <div class="space-y-3">
                     <template x-for="(item, index) in receitaItems" :key="index">
                         <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -237,15 +312,26 @@
                 </div>
             </div>
 
-            <div class="flex items-center justify-end gap-3">
-                <a href="{{ route('receitas.index') }}" class="rounded-full border border-gray-200 dark:border-gray-600 px-5 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+            <div class="flex items-center justify-between gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <a href="{{ route('receitas.index') }}" 
+                   class="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
                     Cancelar
                 </a>
                 <button type="submit" 
-                        :disabled="receitaItems.length === 0"
-                        :class="receitaItems.length > 0 ? 'bg-red-600 hover:bg-red-500' : 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'"
-                        class="rounded-full px-5 py-2 text-sm font-semibold text-white shadow transition-colors">
-                    Salvar <span x-show="receitaItems.length > 0" x-text="`${receitaItems.length} receita(s)`"></span>
+                        :disabled="receitaItems.length === 0 || isSubmitting"
+                        :class="receitaItems.length > 0 && !isSubmitting ? 'bg-red-600 hover:bg-red-500' : 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'"
+                        class="px-5 py-2.5 text-sm font-semibold text-white rounded-lg shadow transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                    <svg x-show="!isSubmitting" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <svg x-show="isSubmitting" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span x-text="isSubmitting ? 'Salvando...' : (receitaItems.length > 0 ? `Salvar ${receitaItems.length} receita(s)` : 'Salvar')"></span>
                 </button>
             </div>
         </form>
@@ -365,6 +451,18 @@
                 addItem() {
                     if (!this.canAddItem) return;
                     
+                    // Verificar se já existe (aviso, mas permite)
+                    const jaExiste = this.receitaItems.some(item => 
+                        item.insumoId == this.insumoSelecionado && 
+                        item.cardapioItemId == this.itemSelecionado
+                    );
+                    
+                    if (jaExiste) {
+                        if (!confirm('Este insumo já foi adicionado. Deseja adicionar novamente?')) {
+                            return;
+                        }
+                    }
+                    
                     const item = {
                         cardapioItemId: this.itemSelecionado,
                         cardapioItemNome: this.cardapioItens.find(i => i.id == this.itemSelecionado)?.nome || '',
@@ -383,6 +481,28 @@
                     this.quantidade = '';
                     this.searchInsumo = '';
                     this.essencial = true;
+                    
+                    // Focar no campo de busca de insumo para adicionar o próximo
+                    this.$nextTick(() => {
+                        const insumoInput = document.querySelector('input[placeholder="Buscar insumo..."]');
+                        if (insumoInput) insumoInput.focus();
+                    });
+                },
+                
+                addItemAndContinue() {
+                    if (!this.canAddItem) return;
+                    
+                    // Adicionar o item
+                    this.addItem();
+                    
+                    // Manter o foco no formulário para adicionar o próximo rapidamente
+                    this.$nextTick(() => {
+                        const insumoInput = document.querySelector('input[placeholder="Buscar insumo..."]');
+                        if (insumoInput) {
+                            insumoInput.focus();
+                            insumoInput.select();
+                        }
+                    });
                 },
                 
                 removeItem(index) {

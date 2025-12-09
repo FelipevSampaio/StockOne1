@@ -116,27 +116,27 @@
          })">
         <template x-for="toast in toasts" :key="toast.id">
             <div x-show="true"
-                 x-transition:enter="transition ease-out duration-300"
+         x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="opacity-0 translate-x-full"
                  x-transition:enter-end="opacity-100 translate-x-0"
-                 x-transition:leave="transition ease-in duration-200"
+         x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100 translate-x-0"
                  x-transition:leave-end="opacity-0 translate-x-full"
                  class="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-3 backdrop-blur-sm">
-                <div class="flex-shrink-0">
+            <div class="flex-shrink-0">
                     <svg class="w-5 h-5 text-green-500 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
-                <div class="flex-1">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+            </div>
+            <div class="flex-1">
                     <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="toast.message"></p>
-                </div>
+            </div>
                 <button @click="toasts = toasts.filter(t => t.id !== toast.id)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
-            </div>
+        </div>
         </template>
     </div>
 
@@ -155,14 +155,14 @@
          x-data="{ expanded: true }">
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
-                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                </svg>
+            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+            </svg>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Insights e Recomendações</h3>
                 <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold rounded-full">
                     {{ count($insights) }}
                 </span>
-            </div>
+        </div>
             <button @click="expanded = !expanded" class="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
                 <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 transition-transform" :class="{ 'rotate-180': !expanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -280,7 +280,7 @@
                         <span class="text-xs font-medium {{ $stats['pedidos_hoje'] > $pedidosOntem ? 'text-green-600 dark:text-green-400' : ($stats['pedidos_hoje'] < $pedidosOntem ? 'text-red-600 dark:text-red-400' : 'text-gray-500') }}">
                             ({{ $pedidosOntem }} ontem)
                         </span>
-                    </div>
+                </div>
                     <!-- Mini gráfico sparkline -->
                     <div class="mt-2 h-8 w-full" id="sparkline-pedidos"></div>
                 </div>
@@ -335,7 +335,7 @@
                         <span class="text-xs font-medium {{ $stats['receita_hoje'] > $receitaOntem ? 'text-green-600 dark:text-green-400' : ($stats['receita_hoje'] < $receitaOntem ? 'text-red-600 dark:text-red-400' : 'text-gray-500') }}">
                             (R$ {{ number_format($receitaOntem, 2, ',', '.') }} ontem)
                         </span>
-                    </div>
+                </div>
                     <!-- Mini gráfico sparkline -->
                     <div class="mt-2 h-8 w-full" id="sparkline-receita"></div>
                 </div>
@@ -361,7 +361,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <div class="flex items-center gap-2">
-                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Alertas Ativos</p>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Alertas Ativos</p>
                         @if($stats['alertas_count'] > 0)
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold text-white bg-red-600 animate-pulse">
                                 {{ $stats['alertas_count'] > 9 ? '9+' : $stats['alertas_count'] }}
@@ -857,9 +857,9 @@
                             class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                         Ordenar
                     </button>
-                    <a href="{{ route('pedidos.index') }}" class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
-                        Ver todos →
-                    </a>
+                <a href="{{ route('pedidos.index') }}" class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+                    Ver todos →
+                </a>
                 </div>
             </div>
             <div class="space-y-2">

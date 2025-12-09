@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Estoque')
-@section('subtitle', 'Acompanhe níveis em tempo real')
+@section('title', 'Controle de Estoque')
+@section('subtitle', 'Localização física e quantidades em estoque')
 
 @section('actions')
     <a href="{{ route('estoque.create') }}" class="rounded-full bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 transition-colors flex items-center gap-2">
@@ -16,7 +16,7 @@
     <div class="space-y-6">
         <!-- Estatísticas -->
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total de Itens</p>
@@ -30,7 +30,7 @@
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow {{ $stats['estoque_baixo'] > 0 ? 'ring-2 ring-red-200 dark:ring-red-900/50' : '' }}">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 {{ $stats['estoque_baixo'] > 0 ? 'ring-2 ring-red-200 dark:ring-red-900/50' : '' }}">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Estoque Baixo</p>
@@ -44,7 +44,7 @@
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Valor Total</p>
@@ -58,7 +58,7 @@
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Localizações</p>
@@ -75,19 +75,38 @@
         </div>
 
         <!-- Filtros -->
-        <form method="GET" action="{{ route('estoque.index') }}" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <div class="flex flex-wrap items-center gap-3">
-                <!-- Busca -->
-                <div class="relative flex-1 min-w-[250px]">
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    <input type="text"
-                           name="search"
-                           placeholder="Buscar por insumo ou localização..."
-                           value="{{ request('search') }}"
-                           class="pl-10 w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
-                </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+            <!-- Filtros Rápidos -->
+            <div class="flex flex-wrap items-center gap-2 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros rápidos:</span>
+                <a href="{{ route('estoque.index', array_merge(request()->except(['nivel']))) }}" 
+                   class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors {{ !request('nivel') ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                    Todos
+                </a>
+                <a href="{{ route('estoque.index', array_merge(request()->except(['nivel']), ['nivel' => 'baixo'])) }}" 
+                   class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors {{ request('nivel') === 'baixo' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                    ⚠️ Estoque Baixo
+                </a>
+                <a href="{{ route('estoque.index', array_merge(request()->except(['nivel']), ['nivel' => 'ok'])) }}" 
+                   class="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors {{ request('nivel') === 'ok' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' }}">
+                    ✅ Estoque OK
+                </a>
+            </div>
+
+            <form method="GET" action="{{ route('estoque.index') }}" id="filter-form">
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Busca -->
+                    <div class="relative flex-1 min-w-[250px]">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <input type="text"
+                               name="search"
+                               id="search-input"
+                               placeholder="Buscar por insumo ou localização..."
+                               value="{{ request('search') }}"
+                               class="pl-10 w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
+                    </div>
 
                 <!-- Filtro por Nível -->
                 <select name="nivel"
@@ -101,6 +120,7 @@
                 <select name="sort"
                         class="px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     <option value="updated_at" @selected(request('sort') === 'updated_at')>Mais recentes</option>
+                    <option value="estoque_baixo" @selected(request('sort') === 'estoque_baixo')>Estoque Baixo</option>
                     <option value="insumo" @selected(request('sort') === 'insumo')>Nome do insumo</option>
                     <option value="quantidade_atual" @selected(request('sort') === 'quantidade_atual')>Quantidade</option>
                 </select>
@@ -128,6 +148,7 @@
                 @endif
             </div>
         </form>
+        </div>
 
         <!-- Tabela -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -135,18 +156,19 @@
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-900">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Insumo</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Quantidade</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Unidade</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Localização</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Ações</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Insumo</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Quantidade</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Ponto Mínimo</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Localização</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Valor</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider min-w-[150px]">Ações</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         @forelse ($estoques as $registro)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
-                                <td class="px-6 py-4">
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                <td class="px-4 py-4">
                                     <div class="flex items-center gap-3">
                                         <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
                                             <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">
@@ -159,13 +181,30 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4">
-                                    <span class="text-lg font-bold text-gray-900 dark:text-white">{{ number_format($registro->quantidade_atual, 2, ',', '.') }}</span>
+                                <td class="px-4 py-4">
+                                    <div class="flex flex-col">
+                                        <span class="text-lg font-bold text-gray-900 dark:text-white">{{ number_format($registro->quantidade_atual, 2, ',', '.') }}</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ $registro->insumo?->unidade_medida ?? '—' }}</span>
+                                    </div>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                                    {{ $registro->insumo?->unidade_medida ?? '—' }}
+                                <td class="px-4 py-4">
+                                    @if($registro->insumo && $registro->insumo->ponto_reposicao_minimo)
+                                        <div class="flex flex-col">
+                                            <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ number_format($registro->insumo->ponto_reposicao_minimo, 2, ',', '.') }}</span>
+                                            @php
+                                                $percentual = ($registro->quantidade_atual / $registro->insumo->ponto_reposicao_minimo) * 100;
+                                                $percentual = min(100, max(0, $percentual));
+                                            @endphp
+                                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
+                                                <div class="h-2 rounded-full {{ $percentual <= 100 ? 'bg-red-500' : 'bg-green-500' }}" style="width: {{ min(100, $percentual) }}%"></div>
+                                            </div>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ number_format($percentual, 0) }}%</span>
+                                        </div>
+                                    @else
+                                        <span class="text-sm text-gray-400 dark:text-gray-500">—</span>
+                                    @endif
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-4">
                                     @if($registro->localizacao)
                                         <div class="flex items-center gap-2">
                                             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,7 +217,16 @@
                                         <span class="text-sm text-gray-400 dark:text-gray-500">—</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-4">
+                                    @if($registro->insumo && $registro->insumo->custo_unitario)
+                                        <span class="text-sm font-semibold text-green-600 dark:text-green-400">
+                                            R$ {{ number_format($registro->quantidade_atual * $registro->insumo->custo_unitario, 2, ',', '.') }}
+                                        </span>
+                                    @else
+                                        <span class="text-sm text-gray-400 dark:text-gray-500">—</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-4">
                                     @if($registro->insumo && $registro->insumo->ponto_reposicao_minimo && $registro->quantidade_atual <= $registro->insumo->ponto_reposicao_minimo)
                                         <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
                                             Estoque baixo
@@ -189,8 +237,8 @@
                                         </span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center justify-end gap-2">
+                                <td class="px-4 py-4">
+                                    <div class="flex items-center justify-end gap-2 flex-wrap">
                                         <a href="{{ route('estoque.edit', $registro) }}"
                                            class="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                            title="Editar">
@@ -214,7 +262,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-16 text-center">
+                                <td colspan="7" class="px-4 py-16 text-center">
                                     <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
                                     </svg>
@@ -234,5 +282,25 @@
             </div>
         @endif
     </div>
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Busca em tempo real com debounce
+        const searchInput = document.getElementById('search-input');
+        const filterForm = document.getElementById('filter-form');
+        let searchTimeout;
+
+        if (searchInput && filterForm) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(function() {
+                    filterForm.submit();
+                }, 500); // Aguarda 500ms após parar de digitar
+            });
+        }
+    });
+</script>
 @endsection
 

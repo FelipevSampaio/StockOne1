@@ -84,11 +84,24 @@ class ReceitaController extends Controller
             ->where('essencial', true)
             ->count();
 
+        // Calcular custo total e margem média
+        $custoTotalGeral = 0;
+        $margens = [];
+        foreach ($custosPorItem as $custoInfo) {
+            $custoTotalGeral += $custoInfo['custo_total'];
+            if ($custoInfo['margem_lucro'] > 0) {
+                $margens[] = $custoInfo['margem_lucro'];
+            }
+        }
+        $margemMedia = count($margens) > 0 ? array_sum($margens) / count($margens) : 0;
+
         $stats = [
             'total' => $totalReceitas,
             'itens_com_receita' => $itensComReceita,
             'insumos_usados' => $insumosUsados,
             'essenciais' => $essenciais,
+            'custo_total' => $custoTotalGeral,
+            'margem_media' => $margemMedia,
         ];
 
         // Lista de itens do cardápio para o filtro
