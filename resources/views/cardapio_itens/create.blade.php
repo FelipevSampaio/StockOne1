@@ -67,7 +67,7 @@
               x-ref="form">
             @csrf
 
-            @include('cardapio_itens._form', ['item' => new \App\Models\CardapioItem()])
+            @include('cardapio_itens._form', ['item' => new \App\Models\CardapioItem(), 'categorias' => $categorias ?? [], 'insumos' => $insumos ?? collect()])
 
             <div class="flex items-center justify-between gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <a href="{{ route('cardapio-itens.index') }}" 

@@ -17,23 +17,31 @@ class PublicCart
     public static function add(CardapioItem $item, int $quantity = 1): void
     {
         $items = self::all();
-        $current = $items->get($item->id, [
-            'id' => $item->id,
-            'nome' => $item->nome,
-            'categoria' => $item->categoria,
-            'preco' => (float) $item->preco_venda,
-            'quantidade' => 0,
-            'imagem' => $item->imagem,
-        ]);
 
-        $current['quantidade'] = min(99, $current['quantidade'] + max(1, $quantity));
-        $current['preco'] = (float) $item->preco_venda;
-        $current['categoria'] = $item->categoria;
-        $current['imagem'] = $item->imagem;
+        // Verificar se o item já existe no carrinho
+        if ($items->has($item->id)) {
+            // Item já existe, incrementar quantidade
+            $current = $items->get($item->id);
+            $current['quantidade'] = min(99, $current['quantidade'] + max(1, $quantity));
+            $current['preco'] = (float) $item->preco_venda;
+            $current['categoria'] = $item->categoria;
+            $current['imagem'] = $item->imagem;
+        } else {
+            // Item novo, criar entrada
+            $current = [
+                'id' => $item->id,
+                'nome' => $item->nome,
+                'categoria' => $item->categoria,
+                'preco' => (float) $item->preco_venda,
+                'quantidade' => max(1, $quantity),
+                'imagem' => $item->imagem,
+            ];
+        }
 
         $items->put($item->id, $current);
 
-        session([self::SESSION_KEY => $items->toArray()]);
+        // Garantir que salvamos como array associativo preservando as chaves
+        session([self::SESSION_KEY => $items->all()]);
     }
 
     public static function updateQuantity(int $itemId, int $quantity): void
@@ -48,7 +56,7 @@ class PublicCart
             $items->put($itemId, $item);
         }
 
-        session([self::SESSION_KEY => $items->toArray()]);
+        session([self::SESSION_KEY => $items->all()]);
     }
 
     public static function refreshFromModel(CardapioItem $item): void
@@ -67,14 +75,14 @@ class PublicCart
 
         $items->put($item->id, $current);
 
-        session([self::SESSION_KEY => $items->toArray()]);
+        session([self::SESSION_KEY => $items->all()]);
     }
 
     public static function remove(int $itemId): void
     {
         $items = self::all();
         $items->forget($itemId);
-        session([self::SESSION_KEY => $items->toArray()]);
+        session([self::SESSION_KEY => $items->all()]);
     }
 
     public static function removeMany(array $ids): void
@@ -87,7 +95,7 @@ class PublicCart
         foreach ($ids as $id) {
             $items->forget($id);
         }
-        session([self::SESSION_KEY => $items->toArray()]);
+        session([self::SESSION_KEY => $items->all()]);
     }
 
     public static function clear(): void

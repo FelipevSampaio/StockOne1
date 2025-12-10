@@ -1,8 +1,9 @@
 @php
     $item = $item ?? null;
+    $insumos = $insumos ?? collect();
 @endphp
 
-<div class="space-y-6">
+<div class="space-y-6" x-data="cardapioFormData()">
     <!-- Informações do Restaurante -->
     <div class="rounded-xl border border-red-200 dark:border-red-800/50 bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 px-4 py-3">
         <div class="flex items-center gap-2 text-sm text-red-700 dark:text-red-400">
@@ -50,6 +51,8 @@
                            step="0.01" 
                            min="0"
                            name="preco_venda" 
+                           x-model="precoVenda"
+                           @input="calcularCustoDireto()"
                            value="{{ old('preco_venda', $item->preco_venda ?? '') }}" 
                            required 
                            placeholder="0.00"
@@ -87,17 +90,91 @@
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Nível de dificuldade de preparo</p>
             </div>
 
-            <div>
+            <div x-data="categoriaCardapioManager()">
                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
                     Categoria
                 </label>
-                <input type="text" 
-                       name="categoria" 
-                       value="{{ old('categoria', $item->categoria ?? '') }}" 
-                       placeholder="Ex: Pizzas, Bebidas, Sobremesas"
-                       class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-400 focus:border-red-500 dark:focus:border-red-500 focus:ring-2 focus:ring-red-500/50 transition-colors">
+                <div class="flex gap-2">
+                    <select name="categoria_select" 
+                            x-model="categoriaSelecionada"
+                            @change="updateCategoriaNome()"
+                            class="flex-1 px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                        <option value="">Selecione uma categoria...</option>
+                        @php
+                            $categorias = $categorias ?? [];
+                        @endphp
+                        @foreach($categorias as $categoria)
+                            <option value="{{ $categoria }}" 
+                                    @selected(old('categoria', $item->categoria ?? '') == $categoria)>
+                                {{ $categoria }}
+                            </option>
+                        @endforeach
+                        <option value="nova">+ Criar nova categoria</option>
+                    </select>
+                </div>
+                
+                <!-- Campo para nova categoria -->
+                <div x-show="categoriaSelecionada === 'nova'" 
+                     x-transition
+                     class="mt-2">
+                    <input type="text" 
+                           name="nova_categoria" 
+                           x-model="novaCategoriaNome"
+                           @input="updateCategoriaNome()"
+                           placeholder="Nome da nova categoria..."
+                           class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-400">
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">A categoria será salva automaticamente ao salvar o item.</p>
+                </div>
+                
+                <!-- Campo hidden para enviar o nome da categoria selecionada -->
+                <input type="hidden" name="categoria" x-model="categoriaNome">
+                
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Agrupa itens similares no cardápio</p>
+                @error('categoria')
+                    <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
             </div>
+            
+            <script>
+                function categoriaCardapioManager() {
+                    @php
+                        $categoriasArray = $categorias ?? [];
+                        $categoriaAtual = old('categoria', $item->categoria ?? '');
+                        $categoriaExiste = !empty($categoriaAtual) && in_array($categoriaAtual, $categoriasArray);
+                        $categoriaSelecionadaInicial = $categoriaExiste ? $categoriaAtual : (!empty($categoriaAtual) ? 'nova' : '');
+                        $novaCategoriaInicial = !$categoriaExiste && !empty($categoriaAtual) ? $categoriaAtual : '';
+                    @endphp
+                    return {
+                        categoriaSelecionada: '{{ old('categoria_select', $categoriaSelecionadaInicial) }}',
+                        novaCategoriaNome: '{{ old('nova_categoria', $novaCategoriaInicial) }}',
+                        categoriaNome: '{{ $categoriaAtual }}',
+                        
+                        init() {
+                            // Se a categoria atual não está na lista e não está vazia, mostrar como "nova"
+                            if (!this.categoriaSelecionada && this.categoriaNome) {
+                                const categorias = @json($categoriasArray);
+                                if (!categorias.includes(this.categoriaNome)) {
+                                    this.categoriaSelecionada = 'nova';
+                                    this.novaCategoriaNome = this.categoriaNome;
+                                } else {
+                                    this.categoriaSelecionada = this.categoriaNome;
+                                }
+                            }
+                            this.updateCategoriaNome();
+                        },
+                        
+                        updateCategoriaNome() {
+                            if (this.categoriaSelecionada === 'nova') {
+                                this.categoriaNome = this.novaCategoriaNome;
+                            } else if (this.categoriaSelecionada) {
+                                this.categoriaNome = this.categoriaSelecionada;
+                            } else {
+                                this.categoriaNome = '';
+                            }
+                        }
+                    }
+                }
+            </script>
         </div>
     </div>
 
@@ -339,6 +416,90 @@
         </div>
     </div>
 
+    <!-- Seção: Vinculação ao Estoque (para bebidas e itens sem receita) -->
+    <div class="space-y-4">
+        <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Vinculação ao Estoque</h3>
+        </div>
+        
+        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+            <div class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-blue-900 dark:text-blue-300 mb-1">Vincular diretamente ao estoque</p>
+                    <p class="text-xs text-blue-800 dark:text-blue-400">
+                        Use esta opção para bebidas e itens que não precisam de receita. O sistema calculará automaticamente a margem de lucro baseado no custo do insumo. Ex: Refrigerante 350ml vinculado ao insumo "Refrigerante" com quantidade 0.35 (litros).
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    Insumo do Estoque
+                </label>
+                <select name="insumo_id" 
+                        id="insumo_id"
+                        x-model="insumoSelecionado"
+                        @change="calcularCustoDireto()"
+                        class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-red-500 dark:focus:border-red-500 focus:ring-2 focus:ring-red-500/50 transition-colors">
+                    <option value="">Nenhum (usar receita)</option>
+                    @php
+                        $insumos = $insumos ?? collect();
+                    @endphp
+                    @foreach($insumos as $insumo)
+                        <option value="{{ $insumo->id }}" 
+                                data-custo="{{ $insumo->custo_unitario ?? 0 }}"
+                                data-unidade="{{ $insumo->unidade_medida ?? '' }}"
+                                @selected(old('insumo_id', $item->insumo_id ?? '') == $insumo->id)>
+                            {{ $insumo->nome }} 
+                            @if($insumo->custo_unitario)
+                                (R$ {{ $insumo->custo_unitario < 0.01 ? number_format($insumo->custo_unitario, 6, ',', '.') : number_format($insumo->custo_unitario, 2, ',', '.') }}/{{ $insumo->unidade_medida }})
+                            @endif
+                        </option>
+                    @endforeach
+                </select>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Selecione um insumo para vincular diretamente ao estoque</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    Quantidade por Unidade
+                </label>
+                <div class="relative">
+                    <input type="number" 
+                           step="0.000001" 
+                           min="0"
+                           name="quantidade_por_unidade" 
+                           id="quantidade_por_unidade"
+                           x-model="quantidadePorUnidade"
+                           @input="calcularCustoDireto()"
+                           value="{{ old('quantidade_por_unidade', $item->quantidade_por_unidade ?? '') }}" 
+                           placeholder="Ex: 0.35 (para 350ml)"
+                           class="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-400 focus:border-red-500 dark:focus:border-red-500 focus:ring-2 focus:ring-red-500/50 transition-colors">
+                    <span x-show="insumoInfo" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400" x-text="insumoInfo.unidade"></span>
+                </div>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Quantidade do insumo por unidade vendida (ex: 1 lata = 0.35 litros)
+                </p>
+                <div x-show="custoDireto > 0" class="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                    <p class="text-xs text-green-700 dark:text-green-400">
+                        <span class="font-semibold">Custo estimado:</span> R$ <span x-text="custoDireto.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')"></span>
+                    </p>
+                    <p x-show="precoVenda > 0 && custoDireto > 0" class="text-xs text-green-700 dark:text-green-400 mt-1">
+                        <span class="font-semibold">Margem de lucro:</span> <span x-text="margemLucroDireto.toFixed(1)"></span>%
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Seção: Configurações -->
     <div class="space-y-4">
         <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
@@ -363,4 +524,43 @@
         </div>
     </div>
 </div>
+
+<script>
+    function cardapioFormData() {
+        return {
+            insumoSelecionado: '{{ old('insumo_id', $item->insumo_id ?? '') }}',
+            quantidadePorUnidade: parseFloat('{{ old('quantidade_por_unidade', $item->quantidade_por_unidade ?? 0) }}') || 0,
+            precoVenda: parseFloat('{{ old('preco_venda', $item->preco_venda ?? 0) }}') || 0,
+            
+            get insumoInfo() {
+                if (!this.insumoSelecionado) return null;
+                const select = document.getElementById('insumo_id');
+                if (!select) return null;
+                const option = select.querySelector(`option[value="${this.insumoSelecionado}"]`);
+                if (!option) return null;
+                return {
+                    custo: parseFloat(option.dataset.custo) || 0,
+                    unidade: option.dataset.unidade || ''
+                };
+            },
+            
+            get custoDireto() {
+                if (!this.insumoInfo || !this.quantidadePorUnidade || this.quantidadePorUnidade <= 0) return 0;
+                return this.insumoInfo.custo * this.quantidadePorUnidade;
+            },
+            
+            get margemLucroDireto() {
+                if (!this.precoVenda || this.precoVenda <= 0 || this.custoDireto <= 0) return 0;
+                return ((this.precoVenda - this.custoDireto) / this.precoVenda) * 100;
+            },
+            
+            calcularCustoDireto() {
+                // Atualização automática via computed properties
+                this.$nextTick(() => {
+                    // Força atualização da UI
+                });
+            }
+        }
+    }
+</script>
 

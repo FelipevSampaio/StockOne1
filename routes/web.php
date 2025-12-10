@@ -143,6 +143,7 @@ Route::middleware('auth')->group(function () {
             ->except(['show']);
         Route::patch('cardapio-itens/{cardapio_item}/toggle-status', [CardapioItemController::class, 'toggleStatus'])->name('cardapio-itens.toggle-status');
         Route::post('cardapio-itens/{cardapio_item}/duplicate', [CardapioItemController::class, 'duplicate'])->name('cardapio-itens.duplicate');
+        Route::post('cardapio-itens/update-order', [CardapioItemController::class, 'updateOrder'])->name('cardapio-itens.update-order');
             // Dashboard do Restaurante
             Route::get('admin/restaurantes/dashboard', [\App\Http\Controllers\RestauranteController::class, 'dashboard'])->name('admin.restaurantes.dashboard');
         Route::resource('pedidos', PedidoController::class)->except(['show']);
@@ -154,6 +155,8 @@ Route::middleware('auth')->group(function () {
         Route::patch('compras-sugestoes/{compraSugestao}/status', [CompraSugestaoController::class, 'updateStatus'])->name('compras-sugestoes.update-status');
         Route::resource('receitas', ReceitaController::class)->except(['show']);
         Route::get('receitas/{receita}/detalhes', [ReceitaController::class, 'detalhes'])->name('receitas.detalhes');
+        Route::post('receitas/duplicate', [ReceitaController::class, 'duplicate'])->name('receitas.duplicate');
+        Route::get('receitas/item/{cardapioItem}/receitas', [ReceitaController::class, 'getReceitasByItem'])->name('receitas.by-item');
         Route::resource('pedido-itens', PedidoItemController::class)->except(['show']);
         Route::resource('fila-producao', FilaProducaoController::class)->except(['show']);
     });

@@ -18,7 +18,7 @@ class Estoque extends Model
     ];
 
     protected $casts = [
-        'quantidade_atual' => 'decimal:3',
+        'quantidade_atual' => 'decimal:6',
     ];
 
     public function insumo()

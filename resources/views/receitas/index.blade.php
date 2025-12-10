@@ -262,9 +262,19 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Preço de Venda</p>
-                                <p class="text-lg font-bold text-gray-900 dark:text-white">R$ {{ number_format($item->preco_venda ?? 0, 2, ',', '.') }}</p>
+                            <div class="flex items-center gap-3">
+                                <div class="text-right">
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Preço de Venda</p>
+                                    <p class="text-lg font-bold text-gray-900 dark:text-white">R$ {{ number_format($item->preco_venda ?? 0, 2, ',', '.') }}</p>
+                                </div>
+                                <button @click.stop="openDuplicateModal({{ $item->id }}, '{{ $item->nome }}')"
+                                        class="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-500 transition-colors flex items-center gap-1.5"
+                                        title="Duplicar receitas para outro item">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                    Duplicar
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -507,6 +517,72 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal de Duplicação -->
+        <div x-show="showDuplicateModal"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+             style="display: none;"
+             @click.self="showDuplicateModal = false">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full mx-4"
+                 @click.stop>
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Duplicar Receitas</h3>
+                        <button @click="showDuplicateModal = false" 
+                                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                            <p class="text-sm text-blue-800 dark:text-blue-300">
+                                <span class="font-semibold">Origem:</span> <span x-text="duplicateItemOrigemNome"></span>
+                            </p>
+                            <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                Todas as receitas deste item serão copiadas para o item de destino.
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Item de Destino <span class="text-red-600">*</span>
+                            </label>
+                            <select x-model="duplicateItemDestinoId"
+                                    class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                                <option value="">Selecione o item de destino...</option>
+                                @foreach($cardapioItens as $item)
+                                    <option value="{{ $item->id }}">{{ $item->nome }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <button @click="showDuplicateModal = false"
+                                    class="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                                Cancelar
+                            </button>
+                            <button @click="duplicateReceitas()"
+                                    :disabled="!duplicateItemDestinoId"
+                                    class="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                                Duplicar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -520,6 +596,10 @@
                 receitaDetails: '',
                 sortField: '{{ request('sort', 'cardapio_item_id') }}',
                 sortDirection: 'asc',
+                showDuplicateModal: false,
+                duplicateItemOrigemId: null,
+                duplicateItemOrigemNome: '',
+                duplicateItemDestinoId: '',
 
                 init() {
                     // Carregar modo de visualização salvo
@@ -671,6 +751,50 @@
                     // form.submit(); // Descomentar quando implementar a rota
                     alert('Funcionalidade em desenvolvimento');
                     document.body.removeChild(form);
+                },
+
+                openDuplicateModal(itemId, itemNome) {
+                    this.duplicateItemOrigemId = itemId;
+                    this.duplicateItemOrigemNome = itemNome;
+                    this.duplicateItemDestinoId = '';
+                    this.showDuplicateModal = true;
+                },
+
+                async duplicateReceitas() {
+                    if (!this.duplicateItemDestinoId) {
+                        alert('Selecione o item de destino');
+                        return;
+                    }
+
+                    if (this.duplicateItemOrigemId == this.duplicateItemDestinoId) {
+                        alert('O item de destino deve ser diferente do item de origem');
+                        return;
+                    }
+
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ route('receitas.duplicate') }}';
+                    
+                    const csrf = document.createElement('input');
+                    csrf.type = 'hidden';
+                    csrf.name = '_token';
+                    csrf.value = '{{ csrf_token() }}';
+                    form.appendChild(csrf);
+                    
+                    const origem = document.createElement('input');
+                    origem.type = 'hidden';
+                    origem.name = 'item_origem_id';
+                    origem.value = this.duplicateItemOrigemId;
+                    form.appendChild(origem);
+                    
+                    const destino = document.createElement('input');
+                    destino.type = 'hidden';
+                    destino.name = 'item_destino_id';
+                    destino.value = this.duplicateItemDestinoId;
+                    form.appendChild(destino);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
                 }
             }
         }

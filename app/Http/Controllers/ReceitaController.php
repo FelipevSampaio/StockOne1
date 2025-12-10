@@ -254,6 +254,95 @@ class ReceitaController extends Controller
         abort_unless(optional($receita->cardapioItem)->restaurante_id === $this->restauranteId(), 403);
     }
 
+    public function duplicate(Request $request)
+    {
+        $restauranteId = $this->restauranteId();
+
+        $request->validate([
+            'item_origem_id' => [
+                'required',
+                Rule::exists('cardapio_itens', 'id')->where('restaurante_id', $restauranteId),
+            ],
+            'item_destino_id' => [
+                'required',
+                Rule::exists('cardapio_itens', 'id')->where('restaurante_id', $restauranteId),
+                'different:item_origem_id',
+            ],
+        ]);
+
+        $itemOrigem = CardapioItem::findOrFail($request->item_origem_id);
+        $itemDestino = CardapioItem::findOrFail($request->item_destino_id);
+
+        // Buscar todas as receitas do item origem
+        $receitasOrigem = Receita::where('cardapio_item_id', $itemOrigem->id)->get();
+
+        if ($receitasOrigem->isEmpty()) {
+            return redirect()->back()
+                ->with('error', 'O item de origem não possui receitas para duplicar.');
+        }
+
+        $duplicadas = 0;
+        $puladas = 0;
+
+        foreach ($receitasOrigem as $receita) {
+            // Verificar se já existe receita com mesmo insumo no item destino
+            $existe = Receita::where('cardapio_item_id', $itemDestino->id)
+                ->where('insumo_id', $receita->insumo_id)
+                ->exists();
+
+            if (!$existe) {
+                Receita::create([
+                    'cardapio_item_id' => $itemDestino->id,
+                    'insumo_id' => $receita->insumo_id,
+                    'quantidade_necessaria' => $receita->quantidade_necessaria,
+                    'essencial' => $receita->essencial,
+                ]);
+                $duplicadas++;
+            } else {
+                $puladas++;
+            }
+        }
+
+        $message = "Receitas duplicadas com sucesso! {$duplicadas} receita(s) criada(s).";
+        if ($puladas > 0) {
+            $message .= " {$puladas} receita(s) já existente(s) foram pulada(s).";
+        }
+
+        return redirect()->route('receitas.index', ['cardapio_item' => $itemDestino->id])
+            ->with('success', $message);
+    }
+
+    public function getReceitasByItem(Request $request, CardapioItem $cardapioItem)
+    {
+        $this->authorizeCardapioItem($cardapioItem);
+
+        $receitas = Receita::with('insumo')
+            ->where('cardapio_item_id', $cardapioItem->id)
+            ->get()
+            ->map(function ($receita) {
+                return [
+                    'id' => $receita->id,
+                    'insumo_id' => $receita->insumo_id,
+                    'insumo_nome' => $receita->insumo?->nome ?? 'Insumo removido',
+                    'quantidade_necessaria' => $receita->quantidade_necessaria,
+                    'unidade_medida' => $receita->insumo?->unidade_medida ?? '',
+                    'essencial' => $receita->essencial,
+                    'custo_unitario' => $receita->insumo?->custo_unitario ?? 0,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'receitas' => $receitas,
+            'item_nome' => $cardapioItem->nome,
+        ]);
+    }
+
+    protected function authorizeCardapioItem(CardapioItem $cardapioItem): void
+    {
+        abort_unless($cardapioItem->restaurante_id === $this->restauranteId(), 403);
+    }
+
     protected function formOptions(): array
     {
         $restauranteId = $this->restauranteId();

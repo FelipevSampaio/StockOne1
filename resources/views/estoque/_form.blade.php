@@ -63,13 +63,13 @@
                 </label>
                 <div class="relative">
                     <input type="number" 
-                           step="0.001" 
+                           step="0.000001" 
                            min="0"
                            name="quantidade_atual" 
                            id="quantidade-input"
-                           value="{{ old('quantidade_atual', $registro && $registro->quantidade_atual !== null ? number_format($registro->quantidade_atual, 3, '.', '') : '') }}" 
+                           value="{{ old('quantidade_atual', $registro && $registro->quantidade_atual !== null ? number_format($registro->quantidade_atual, 6, '.', '') : '') }}" 
                            required 
-                           placeholder="0.000"
+                           placeholder="0.000000"
                            class="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
                     <span id="unidade-display" class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 dark:text-gray-400"></span>
                 </div>

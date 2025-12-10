@@ -183,7 +183,14 @@
                                 </td>
                                 <td class="px-4 py-4">
                                     <div class="flex items-baseline gap-1.5">
-                                        <span class="text-lg font-bold text-gray-900 dark:text-white">{{ number_format($registro->quantidade_atual, 2, ',', '.') }}</span>
+                                        <span class="text-lg font-bold text-gray-900 dark:text-white">
+                                            @php
+                                                // Mostrar mais casas decimais para valores pequenos (gramas)
+                                                $quantidade = $registro->quantidade_atual;
+                                                $decimais = ($quantidade < 1) ? 6 : (($quantidade < 10) ? 3 : 2);
+                                            @endphp
+                                            {{ number_format($quantidade, $decimais, ',', '.') }}
+                                        </span>
                                         <span class="text-xs font-medium text-gray-500 dark:text-gray-400" title="Unidade de medida">{{ $registro->insumo?->unidade_medida ?? '—' }}</span>
                                     </div>
                                 </td>

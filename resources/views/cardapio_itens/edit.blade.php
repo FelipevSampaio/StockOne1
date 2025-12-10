@@ -117,7 +117,7 @@
             @csrf
             @method('PUT')
 
-            @include('cardapio_itens._form')
+            @include('cardapio_itens._form', ['categorias' => $categorias ?? []])
 
             <div class="flex items-center justify-between gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <a href="{{ route('cardapio-itens.index') }}" 

@@ -93,11 +93,83 @@ class CardapioItemController extends Controller
         if ($sortBy === 'vendas') {
             $query->orderBy('total_vendido', $sortOrder);
         } else {
-            $query->orderBy($sortBy, $sortOrder);
+            // Ordenar por categoria e depois por ordem dentro da categoria
+            $query->orderBy('categoria')
+                  ->orderBy('ordem')
+                  ->orderBy($sortBy, $sortOrder);
         }
 
         $perPage = $request->get('per_page', 15);
-        $itens = $query->paginate($perPage)->withQueryString();
+        $itens = $query->with(['receitas.insumo', 'insumo'])->paginate($perPage)->withQueryString();
+        
+        // Agrupar itens por categoria para visualização com drag-and-drop
+        // Aplicar os mesmos filtros da query principal
+        $queryAgrupados = CardapioItem::where('restaurante_id', $restauranteId);
+        
+        // Aplicar filtro de busca
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $queryAgrupados->where(function($q) use ($search) {
+                $q->where('nome', 'like', "%{$search}%")
+                  ->orWhere('descricao', 'like', "%{$search}%")
+                  ->orWhere('categoria', 'like', "%{$search}%");
+            });
+        }
+        
+        // Filtro por categoria
+        if ($request->filled('categoria')) {
+            $queryAgrupados->where('categoria', $request->get('categoria'));
+        }
+        
+        // Filtro por status
+        if ($request->filled('status')) {
+            $status = $request->get('status');
+            if ($status === 'online') {
+                $queryAgrupados->where('ativo_online', true);
+            } elseif ($status === 'offline') {
+                $queryAgrupados->where('ativo_online', false);
+            }
+        } else {
+            // Por padrão, mostrar apenas itens online
+            $queryAgrupados->where('ativo_online', true);
+        }
+        
+        $itensAgrupados = $queryAgrupados
+            ->with(['receitas.insumo', 'insumo'])
+            ->withCount(['pedidoItens as total_vendido' => function($q) {
+                $q->selectRaw('COALESCE(SUM(quantidade), 0)');
+            }])
+            ->orderBy('categoria')
+            ->orderBy('ordem')
+            ->orderBy('nome')
+            ->get()
+            ->groupBy('categoria');
+        
+        // Inicializar ordem para itens que ainda não têm ordem definida
+        foreach ($itensAgrupados as $categoria => $itens) {
+            $ordem = 0;
+            foreach ($itens as $item) {
+                if ($item->ordem === null || $item->ordem === 0) {
+                    $item->ordem = $ordem;
+                    $item->save();
+                }
+                $ordem++;
+            }
+        }
+        
+        // Recarregar após inicializar ordem
+        $itensAgrupados = CardapioItem::where('restaurante_id', $restauranteId)
+            ->where(function($q) use ($request) {
+                if (!$request->filled('status') || $request->get('status') !== 'all') {
+                    $q->where('ativo_online', true);
+                }
+            })
+            ->with(['receitas.insumo', 'insumo'])
+            ->orderBy('categoria')
+            ->orderBy('ordem')
+            ->orderBy('nome')
+            ->get()
+            ->groupBy('categoria');
 
         // Estatísticas
         $stats = [
@@ -121,12 +193,34 @@ class CardapioItemController extends Controller
             ->orderBy('categoria')
             ->pluck('categoria');
 
-        return view('cardapio_itens.index', compact('itens', 'stats', 'categorias'));
+        return view('cardapio_itens.index', compact('itens', 'stats', 'categorias', 'itensAgrupados'));
     }
 
     public function create()
     {
-        return view('cardapio_itens.create');
+        $restauranteId = $this->restauranteId();
+        
+        // Buscar categorias existentes do restaurante
+        $categorias = CardapioItem::where('restaurante_id', $restauranteId)
+            ->whereNotNull('categoria')
+            ->distinct()
+            ->orderBy('categoria')
+            ->pluck('categoria')
+            ->toArray();
+
+        // Buscar insumos com estoque para vinculação direta
+        $insumos = \App\Models\Insumo::where('restaurante_id', $restauranteId)
+            ->whereHas('estoque')
+            ->orderBy('nome')
+            ->get(['id', 'nome', 'custo_unitario', 'unidade_medida']);
+        
+        // Buscar insumos com estoque para vinculação direta
+        $insumos = \App\Models\Insumo::where('restaurante_id', $restauranteId)
+            ->whereHas('estoque')
+            ->orderBy('nome')
+            ->get(['id', 'nome', 'custo_unitario', 'unidade_medida']);
+        
+        return view('cardapio_itens.create', compact('categorias', 'insumos'));
     }
 
     public function store(Request $request)
@@ -143,11 +237,18 @@ class CardapioItemController extends Controller
             'disponibilidade' => ['nullable', 'boolean'],
             'ingredientes' => ['nullable', 'string'],
             'promocao' => ['nullable', 'string'],
+            'insumo_id' => ['nullable', 'exists:insumos,id'],
+            'quantidade_por_unidade' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $data['restaurante_id'] = $this->restauranteId();
         $data['ativo_online'] = true; // Set default to true
         $data['disponibilidade'] = $request->boolean('disponibilidade');
+
+        // Se não houver insumo_id, limpar quantidade_por_unidade
+        if (empty($data['insumo_id'])) {
+            $data['quantidade_por_unidade'] = null;
+        }
 
         // Ingredientes: transforma string em array
         if (!empty($data['ingredientes'])) {
@@ -167,6 +268,14 @@ class CardapioItemController extends Controller
             $data['imagem'] = $request->file('imagem')->store('cardapio-itens', 'public');
         }
 
+        // Definir ordem automaticamente (última posição na categoria)
+        if (empty($data['ordem'])) {
+            $ultimaOrdem = CardapioItem::where('restaurante_id', $data['restaurante_id'])
+                ->where('categoria', $data['categoria'] ?? null)
+                ->max('ordem') ?? -1;
+            $data['ordem'] = $ultimaOrdem + 1;
+        }
+
         CardapioItem::create($data);
 
         return redirect()->route('admin.cardapio.index')->with('success', 'Item de cardápio cadastrado com sucesso.');
@@ -175,6 +284,22 @@ class CardapioItemController extends Controller
     public function edit(CardapioItem $cardapioItem)
     {
         $this->authorizeItem($cardapioItem);
+
+        $restauranteId = $this->restauranteId();
+        
+        // Buscar categorias existentes do restaurante
+        $categorias = CardapioItem::where('restaurante_id', $restauranteId)
+            ->whereNotNull('categoria')
+            ->distinct()
+            ->orderBy('categoria')
+            ->pluck('categoria')
+            ->toArray();
+
+        // Buscar insumos com estoque para vinculação direta
+        $insumos = \App\Models\Insumo::where('restaurante_id', $restauranteId)
+            ->whereHas('estoque')
+            ->orderBy('nome')
+            ->get(['id', 'nome', 'custo_unitario', 'unidade_medida']);
 
         // Estatísticas do item
         $stats = [
@@ -192,7 +317,7 @@ class CardapioItemController extends Controller
                 ->first(),
         ];
 
-        return view('cardapio_itens.edit', ['item' => $cardapioItem, 'stats' => $stats]);
+        return view('cardapio_itens.edit', ['item' => $cardapioItem, 'stats' => $stats, 'categorias' => $categorias, 'insumos' => $insumos]);
     }
 
     public function update(Request $request, CardapioItem $cardapioItem)
@@ -211,10 +336,17 @@ class CardapioItemController extends Controller
             'disponibilidade' => ['nullable', 'boolean'],
             'ingredientes' => ['nullable', 'string'],
             'promocao' => ['nullable', 'string'],
+            'insumo_id' => ['nullable', 'exists:insumos,id'],
+            'quantidade_por_unidade' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $data['ativo_online'] = $request->boolean('ativo_online');
         $data['disponibilidade'] = $request->boolean('disponibilidade');
+
+        // Se não houver insumo_id, limpar quantidade_por_unidade
+        if (empty($data['insumo_id'])) {
+            $data['quantidade_por_unidade'] = null;
+        }
 
         // Ingredientes: transforma string em array
         if (!empty($data['ingredientes'])) {
@@ -321,6 +453,61 @@ class CardapioItemController extends Controller
     protected function restauranteId(): int
     {
         return (int) session('restaurante_id');
+    }
+
+    public function updateOrder(Request $request)
+    {
+        $restauranteId = $this->restauranteId();
+        
+        $request->validate([
+            'items' => ['required', 'array'],
+            'items.*.id' => ['required', 'exists:cardapio_itens,id'],
+            'items.*.ordem' => ['required', 'integer', 'min:0'],
+            'categoria' => ['nullable', 'string'],
+        ]);
+
+        // Converter 'sem-categoria' para null
+        $categoria = ($request->categoria === 'sem-categoria' || $request->categoria === null) ? null : $request->categoria;
+        $items = $request->items;
+
+        // Verificar se todos os itens pertencem ao restaurante e à categoria
+        foreach ($items as $itemData) {
+            $item = CardapioItem::findOrFail($itemData['id']);
+            if ($item->restaurante_id !== $restauranteId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Um ou mais itens não pertencem a este restaurante.',
+                ], 403);
+            }
+            // Comparar categoria (tratando null corretamente)
+            $itemCategoria = $item->categoria ?? null;
+            if ($itemCategoria !== $categoria) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Um ou mais itens não pertencem a esta categoria.',
+                ], 403);
+            }
+        }
+
+        // Atualizar a ordem de cada item
+        foreach ($items as $itemData) {
+            $query = CardapioItem::where('id', $itemData['id'])
+                ->where('restaurante_id', $restauranteId);
+            
+            // Tratar categoria null corretamente
+            if ($categoria === null) {
+                $query->whereNull('categoria');
+            } else {
+                $query->where('categoria', $categoria);
+            }
+            
+            $query->update(['ordem' => $itemData['ordem']]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Ordem dos itens atualizada com sucesso.',
+        ]);
     }
 
     protected function authorizeItem(CardapioItem $cardapioItem): void

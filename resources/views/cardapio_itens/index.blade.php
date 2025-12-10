@@ -190,15 +190,41 @@
         </form>
         </div>
 
-        <!-- Grid de Itens -->
-        <div id="grid-view"
-             class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            @forelse ($itens as $item)
+        <!-- Visualização Agrupada por Categoria com Drag-and-Drop -->
+        <div id="grid-view" class="space-y-8" style="display: block;">
+            @php
+                $itensAgrupados = $itensAgrupados ?? collect();
+            @endphp
+            @forelse($itensAgrupados as $categoria => $itensCategoria)
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                            </svg>
+                            {{ $categoria ?: 'Sem Categoria' }}
+                        </h2>
+                        <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-full">
+                            {{ $itensCategoria->count() }} item(ns)
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sortable-categoria" 
+                         data-categoria="{{ $categoria ?: 'sem-categoria' }}">
+                        @foreach($itensCategoria as $item)
                 @php
                     $ctrl = app(\App\Http\Controllers\CardapioItemController::class);
                     $disp = $ctrl->verificarDisponibilidadeEsubstituicoes($item);
                 @endphp
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow {{ !$item->ativo_online ? 'opacity-75' : '' }}">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow {{ !$item->ativo_online ? 'opacity-75' : '' }} sortable-item group relative"
+                     data-item-id="{{ $item->id }}">
+                    <!-- Handle para arrastar -->
+                    <div class="sortable-handle absolute top-2 left-2 z-20 p-2 bg-gray-200 dark:bg-gray-700 rounded-lg opacity-70 group-hover:opacity-100 transition-opacity cursor-move hover:bg-gray-300 dark:hover:bg-gray-600" 
+                         title="Arraste para reordenar">
+                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+                        </svg>
+                    </div>
                     <!-- Imagem -->
                     <div class="relative h-48 bg-gray-100 dark:bg-gray-700 {{ !$item->ativo_online ? 'grayscale' : '' }}">
                         @if ($item->imagem)
@@ -275,12 +301,41 @@
                             </div>
                         @endif
 
+                        @php
+                            $custoTotal = $item->calcularCustoTotal();
+                            $margemLucro = $item->calcularMargemLucro();
+                            $lucro = $item->calcularLucro();
+                        @endphp
+                        
+                        @if($custoTotal > 0)
+                            <div class="mb-2 p-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-gray-600 dark:text-gray-400">Custo:</span>
+                                    <span class="font-semibold text-gray-900 dark:text-white">R$ {{ number_format($custoTotal, 2, ',', '.') }}</span>
+                                </div>
+                                <div class="flex items-center justify-between text-xs mt-1">
+                                    <span class="text-gray-600 dark:text-gray-400">Margem:</span>
+                                    <span class="font-semibold {{ $margemLucro >= 50 ? 'text-green-600 dark:text-green-400' : ($margemLucro >= 30 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400') }}">
+                                        {{ number_format($margemLucro, 1) }}%
+                                    </span>
+                                </div>
+                                @if($item->insumo_id)
+                                    <div class="mt-1 text-xs text-blue-600 dark:text-blue-400">
+                                        <svg class="w-3 h-3 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                        </svg>
+                                        Vinculado ao estoque
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
+
                         <div class="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
                             <span class="text-xl font-bold text-gray-900 dark:text-white">
                                 R$ {{ number_format($item->preco_venda, 2, ',', '.') }}
                             </span>
 
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 no-drag">
                                 <!-- Botão Desativar/Ativar -->
                                 <form action="{{ route('cardapio-itens.toggle-status', $item) }}" method="POST" class="inline">
                                     @csrf
@@ -326,10 +381,12 @@
                         </div>
                     </div>
                 </div>
+                        @endforeach
+                    </div>
+                </div>
             @empty
-                <div class="col-span-full">
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-16 text-center">
-                        <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-16 text-center">
+                    <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                         </svg>
                         <p class="text-gray-500 dark:text-gray-400 font-medium">Nenhum item encontrado.</p>
@@ -343,7 +400,12 @@
         <div id="list-view"
              class="space-y-4"
              style="display: none;">
-            @forelse ($itens as $item)
+            @php
+                $itensAgrupados = $itensAgrupados ?? collect();
+                // Criar uma lista plana de todos os itens agrupados para a visualização em lista
+                $itensLista = $itensAgrupados->flatten();
+            @endphp
+            @forelse ($itensLista as $item)
                 @php
                     $ctrl = app(\App\Http\Controllers\CardapioItemController::class);
                     $disp = $ctrl->verificarDisponibilidadeEsubstituicoes($item);
@@ -499,74 +561,213 @@
             @endforelse
         </div>
 
-        @if($itens->hasPages())
-            <div class="flex justify-center">
-                {{ $itens->links() }}
-            </div>
-        @endif
     </div>
 
 @endsection
 
 @section('scripts')
+<!-- SortableJS para drag-and-drop -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script>
-        // Função para alternar entre visualizações
-        function setViewMode(mode) {
-            const gridView = document.getElementById('grid-view');
-            const listView = document.getElementById('list-view');
-            const btnGrid = document.getElementById('btn-grid');
-            const btnList = document.getElementById('btn-list');
+    // Função para alternar entre visualizações
+    function setViewMode(mode) {
+        const gridView = document.getElementById('grid-view');
+        const listView = document.getElementById('list-view');
+        const btnGrid = document.getElementById('btn-grid');
+        const btnList = document.getElementById('btn-list');
 
-            if (mode === 'grid') {
-                gridView.style.display = 'grid';
-                listView.style.display = 'none';
+        if (mode === 'grid') {
+            if (gridView) gridView.style.display = 'block';
+            if (listView) listView.style.display = 'none';
+            if (btnGrid) {
                 btnGrid.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-gray-600', 'dark:text-gray-400');
                 btnGrid.classList.add('bg-red-100', 'dark:bg-red-900/30', 'text-red-600', 'dark:text-red-400');
+            }
+            if (btnList) {
                 btnList.classList.remove('bg-red-100', 'dark:bg-red-900/30', 'text-red-600', 'dark:text-red-400');
                 btnList.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-600', 'dark:text-gray-400');
-            } else {
-                gridView.style.display = 'none';
-                listView.style.display = 'block';
+            }
+            // Reinicializar SortableJS quando voltar para grid
+            setTimeout(initSortable, 100);
+        } else {
+            if (gridView) gridView.style.display = 'none';
+            if (listView) listView.style.display = 'block';
+            if (btnList) {
                 btnList.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-gray-600', 'dark:text-gray-400');
                 btnList.classList.add('bg-red-100', 'dark:bg-red-900/30', 'text-red-600', 'dark:text-red-400');
+            }
+            if (btnGrid) {
                 btnGrid.classList.remove('bg-red-100', 'dark:bg-red-900/30', 'text-red-600', 'dark:text-red-400');
                 btnGrid.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-600', 'dark:text-gray-400');
             }
-
-            try {
-                localStorage.setItem('cardapio-view-mode', mode);
-            } catch(e) {
-                console.warn('Erro ao salvar preferência:', e);
-            }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Busca em tempo real com debounce
-            const searchInput = document.getElementById('search-input');
-            const filterForm = document.getElementById('filter-form');
-            let searchTimeout;
+        try {
+            localStorage.setItem('cardapio-view-mode', mode);
+        } catch(e) {
+            console.warn('Erro ao salvar preferência:', e);
+        }
+    }
 
-            if (searchInput && filterForm) {
-                searchInput.addEventListener('input', function() {
-                    clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(function() {
-                        filterForm.submit();
-                    }, 500); // Aguarda 500ms após parar de digitar
-                });
-            }
-
-            // Carregar preferência de visualização
-            try {
-                const saved = localStorage.getItem('cardapio-view-mode');
-                if (saved === 'list' || saved === 'grid') {
-                    setViewMode(saved);
-                } else {
-                    setViewMode('grid');
-                }
-            } catch(e) {
-                setViewMode('grid');
+    // Função para inicializar SortableJS
+    function initSortable() {
+        // Verificar se SortableJS está disponível
+        if (typeof Sortable === 'undefined') {
+            console.error('SortableJS não foi carregado! Tentando novamente...');
+            setTimeout(initSortable, 500);
+            return;
+        }
+        
+        // Remover instâncias anteriores (se houver)
+        document.querySelectorAll('.sortable-categoria').forEach(container => {
+            if (container.sortableInstance) {
+                container.sortableInstance.destroy();
             }
         });
-    </script>
+        
+        // Inicializar SortableJS para cada categoria
+        const categorias = document.querySelectorAll('.sortable-categoria');
+        
+        if (categorias.length === 0) {
+            console.warn('Nenhuma categoria encontrada para ordenação');
+            return;
+        }
+        
+        console.log('Inicializando SortableJS para', categorias.length, 'categoria(s)');
+        
+        categorias.forEach(function(container) {
+            const categoria = container.dataset.categoria || container.getAttribute('data-categoria');
+            
+            if (!categoria) {
+                console.warn('Categoria não encontrada no container');
+                return;
+            }
+            
+            // Verificar se há itens no container
+            const items = container.querySelectorAll('.sortable-item');
+            if (items.length === 0) {
+                console.warn('Nenhum item encontrado na categoria:', categoria);
+                return;
+            }
+            
+            try {
+                const sortable = new Sortable(container, {
+                    animation: 150,
+                    ghostClass: 'opacity-50',
+                    chosenClass: 'ring-2 ring-red-500',
+                    dragClass: 'opacity-50',
+                    handle: '.sortable-handle', // Usar o handle específico para arrastar
+                    forceFallback: true,
+                    fallbackOnBody: true,
+                    swapThreshold: 0.65,
+                    filter: '.no-drag', // Elementos com classe 'no-drag' não podem ser arrastados
+                    preventOnFilter: false,
+                    onStart: function(evt) {
+                        console.log('Iniciando arraste do item:', evt.item.dataset.itemId);
+                        evt.item.style.cursor = 'grabbing';
+                    },
+                    onEnd: function(evt) {
+                        evt.item.style.cursor = '';
+                        console.log('Arraste finalizado');
+                        const items = Array.from(container.querySelectorAll('.sortable-item'));
+                        const itemsData = items.map((item, index) => {
+                            const itemId = item.getAttribute('data-item-id') || item.dataset.itemId;
+                            if (!itemId) {
+                                console.error('Item ID não encontrado:', item);
+                                return null;
+                            }
+                            return {
+                                id: parseInt(itemId),
+                                ordem: index
+                            };
+                        }).filter(item => item !== null);
+                        
+                        if (itemsData.length === 0) {
+                            console.error('Nenhum item encontrado para atualizar');
+                            return;
+                        }
+                        
+                        console.log('Enviando nova ordem:', itemsData);
+                        
+                        // Enviar nova ordem para o servidor
+                        fetch('{{ route('cardapio-itens.update-order') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                items: itemsData,
+                                categoria: categoria === 'sem-categoria' ? null : categoria
+                            })
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Erro na resposta do servidor: ' + response.status);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                console.log('✅ Ordem atualizada com sucesso');
+                            } else {
+                                console.error('❌ Erro ao atualizar ordem:', data.message);
+                                location.reload();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('❌ Erro ao atualizar ordem:', error);
+                            alert('Erro ao salvar a ordem. A página será recarregada.');
+                            location.reload();
+                        });
+                    }
+                });
+                
+                // Armazenar instância para poder destruir depois
+                container.sortableInstance = sortable;
+                
+                if (sortable) {
+                    console.log('✅ SortableJS inicializado para categoria:', categoria, 'com', items.length, 'itens');
+                }
+            } catch (error) {
+                console.error('❌ Erro ao inicializar SortableJS para categoria', categoria, ':', error);
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Carregar preferência de visualização
+        try {
+            const saved = localStorage.getItem('cardapio-view-mode');
+            if (saved === 'list' || saved === 'grid') {
+                setViewMode(saved);
+            } else {
+                setViewMode('grid');
+            }
+        } catch(e) {
+            setViewMode('grid');
+        }
+        
+        // Aguardar um pouco para garantir que o DOM está totalmente renderizado
+        setTimeout(function() {
+            initSortable();
+        }, 300);
+
+        // Busca em tempo real com debounce
+        const searchInput = document.getElementById('search-input');
+        const filterForm = document.getElementById('filter-form');
+        let searchTimeout;
+
+        if (searchInput && filterForm) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(function() {
+                    filterForm.submit();
+                }, 500);
+            });
+        }
+    });
+</script>
 @endsection
 

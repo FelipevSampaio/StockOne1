@@ -52,6 +52,9 @@ class CardapioItem extends Model
         'disponibilidade', // novo campo
         'ingredientes',    // novo campo
         'promocao',        // novo campo
+        'insumo_id',       // vinculação direta ao estoque (para bebidas)
+        'quantidade_por_unidade', // quantidade do insumo por unidade vendida
+        'ordem',           // ordem dentro da categoria
     ];
 
     protected $casts = [
@@ -60,6 +63,7 @@ class CardapioItem extends Model
         'disponibilidade' => 'boolean',
         'ingredientes' => 'array',
         'promocao' => 'array',
+        'quantidade_por_unidade' => 'decimal:6',
     ];
 
     public function restaurante()
@@ -75,5 +79,54 @@ class CardapioItem extends Model
     public function pedidoItens()
     {
         return $this->hasMany(PedidoItem::class);
+    }
+
+    /**
+     * Relacionamento direto com insumo (para bebidas e itens sem receita)
+     */
+    public function insumo()
+    {
+        return $this->belongsTo(Insumo::class);
+    }
+
+    /**
+     * Calcula o custo total do item considerando receitas ou insumo direto
+     */
+    public function calcularCustoTotal(): float
+    {
+        // Se tem insumo direto vinculado, usar esse
+        if ($this->insumo_id && $this->quantidade_por_unidade) {
+            $custoUnitario = $this->insumo?->custo_unitario ?? 0;
+            return $this->quantidade_por_unidade * $custoUnitario;
+        }
+
+        // Caso contrário, calcular pela receita
+        $custoTotal = 0;
+        foreach ($this->receitas as $receita) {
+            if ($receita->insumo && $receita->insumo->custo_unitario) {
+                $custoTotal += $receita->quantidade_necessaria * $receita->insumo->custo_unitario;
+            }
+        }
+        return $custoTotal;
+    }
+
+    /**
+     * Calcula a margem de lucro em percentual
+     */
+    public function calcularMargemLucro(): float
+    {
+        $custoTotal = $this->calcularCustoTotal();
+        if ($custoTotal <= 0 || $this->preco_venda <= 0) {
+            return 0;
+        }
+        return (($this->preco_venda - $custoTotal) / $this->preco_venda) * 100;
+    }
+
+    /**
+     * Retorna o lucro em reais
+     */
+    public function calcularLucro(): float
+    {
+        return $this->preco_venda - $this->calcularCustoTotal();
     }
 }

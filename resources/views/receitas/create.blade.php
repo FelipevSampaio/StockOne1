@@ -138,6 +138,54 @@
                                 <span x-show="precoVenda > 0" x-text="`Preço de venda: R$ ${precoVenda.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')}`"></span>
                             </p>
                         </div>
+
+                        <!-- Opção de copiar receita base -->
+                        <div x-show="itemSelecionado" class="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                                <div class="flex-1">
+                                    <h4 class="text-sm font-semibold text-green-900 dark:text-green-300 mb-2">Copiar receita de outro item</h4>
+                                    <p class="text-xs text-green-800 dark:text-green-400 mb-3">
+                                        Selecione um item que já possui receita para copiar todos os ingredientes. Útil para criar variações (ex: pastel de carne → pastel de queijo).
+                                    </p>
+                                    <div class="flex gap-2">
+                                        <select x-model="receitaBaseId"
+                                                @change="loadReceitaBase()"
+                                                class="flex-1 px-3 py-2 text-sm border border-green-300 dark:border-green-700 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                                            <option value="">Selecione um item para copiar receita...</option>
+                                            @foreach ($cardapioItens as $item)
+                                                <option value="{{ $item->id }}" 
+                                                        data-nome="{{ $item->nome }}">
+                                                    {{ $item->nome }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <button type="button"
+                                                @click="loadReceitaBase()"
+                                                :disabled="!receitaBaseId"
+                                                class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                            </svg>
+                                            Carregar
+                                        </button>
+                                    </div>
+                                    <div x-show="loadingReceitaBase" class="mt-2 text-xs text-green-700 dark:text-green-400">
+                                        Carregando receita...
+                                    </div>
+                                    <div x-show="receitaBaseCarregada && receitaItems.length > 0" class="mt-2 p-2 bg-white dark:bg-gray-800 rounded border border-green-200 dark:border-green-800">
+                                        <p class="text-xs font-semibold text-green-800 dark:text-green-400 mb-1">
+                                            ✓ Receita carregada! <span x-text="`${receitaItems.length} ingrediente(s) adicionado(s)`"></span>
+                                        </p>
+                                        <p class="text-xs text-green-700 dark:text-green-500">
+                                            Revise os ingredientes abaixo e ajuste conforme necessário (ex: trocar carne por queijo).
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                 </div>
             </div>
 
@@ -347,6 +395,11 @@
                 essencial: true,
                 receitaItems: [],
                 
+                // Receita base
+                receitaBaseId: '',
+                receitaBaseCarregada: false,
+                loadingReceitaBase: false,
+                
                 // Busca
                 searchItem: '',
                 searchInsumo: '',
@@ -507,6 +560,73 @@
                 
                 removeItem(index) {
                     this.receitaItems.splice(index, 1);
+                },
+
+                async loadReceitaBase() {
+                    if (!this.receitaBaseId || !this.itemSelecionado) {
+                        alert('Selecione o item do cardápio e o item base primeiro');
+                        return;
+                    }
+
+                    if (this.receitaBaseId == this.itemSelecionado) {
+                        alert('O item base deve ser diferente do item atual');
+                        return;
+                    }
+
+                    this.loadingReceitaBase = true;
+                    this.receitaBaseCarregada = false;
+
+                    try {
+                        const response = await fetch(`{{ url('receitas/item') }}/${this.receitaBaseId}/receitas`);
+                        const data = await response.json();
+
+                        if (data.success && data.receitas.length > 0) {
+                            // Limpar receitas existentes ou adicionar às existentes
+                            const confirmar = this.receitaItems.length > 0 
+                                ? confirm(`Já existem ${this.receitaItems.length} ingrediente(s) na receita. Deseja substituir por todos os ingredientes de "${data.item_nome}"?`)
+                                : true;
+
+                            if (confirmar) {
+                                if (this.receitaItems.length > 0) {
+                                    this.receitaItems = [];
+                                }
+
+                                // Adicionar todos os ingredientes da receita base
+                                data.receitas.forEach(receita => {
+                                    const insumo = this.insumos.find(i => i.id == receita.insumo_id);
+                                    if (insumo) {
+                                        this.receitaItems.push({
+                                            cardapioItemId: this.itemSelecionado,
+                                            cardapioItemNome: this.cardapioItens.find(i => i.id == this.itemSelecionado)?.nome || '',
+                                            insumoId: receita.insumo_id,
+                                            insumoNome: receita.insumo_nome,
+                                            quantidade: parseFloat(receita.quantidade_necessaria),
+                                            unidade: receita.unidade_medida,
+                                            essencial: receita.essencial,
+                                            custo: (parseFloat(receita.quantidade_necessaria) * parseFloat(receita.custo_unitario || 0)).toFixed(2)
+                                        });
+                                    }
+                                });
+
+                                this.receitaBaseCarregada = true;
+                                
+                                // Scroll para o preview
+                                this.$nextTick(() => {
+                                    const preview = document.querySelector('[x-show="receitaItems.length > 0"]');
+                                    if (preview) {
+                                        preview.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    }
+                                });
+                            }
+                        } else {
+                            alert(`O item "${data.item_nome}" não possui receitas cadastradas.`);
+                        }
+                    } catch (error) {
+                        console.error('Erro ao carregar receita base:', error);
+                        alert('Erro ao carregar receita base. Tente novamente.');
+                    } finally {
+                        this.loadingReceitaBase = false;
+                    }
                 },
                 
                 submitForm() {

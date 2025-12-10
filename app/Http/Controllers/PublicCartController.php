@@ -42,54 +42,119 @@ class PublicCartController extends Controller
 
     public function update(Request $request, int $cardapioItemId)
     {
-        $data = $request->validate([
-            'quantity' => ['required', 'integer', 'min:0', 'max:99'],
-        ]);
+        try {
+            $data = $request->validate([
+                'quantity' => ['required', 'integer', 'min:0', 'max:99'],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dados inválidos.',
+                    'errors' => $e->errors(),
+                    'cart' => [
+                        'count' => PublicCart::itemsCount(),
+                        'total' => PublicCart::subtotal(),
+                        'items' => PublicCart::all()->values()->all(),
+                    ],
+                ], 422);
+            }
+            throw $e;
+        }
 
         $quantity = $data['quantity'];
 
-        $restauranteSlug = $request->route('restaurante');
         if ($quantity === 0) {
             PublicCart::remove($cardapioItemId);
-            return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('success', 'Item removido do pedido.');
+
+            // Se for requisição AJAX, retornar JSON
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Item removido do pedido.',
+                    'cart' => [
+                        'count' => PublicCart::itemsCount(),
+                        'total' => PublicCart::subtotal(),
+                        'items' => PublicCart::all()->values()->all(),
+                    ],
+                ]);
+            }
+
+            return redirect()->route('public.menu')->with('success', 'Item removido do pedido.');
         }
 
         $item = CardapioItem::where('ativo_online', true)
-            ->where('restaurante_id', $this->publicRestauranteId())
             ->find($cardapioItemId);
 
         if (!$item) {
             PublicCart::remove($cardapioItemId);
-            return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('error', 'Este item não está mais disponível.');
+
+            // Se for requisição AJAX, retornar JSON
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Este item não está mais disponível.',
+                    'cart' => [
+                        'count' => PublicCart::itemsCount(),
+                        'total' => PublicCart::subtotal(),
+                        'items' => PublicCart::all()->values()->all(),
+                    ],
+                ]);
+            }
+
+            return redirect()->route('public.menu')->with('error', 'Este item não está mais disponível.');
         }
 
         PublicCart::refreshFromModel($item);
         PublicCart::updateQuantity($cardapioItemId, $quantity);
 
-        return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('success', 'Quantidade atualizada.');
+        // Se for requisição AJAX, retornar JSON
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Quantidade atualizada.',
+                'cart' => [
+                    'count' => PublicCart::itemsCount(),
+                    'total' => PublicCart::subtotal(),
+                    'items' => PublicCart::all()->values()->all(),
+                ],
+            ]);
+        }
+
+        return redirect()->route('public.menu')->with('success', 'Quantidade atualizada.');
     }
 
     public function destroy(int $cardapioItemId)
     {
-        $restauranteSlug = request()->route('restaurante');
         PublicCart::remove($cardapioItemId);
 
-        return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('success', 'Item removido do pedido.');
+        // Se for requisição AJAX, retornar JSON
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Item removido do pedido.',
+                'cart' => [
+                    'count' => PublicCart::itemsCount(),
+                    'total' => PublicCart::subtotal(),
+                    'items' => PublicCart::all()->values()->all(),
+                ],
+            ]);
+        }
+
+        return redirect()->route('public.menu')->with('success', 'Item removido do pedido.');
     }
 
     public function checkout()
     {
-        $restauranteSlug = request()->route('restaurante');
-        
         // Priorizar restaurante da sessão se o usuário estiver logado
         $restauranteId = session('restaurante_id') ?? $this->publicRestauranteId();
 
         if (! $restauranteId) {
-            return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('error', 'Restaurante indisponível no momento.');
+            return redirect()->route('public.menu')->with('error', 'Restaurante indisponível no momento.');
         }
 
         if (PublicCart::isEmpty()) {
-            return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('error', 'Seu carrinho está vazio.');
+            return redirect()->route('public.menu')->with('error', 'Seu carrinho está vazio.');
         }
 
         $cartItems = PublicCart::all();
@@ -105,7 +170,7 @@ class PublicCartController extends Controller
 
         if ($missing->isNotEmpty()) {
             PublicCart::removeMany($missing->all());
-            return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('error', 'Atualizamos seu pedido: alguns itens ficaram indisponíveis.');
+            return redirect()->route('public.menu')->with('error', 'Atualizamos seu pedido: alguns itens ficaram indisponíveis.');
         }
 
         $valorTotal = 0;
@@ -124,7 +189,7 @@ class PublicCartController extends Controller
                 'numero_pedido_externo' => now()->format('YmdHis'),
                 'plataforma_origem' => 'web',
                 'data_hora_pedido' => now(),
-                'status' => 'pendente', // Mudar para pendente ao invés de concluido
+                'status' => 'recebido', // Status inicial conforme enum da migration
                 'valor_total' => $valorTotal,
                 'tempo_preparo_estimado' => null,
             ]);
@@ -146,12 +211,20 @@ class PublicCartController extends Controller
             DB::rollBack();
             report($exception);
 
-            return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('error', 'Não conseguimos registrar seu pedido. Tente novamente.');
+            // Log mais detalhado do erro para debug
+            \Log::error('Erro ao criar pedido no checkout público', [
+                'exception' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
+                'restaurante_id' => $restauranteId,
+                'cart_items_count' => $cartItems->count(),
+            ]);
+
+            return redirect()->route('public.menu')->with('error', 'Não conseguimos registrar seu pedido. Tente novamente.');
         }
 
         PublicCart::clear();
 
-        return redirect()->route('public.menu', ['restaurante' => $restauranteSlug])->with('success', "Recebemos seu pedido! Código #{$pedido->id}.");
+        return redirect()->route('public.menu')->with('success', "Recebemos seu pedido! Código #{$pedido->id}.");
     }
 
     protected function publicRestauranteId(): ?int
