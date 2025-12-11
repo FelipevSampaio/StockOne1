@@ -621,8 +621,7 @@ Para reportar bugs ou solicitar funcionalidades:
 
 <div align="center">
 
-**Feito com ❤️ para revolucionar a gestão de restaurantes**
+**Feito para revolucionar a gestão de restaurantes**
 
-⭐ Se este projeto foi útil, considere dar uma estrela!
 
 </div>
