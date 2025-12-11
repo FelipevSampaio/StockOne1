@@ -49,3 +49,4 @@ Se aparecer uma tabela com "1", está funcionando!
 - O script **NÃO apaga** dados existentes
 - Seus dados no banco `laravel` estão **100% seguros**
 - O script apenas cria um novo usuário e concede permissões
+

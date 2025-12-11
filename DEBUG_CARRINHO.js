@@ -113,3 +113,4 @@ document.addEventListener('submit', function(e) {
 
 console.log('=== FIM DEBUG ===');
 console.log('Execute testAddToCart(ITEM_ID) para testar manualmente');
+

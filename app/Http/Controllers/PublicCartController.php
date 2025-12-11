@@ -9,6 +9,7 @@ use App\Models\Restaurante;
 use App\Support\PublicCart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class PublicCartController extends Controller
 {
@@ -183,12 +184,15 @@ class PublicCartController extends Controller
         DB::beginTransaction();
 
         try {
+            // Usar timezone do Brasil para a data/hora do pedido
+            $dataHoraPedido = Carbon::now('America/Sao_Paulo');
+
             $pedido = Pedido::create([
                 'restaurante_id' => $restauranteId,
                 'usuario_id' => auth()->id(), // Usar usuário logado se houver
-                'numero_pedido_externo' => now()->format('YmdHis'),
+                'numero_pedido_externo' => $dataHoraPedido->format('YmdHis'),
                 'plataforma_origem' => 'web',
-                'data_hora_pedido' => now(),
+                'data_hora_pedido' => $dataHoraPedido,
                 'status' => 'recebido', // Status inicial conforme enum da migration
                 'valor_total' => $valorTotal,
                 'tempo_preparo_estimado' => null,
