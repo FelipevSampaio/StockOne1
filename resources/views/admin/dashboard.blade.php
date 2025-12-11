@@ -833,12 +833,16 @@
                     <span class="inline-block bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-semibold mb-2">{{ $item->promocao['descricao'] ?? 'Promoção' }}</span>
                 @endif
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Estoque Essenciais: <span class="font-bold">{{ $item->soma_estoque_essenciais }}</span></p>
+                @if($item->ingredientes && (is_array($item->ingredientes) || is_object($item->ingredientes)))
                 <ul class="text-xs text-gray-700 dark:text-gray-300 mb-2">
                     @foreach($item->ingredientes as $ing)
                         <li>{{ $ing }}</li>
                     @endforeach
                 </ul>
-                <a href="{{ route('admin.cardapio.edit', $item->id) }}" class="mt-2 btn btn-sm btn-primary">Editar</a>
+                @else
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Nenhum ingrediente cadastrado</p>
+                @endif
+                <a href="{{ route('cardapio-itens.edit', $item) }}" class="mt-2 btn btn-sm btn-primary">Editar</a>
             </div>
             @endforeach
         </div>

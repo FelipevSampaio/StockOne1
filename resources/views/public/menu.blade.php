@@ -309,7 +309,7 @@
                             </div>
                             <form action="{{ route('public.cart.checkout') }}" method="POST" class="mt-3 md:mt-4">
                                 @csrf
-                                <button type="submit" @class([
+                                <button type="submit" id="checkout-button-sidebar" @class([
                                     'w-full rounded-full px-4 md:px-5 py-2.5 md:py-3 text-xs md:text-sm font-semibold text-white shadow transition',
                                     'bg-red-600 hover:bg-red-500' => $cartItems->isNotEmpty(),
                                     'bg-gray-200 text-gray-400 cursor-not-allowed' => $cartItems->isEmpty(),
@@ -412,7 +412,7 @@
                     </div>
                     <form action="{{ route('public.cart.checkout') }}" method="POST">
                         @csrf
-                        <button type="submit"
+                        <button type="submit" id="checkout-button-mobile"
                                 class="w-full rounded-full bg-red-600 px-6 py-3 text-sm font-semibold text-white shadow hover:bg-red-500 transition-colors"
                                 :disabled="cartCount === 0">
                             Finalizar Pedido
@@ -855,6 +855,23 @@
 
                     // Atualizar sidebar do carrinho
                     this.updateCartSidebar(items);
+
+                    // Atualizar botão de finalizar pedido
+                    this.updateCheckoutButton(count > 0);
+                },
+
+                updateCheckoutButton(hasItems) {
+                    // Atualizar botão da sidebar
+                    const checkoutButtonSidebar = document.getElementById('checkout-button-sidebar');
+                    if (checkoutButtonSidebar) {
+                        if (hasItems) {
+                            checkoutButtonSidebar.disabled = false;
+                            checkoutButtonSidebar.className = 'w-full rounded-full px-4 md:px-5 py-2.5 md:py-3 text-xs md:text-sm font-semibold text-white shadow transition bg-red-600 hover:bg-red-500';
+                        } else {
+                            checkoutButtonSidebar.disabled = true;
+                            checkoutButtonSidebar.className = 'w-full rounded-full px-4 md:px-5 py-2.5 md:py-3 text-xs md:text-sm font-semibold text-white shadow transition bg-gray-200 text-gray-400 cursor-not-allowed';
+                        }
+                    }
                 },
 
                 updateCartSidebar(items) {
@@ -863,13 +880,7 @@
 
                     if (items.length === 0) {
                         sidebarItems.innerHTML = '<p class="text-sm text-gray-500">Seu carrinho está vazio. Comece adicionando pratos do cardápio.</p>';
-
-                        // Atualizar estado do botão de finalizar
-                        const checkoutButton = document.querySelector('form[action*="checkout"] button');
-                        if (checkoutButton) {
-                            checkoutButton.disabled = true;
-                            checkoutButton.className = 'w-full rounded-full px-5 py-3 text-sm font-semibold text-white shadow transition bg-gray-200 text-gray-400 cursor-not-allowed';
-                        }
+                        this.updateCheckoutButton(false);
                         return;
                     }
 
@@ -914,13 +925,7 @@
                     });
 
                     sidebarItems.innerHTML = html;
-
-                    // Atualizar estado do botão de finalizar
-                    const checkoutButton = document.querySelector('form[action*="checkout"] button');
-                    if (checkoutButton) {
-                        checkoutButton.disabled = false;
-                        checkoutButton.className = 'w-full rounded-full px-5 py-3 text-sm font-semibold text-white shadow transition bg-red-600 hover:bg-red-500';
-                    }
+                    this.updateCheckoutButton(true);
                 },
 
                 escapeHtml(text) {

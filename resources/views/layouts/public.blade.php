@@ -9,9 +9,13 @@
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     </head>
     <body class="bg-gray-50 text-gray-900">
+        @php
+            $isPublicMenu = request()->routeIs('public.menu');
+        @endphp
         <div class="min-h-screen flex"
              x-data="{ sidebarOpen: false }"
              x-init="window.addEventListener('resize', () => { if(window.innerWidth >= 1024) sidebarOpen = false; })">
+            @if(!$isPublicMenu)
             <!-- Overlay escuro em mobile -->
             <div x-show="sidebarOpen && window.innerWidth < 1024"
                  @click="sidebarOpen = false"
@@ -87,8 +91,9 @@
                     StockOne © {{ date('Y') }} · SaaS de restaurantes
                 </div>
             </aside>
+            @endif
 
-            <div class="flex-1 flex flex-col bg-gray-50 w-full lg:ml-64">
+            <div class="flex-1 flex flex-col bg-gray-50 w-full {{ !$isPublicMenu ? 'lg:ml-64' : '' }}">
                 <header class="bg-white/90 shadow-sm backdrop-blur">
                     <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 md:px-6 lg:px-8 py-4 md:py-6">
                         <div class="min-w-0 flex-1">
