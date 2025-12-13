@@ -4,9 +4,17 @@ Manual interativo do sistema StockOne desenvolvido em React.
 
 ## Como Usar
 
-### Opção 1: Servidor Local (Recomendado)
+### Opção 1: Usando npm (Recomendado)
 
-Para garantir que o JSX seja processado corretamente, é recomendado usar um servidor HTTP local:
+```bash
+npm start
+```
+
+Isso iniciará um servidor HTTP na porta 8080. Acesse: `http://localhost:8080`
+
+### Opção 2: Servidor Local Manual
+
+Para garantir que o JSX seja processado corretamente, use um servidor HTTP local:
 
 ```bash
 # Usando Python 3
@@ -21,7 +29,7 @@ npx http-server -p 8080
 
 Depois acesse: `http://localhost:8080`
 
-### Opção 2: Abrir Diretamente
+### Opção 3: Abrir Diretamente
 
 Você pode tentar abrir o `index.html` diretamente no navegador, mas algumas funcionalidades podem não funcionar devido a restrições CORS.
 
@@ -48,15 +56,40 @@ Você pode tentar abrir o `index.html` diretamente no navegador, mas algumas fun
 
 ## Navegação
 
-O manual está organizado nas seguintes seções:
+O manual está organizado em três módulos principais:
 
-1. **Introdução** - Visão geral e acesso ao painel
-2. **Dashboard** - Visão geral do dashboard
-3. **Usuários** - Gerenciamento completo de usuários
-4. **Logs de Auditoria** - Sistema de auditoria
-5. **Configurações** - Configurações do sistema
-6. **Dicas e Boas Práticas** - Recomendações de uso
-7. **Solução de Problemas** - Problemas comuns e soluções
+### 1. Módulo Público (Sem Autenticação)
+- Login e Autenticação
+- Menu Público
+- Carrinho de Compras
+- Finalizar Pedido (Checkout)
+
+### 2. Painel Administrativo (Admin)
+- Dashboard Administrativo
+- Gestão de Usuários
+- Gestão de Restaurantes
+- Estoque Inteligente
+- Logs de Auditoria
+- Relatórios
+- Configurações
+- Funcionários
+- Mesas e Reservas
+- Pedidos de Delivery
+- Controle de Desperdícios
+- Gestão de Cardápio
+- Notificações
+- Busca Global
+
+### 3. Módulo Restaurante (Usuário Autenticado)
+- Dashboard do Restaurante
+- Gestão de Insumos
+- Gestão de Cardápio
+- Gestão de Pedidos
+- Gestão de Estoque
+- Gestão de Alertas
+- Compras e Sugestões
+- Gestão de Receitas
+- Fila de Produção
 
 ## Paleta de Cores
 
