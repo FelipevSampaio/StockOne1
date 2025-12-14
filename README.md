@@ -482,12 +482,6 @@ $schedule->call(function () {
 *Gestão de usuários, podendo criar, remover, e limitar as permissões*
 
 ---
-#### Gestão de Restaurantes com Health Score
-![Gestão de Restaurantes](./docs/screenshots/restaurantes-list.png)
-*Lista de restaurantes com filtros avançados e badges de Health Score*
-
----
-
 
 </div>
 
