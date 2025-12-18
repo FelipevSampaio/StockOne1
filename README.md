@@ -48,25 +48,25 @@
 ## ✨ Funcionalidades
 
 ### 🏪 Gestão de Restaurantes
-- ✅ Cadastro e gerenciamento de múltiplos restaurantes
-- ✅ Sistema de Health Score (0-100 pontos)
-- ✅ Análise de ciclo de vida do cliente
-- ✅ Ações recomendadas automáticas
-- ✅ Histórico de engajamento e atividade
-- ✅ Filtros avançados por status e risco
+- Cadastro e gerenciamento de múltiplos restaurantes
+- Sistema de Health Score (0-100 pontos)
+- Análise de ciclo de vida do cliente
+- Ações recomendadas automáticas
+- Histórico de engajamento e atividade
+- Filtros avançados por status e risco
 
 ### 📦 Controle de Estoque
-- ✅ Gestão completa de insumos
-- ✅ Alertas automáticos de estoque baixo
-- ✅ Sugestões inteligentes de compra
-- ✅ Histórico de movimentações
-- ✅ Controle de validade
+- Gestão completa de insumos
+- Alertas automáticos de estoque baixo
+- Sugestões inteligentes de compra
+- Histórico de movimentações
+- Controle de validade
 
-### 🍽️ Cardápio Digital
+###  Cardápio Digital
 
 ---
 
-## 🍽️ Cardápio Dinâmico
+##  Cardápio Dinâmico
 
 O sistema oferece um cardápio dinâmico, permitindo:
 
@@ -77,36 +77,36 @@ O sistema oferece um cardápio dinâmico, permitindo:
 Essas funcionalidades garantem flexibilidade, agilidade e maior engajamento dos clientes, além de otimizar o uso dos insumos e reduzir desperdícios.
 
 ### 📋 Sistema de Pedidos
-- ✅ Pedidos online integrados
-- ✅ Fila de produção
-- ✅ Status em tempo real
-- ✅ Histórico completo
-- ✅ Relatórios detalhados
+- Pedidos online integrados
+- Fila de produção
+- Status em tempo real
+- Histórico completo
+- Relatórios detalhados
 
 ### 👤 Gestão de Usuários
-- ✅ Sistema de autenticação seguro
-- ✅ Níveis de permissão (Admin/Usuário)
-- ✅ Rastreamento de atividades
-- ✅ Logs de auditoria
-- ✅ Histórico de login
+- Sistema de autenticação seguro
+- Níveis de permissão (Admin/Usuário)
+- Rastreamento de atividades
+- Logs de auditoria
+- Histórico de login
 
 ### 📊 Dashboard Administrativo
-- ✅ Métricas em tempo real
-- ✅ Gráficos interativos
-- ✅ Estatísticas de vendas
-- ✅ Análise de restaurantes
-- ✅ Notificações centralizadas
+- Métricas em tempo real
+- Gráficos interativos
+- Estatísticas de vendas
+- Análise de restaurantes
+- Notificações centralizadas
 
 ### 🔔 Sistema de Notificações
-- ✅ Alertas de estoque baixo
-- ✅ Avisos de vencimento
-- ✅ Notificações de pedidos
-- ✅ Sistema de prioridades
-- ✅ Marcação de lidas/não lidas
+- Alertas de estoque baixo
+- Avisos de vencimento
+- Notificações de pedidos
+- Sistema de prioridades
+- Marcação de lidas/não lidas
 
 ---
 
-## 🛠️ Tecnologias
+##    Tecnologias
 
 ### Backend
 - **Laravel 12** - Framework PHP moderno
@@ -129,7 +129,7 @@ Essas funcionalidades garantem flexibilidade, agilidade e maior engajamento dos 
 
 ---
 
-## 📋 Requisitos
+##  Requisitos
 
 - PHP >= 8.2
 - Composer >= 2.x
@@ -140,7 +140,7 @@ Essas funcionalidades garantem flexibilidade, agilidade e maior engajamento dos 
 
 ---
 
-## 🚀 Instalação
+##  Instalação
 
 ### 1. Clone o Repositório
 
@@ -321,7 +321,7 @@ StockOne_Laravel/
 
 ---
 
-## 🎨 Módulos
+##  Módulos
 
 ### 1. Painel Administrativo (`/admin`)
 
@@ -412,11 +412,11 @@ Sistema inteligente que calcula uma pontuação de 0 a 100 para cada restaurante
 
 ### Funcionalidades
 
-✅ **Tendência** - Comparação com mês anterior  
-✅ **Histórico** - Evolução dos últimos 90 dias  
-✅ **Ciclo de Vida** - Onboarding, Ativo, Em Risco, etc.  
-✅ **Ações Recomendadas** - Sugestões automáticas baseadas em problemas  
-✅ **Alertas** - Notificações sobre problemas identificados  
+ **Tendência** - Comparação com mês anterior  
+ **Histórico** - Evolução dos últimos 90 dias  
+ **Ciclo de Vida** - Onboarding, Ativo, Em Risco, etc.  
+ **Ações Recomendadas** - Sugestões automáticas baseadas em problemas  
+ **Alertas** - Notificações sobre problemas identificados  
 
 ### Como Usar
 
@@ -460,9 +460,9 @@ $schedule->call(function () {
 
 ---
 
-## 📸 Capturas de Tela
+##  Capturas de Tela
 
-### 🎨 Dashboard Administrativo
+###  Dashboard Administrativo
 
 <div align="center">
 
@@ -507,7 +507,7 @@ $schedule->call(function () {
 
 </div>
 
-### 🌐 Área Pública
+###  Área Pública
 
 <div align="center">
 
@@ -523,7 +523,7 @@ $schedule->call(function () {
 
 </div>
 
-### 🎨 Temas
+###  Temas
 
 <div align="center">
 
@@ -556,7 +556,7 @@ $schedule->call(function () {
 
 ---
 
-## 🤝 Contribuindo
+##  Contribuindo
 
 Contribuições são bem-vindas! Siga estes passos:
 
@@ -580,12 +580,6 @@ Seguimos o [Conventional Commits](https://www.conventionalcommits.org/):
 
 ---
 
-## 📝 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
----
-
 ## 👥 Autores
 
 - **Clayton Silva** - [@CLSilva2](https://github.com/CLSilva2).
@@ -599,12 +593,12 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 ## 📞 Suporte
 
 Para reportar bugs ou solicitar funcionalidades:
-- 📧 Email: suporte@stockone.com
-- 🐛 Issues: [GitHub Issues](https://github.com/FelipevSampaio/StockOneLaravel/issues)
+-  Email: suporte@stockone.com
+-  Issues: [GitHub Issues](https://github.com/FelipevSampaio/StockOneLaravel/issues)
 
 ---
 
-## 🙏 Agradecimentos
+##  Agradecimentos
 
 - [Laravel](https://laravel.com) - Framework PHP
 - [Filament](https://filamentphp.com) - Painel administrativo
