@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🍽️ StockOne Laravel
+#StockOne Laravel
 
 ### Sistema Completo de Gestão para Restaurantes
 
@@ -14,7 +14,7 @@
 
 ---
 
-## 📋 Índice
+##Índice
 
 - [Sobre o Projeto](#-sobre-o-projeto)
 - [Funcionalidades](#-funcionalidades)
